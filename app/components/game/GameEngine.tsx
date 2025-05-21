@@ -130,8 +130,10 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
   // Render UI based on game state
   return (
     <div className="flex flex-col items-center gap-6">
-      <ScoreCounter score={state.score} />
-      <GameTimer duration={state.timeLeft} onComplete={handleEnd} running={state.gameState === GameState.Running} />
+      <div className="flex flex-row items-center justify-center gap-6 w-full max-w-xs sm:max-w-md">
+        <ScoreCounter score={state.score} />
+        <GameTimer duration={state.timeLeft} onComplete={handleEnd} running={state.gameState === GameState.Running} />
+      </div>
       {state.gameState === GameState.Idle && (
         <Button variant="secondary" onClick={handleStart}>
           Start Game
@@ -143,9 +145,9 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
       {state.gameState === GameState.Finished && (
         <>
           <div className="text-xl font-bold text-center">Game Over! Final Score: {state.score}</div>
-          <button className="btn btn-secondary mt-2" onClick={handleReset}>
+          <Button variant="secondary" className="mt-2" onClick={handleReset}>
             Play Again
-          </button>
+          </Button>
         </>
       )}
       <GameFeedback trigger={state.feedback} type="visual" />
