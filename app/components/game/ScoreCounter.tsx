@@ -8,7 +8,7 @@ export interface ScoreCounterProps {
 
 export const ScoreCounter: React.FC<ScoreCounterProps> = ({ score }) => (
   <div className="flex items-center justify-center gap-3 text-4xl font-extrabold text-center text-accent drop-shadow">
-    {/* @ts-expect-error */}
+    {/* @ts-expect-error: Display expects a different prop type */}
     <Display value={score.toString().padStart(3, '0')} color="lime" height={64} count={3} backgroundColor="transparent" />
   </div>
 );
