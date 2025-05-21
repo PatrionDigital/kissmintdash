@@ -32,6 +32,34 @@ input[type="radio"] {
   border-color: var(--color-bubblegum);
 }
 
+input[type="checkbox"] {
+  appearance: none;
+  width: 1.375em;
+  height: 1.375em;
+  border: 2px solid var(--color-bubblegum);
+  border-radius: 0.25em;
+  background: var(--input-bg, #23272f);
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+input[type="checkbox"]:checked::after {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 0.66em solid transparent;
+  border-right: 0.66em solid transparent;
+  border-top: 0.77em solid var(--color-bubblegum);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -40%);
+}
+
+
 input:focus,
 select:focus,
 textarea:focus {
