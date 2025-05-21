@@ -36,6 +36,7 @@
 
 - Verify TailwindCSS is working.
 - Add color palette and theming from documentation.
+- Add fav-icon
 
 ---
 
