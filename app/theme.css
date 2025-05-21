@@ -4,18 +4,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global form element styles for secondary color (bubblegum pink) */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  border-color: var(--color-bubblegum) !important;
+  color: var(--color-bubblegum);
+  background: var(--input-bg, #23272f);
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="number"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--color-bubblegum) 60%, transparent);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-bubblegum);
+  border-color: var(--color-bubblegum);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--color-bubblegum);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-bubblegum);
+}
+
 :root {
   --app-background: #ffffff;
   --app-foreground: #111111;
   --app-foreground-muted: #58585c;
-  --app-accent: #0052ff;
-  --app-accent-hover: #0047e1;
-  --app-accent-active: #003db8;
-  --app-accent-light: #e6edff;
+  --app-accent: var(--color-mint); /* Primary accent */
+  --app-accent-hover: var(--color-bubblegum); /* Secondary accent */
+  --app-accent-active: var(--color-electric); /* Tertiary accent */
+  --app-accent-light: var(--color-cyber); /* Highlight/accent light */
   --app-gray: #f5f5f5;
   --app-gray-dark: #e0e0e0;
   --app-card-bg: rgba(255, 255, 255, 0.4);
-  --app-card-border: rgba(0, 0, 0, 0.1);
+  --app-card-border: var(--color-cyber); /* Cyber Yellow border */
+
+  /* Design Tokens */
+  --color-mint: #3DFFC0;
+  --color-bubblegum: #FF6EB3;
+  --color-electric: #00C2FF;
+  --color-cyber: #FFE94A;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,7 +72,13 @@
     --app-gray: #1e1e1e;
     --app-gray-dark: #2e2e2e;
     --app-card-bg: rgba(17, 17, 17, 0.4);
-    --app-card-border: rgba(115, 115, 115, 0.5);
+    --app-card-border: var(--color-cyber); /* Cyber Yellow border */
+
+    /* Design Tokens - dark mode */
+    --color-mint: #3DFFC0;
+    --color-bubblegum: #FF6EB3;
+    --color-electric: #00C2FF;
+    --color-cyber: #FFE94A;
   }
 }
 
@@ -44,7 +92,7 @@
   --ock-text-foreground: var(--app-foreground);
   --ock-text-foreground-muted: var(--app-foreground-muted);
   --ock-text-error: #ef4444;
-  --ock-text-primary: var(--app-accent);
+  --ock-text-primary: var(--app-accent); /* Mint */
   --ock-text-success: #22c55e;
   --ock-text-warning: #f59e0b;
   --ock-text-disabled: #a1a1aa;
@@ -59,10 +107,10 @@
   --ock-bg-inverse: var(--app-foreground);
   --ock-bg-inverse-hover: #2a2a2a;
   --ock-bg-inverse-active: #3a3a3a;
-  --ock-bg-primary: var(--app-accent);
-  --ock-bg-primary-hover: var(--app-accent-hover);
-  --ock-bg-primary-active: var(--app-accent-active);
-  --ock-bg-primary-washed: var(--app-accent-light);
+  --ock-bg-primary: var(--app-accent); /* Mint */
+  --ock-bg-primary-hover: var(--app-accent-hover); /* Bubblegum */
+  --ock-bg-primary-active: var(--app-accent-active); /* Electric */
+  --ock-bg-primary-washed: var(--app-accent-light); /* Cyber */
   --ock-bg-primary-disabled: #80a8ff;
   --ock-bg-secondary: var(--app-gray);
   --ock-bg-secondary-hover: var(--app-gray-dark);
@@ -82,7 +130,7 @@
   --ock-icon-color-warning: #f59e0b;
 
   /* Line colors */
-  --ock-line-primary: var(--app-accent);
+  --ock-line-primary: var(--app-accent); /* Mint */
   --ock-line-default: var(--app-gray-dark);
   --ock-line-heavy: #a1a1aa;
   --ock-line-inverse: #d4d4d8;

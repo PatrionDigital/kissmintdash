@@ -39,17 +39,17 @@ export function Button({
   icon,
 }: ButtonProps) {
   const baseClasses =
-    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0052FF] disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none";
 
   const variantClasses = {
     primary:
-      "bg-[var(--app-accent)] hover:bg-[var(--app-accent-hover)] text-[var(--app-background)]",
+      "bg-accent hover:bg-accent-hover text-[var(--app-background)]",
     secondary:
-      "bg-[var(--app-gray)] hover:bg-[var(--app-gray-dark)] text-[var(--app-foreground)]",
+      "bg-[var(--app-foreground-muted)] hover:bg-accent-light text-[var(--app-background)]",
     outline:
-      "border border-[var(--app-accent)] hover:bg-[var(--app-accent-light)] text-[var(--app-accent)]",
+      "border border-accent text-accent bg-transparent hover:bg-accent-light",
     ghost:
-      "hover:bg-[var(--app-accent-light)] text-[var(--app-foreground-muted)]",
+      "hover:bg-accent-light text-[var(--app-foreground-muted)]",
   };
 
   const sizeClasses = {
@@ -93,7 +93,7 @@ function Card({
 
   return (
     <div
-      className={`bg-[var(--app-card-bg)] backdrop-blur-md rounded-xl shadow-lg border border-[var(--app-card-border)] overflow-hidden transition-all hover:shadow-xl ${className} ${onClick ? "cursor-pointer" : ""}`}
+      className={`bg-[var(--app-card-bg)] backdrop-blur-md rounded-xl shadow-lg border-2 border-cyber overflow-hidden transition-all hover:shadow-xl ${className} ${onClick ? "cursor-pointer" : ""}`}
       onClick={onClick}
       onKeyDown={onClick ? handleKeyDown : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -121,25 +121,25 @@ export function Features({ setActiveTab }: FeaturesProps) {
       <Card title="Key Features">
         <ul className="space-y-3 mb-4">
           <li className="flex items-start">
-            <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
+            <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
               Minimalistic and beautiful UI design
             </span>
           </li>
           <li className="flex items-start">
-            <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
+            <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
               Responsive layout for all devices
             </span>
           </li>
           <li className="flex items-start">
-            <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
+            <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
               Dark mode support
             </span>
           </li>
           <li className="flex items-start">
-            <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
+            <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
               OnchainKit integration
             </span>
@@ -160,6 +160,9 @@ type HomeProps = {
 export function Home({ setActiveTab }: HomeProps) {
   return (
     <div className="space-y-6 animate-fade-in">
+      <Card title="Cyber Yellow Border Demo" className="border-4 border-cyber">
+        <p className="text-accent font-bold">This card uses <span className="text-[var(--color-cyber)]">Cyber Yellow</span> for its border.</p>
+      </Card>
       <Card title="My First Mini App">
         <p className="text-[var(--app-foreground-muted)] mb-4">
           This is a minimalistic Mini App built with OnchainKit components.
@@ -326,11 +329,11 @@ function TodoList() {
         <div className="flex items-center space-x-2">
           <input
             type="text"
+            className="flex-1 px-3 py-2 rounded border border-bubblegum text-bubblegum focus:outline-none focus:ring-2 focus:ring-bubblegum placeholder:text-bubblegum/60"
+            placeholder="Add a new todo..."
             value={newTodo}
             onChange={(e) => setNewTodo(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Add a new task..."
-            className="flex-1 px-3 py-2 bg-[var(--app-card-bg)] border border-[var(--app-card-border)] rounded-lg text-[var(--app-foreground)] placeholder-[var(--app-foreground-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--app-accent)]"
           />
           <Button
             variant="primary"
@@ -346,24 +349,20 @@ function TodoList() {
           {todos.map((todo) => (
             <li key={todo.id} className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <button
-                  type="button"
+                <input
                   id={`todo-${todo.id}`}
-                  onClick={() => toggleTodo(todo.id)}
-                  className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                    todo.completed
-                      ? "bg-[var(--app-accent)] border-[var(--app-accent)]"
-                      : "border-[var(--app-foreground-muted)] bg-transparent"
-                  }`}
-                >
-                  {todo.completed && (
-                    <Icon
-                      name="check"
-                      size="sm"
-                      className="text-[var(--app-background)]"
-                    />
-                  )}
-                </button>
+                  type="checkbox"
+                  checked={todo.completed}
+                  onChange={() => toggleTodo(todo.id)}
+                  className="mr-2 accent-bubblegum border-bubblegum focus:ring-2 focus:ring-bubblegum"
+                />
+                {todo.completed && (
+                  <Icon
+                    name="check"
+                    size="sm"
+                    className="text-[var(--app-background)]"
+                  />
+                )}
                 <label
                   htmlFor={`todo-${todo.id}`}
                   className={`text-[var(--app-foreground-muted)] cursor-pointer ${todo.completed ? "line-through opacity-70" : ""}`}
@@ -374,7 +373,7 @@ function TodoList() {
               <button
                 type="button"
                 onClick={() => deleteTodo(todo.id)}
-                className="text-[var(--app-foreground-muted)] hover:text-[var(--app-foreground)]"
+                className="text-[var(--app-foreground-muted)] hover:text-accent"
               >
                 ×
               </button>

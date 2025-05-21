@@ -3,10 +3,12 @@
 ## 1. Project Initialization & Environment Setup
 
 - [x] **1.1. Review MiniKit Quickstart Output**
+
   - Verify that the MiniKit quickstart created the expected project structure and dependencies.
   - Ensure the project runs locally (`yarn dev` or `npm run dev`).
 
 - [x] **1.2. Version Control & CI/CD**
+
   - Set up GitHub repository if not already done.
   - Configure GitHub Actions for CI (lint, typecheck, tests, build).
   - Add branch protection and PR review rules.
@@ -21,15 +23,16 @@
 ## 2. Core Architecture & Boilerplate
 
 - [x] **2.1. Directory Structure**
+
   - Align folders with documentation: `src/components/`, `src/hooks/`, `src/context/`, `src/lib/`, `src/pages/`, `src/styles/`, `contracts/`, `api/`, `tests/`.
   - Create placeholder files for each major module.
 
-  2.2. **TypeScript & Linting**
+- [x] **2.2. TypeScript & Linting**
 
 - Ensure TypeScript is enforced everywhere.
 - Configure ESLint, Prettier, and Husky for pre-commit hooks.
 
-  2.3. **TailwindCSS & Design Tokens**
+- [] **2.3. TailwindCSS & Design Tokens**
 
 - Verify TailwindCSS is working.
 - Add color palette and theming from documentation.
@@ -38,12 +41,7 @@
 
 ## 3. Authentication & User Profile
 
-3.1. **Farcaster Authentication**
-
-- Integrate Farcaster Auth Kit using MiniKit hooks.
-- Implement sign-in flow and store user profile in context.
-
-  3.2. **User Profile Management**
+- [] **3.1. User Profile Management**
 
 - Create user context/provider for profile, attempts, streaks, and balances.
 - UI: Profile modal or screen.
@@ -52,18 +50,18 @@
 
 ## 4. Game Core Mechanics
 
-4.1. **Game Engine**
+- [] **4.1. Game Engine**
 
 - Build the tap button, timer, and score counter components.
 - Implement tap detection with <50ms latency.
 - Add real-time feedback (visual/audio) per tap.
 
-  4.2. **Game State & Flow**
+- [] **4.2. Game State & Flow**
 
 - Manage game states: idle, running, finished.
 - Handle start, end, and reset logic.
 
-  4.3. **Anti-Cheat (Client)**
+- [] **4.3. Anti-Cheat (Client)**
 
 - Track tap timestamps, intervals, and device fingerprint.
 - Generate integrity hash for each session.
@@ -72,17 +70,17 @@
 
 ## 5. Leaderboards & Social
 
-5.1. **Leaderboard UI**
+- [] **5.1. Leaderboard UI**
 
 - Implement daily/weekly/all-time leaderboard tabs.
 - Show player’s rank, score, and reward status.
 
-  5.2. **Leaderboard Backend**
+- [] **5.2. Leaderboard Backend**
 
 - API endpoints for fetching and submitting scores.
 - Integrate with Redis for real-time updates.
 
-  5.3. **Social Sharing (Frames)**
+- [] **5.3. Social Sharing (Frames)**
 
 - Use MiniKit and OnchainKit for Farcaster Frame generation.
 - Allow users to share scores and achievements.
@@ -91,17 +89,17 @@
 
 ## 6. Token Economy & Blockchain Integration
 
-6.1. **$GLICO Token Integration**
+- [] **6.1. $GLICO Token Integration**
 
 - Integrate ethers.js/wagmi/RainbowKit for wallet connections.
 - Display $GLICO balance and transaction history.
 
-  6.2. **Purchasing Attempts**
+- [] **6.2. Purchasing Attempts**
 
 - Implement modal for buying attempts with dynamic pricing.
 - Handle token transactions and update attempts.
 
-  6.3. **Reward Distribution**
+- [] **6.3. Reward Distribution**
 
 - Backend logic for prize pool and streak rewards.
 - UI for reward claiming and history.
