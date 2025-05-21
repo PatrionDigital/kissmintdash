@@ -218,3 +218,30 @@ To get started building your own frame, follow these steps:
 - [OnchainKit Documentation](https://docs.base.org/builderkits/onchainkit/getting-started)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+---
+
+## Acknowledgments
+
+KISSMINT DASH makes use of the following open source and third-party packages:
+
+- [ethers.js](https://docs.ethers.org/)
+- [Framer Motion](https://www.framer.com/motion/)
+- [GitHub Actions](https://github.com/features/actions)
+- [MongoDB](https://www.mongodb.com/)
+- [Next.js](https://nextjs.org/)
+- [ngrok](https://ngrok.com/)
+- [NumberFlow](https://number-flow.barvian.me)
+- [OpenZeppelin](https://openzeppelin.com/contracts/)
+- [RainbowKit](https://www.rainbowkit.com/)
+- [React](https://react.dev/)
+- [react-7-segment-display](https://github.com/nachovigilante/react-7-segment-display)
+- [React Hook Form](https://react-hook-form.com/)
+- [Redis](https://redis.io/)
+- [Serverless](https://www.serverless.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Turso](https://turso.tech/)
+- [Upstash](https://upstash.com/)
+- [wagmi](https://wagmi.sh/)
+
+We thank the developers and maintainers of these projects for their contributions to the open source community.

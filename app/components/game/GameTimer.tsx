@@ -1,4 +1,5 @@
 import React from "react";
+import NumberFlow from '@number-flow/react';
 
 export interface GameTimerProps {
   duration: number; // in seconds
@@ -12,8 +13,10 @@ export const GameTimer: React.FC<GameTimerProps> = ({ duration, onComplete, runn
   const _dummy = [duration, onComplete, running];
   // Placeholder: implement timer logic later
   return (
-    <div className="text-lg font-mono text-center">
-      Timer: {duration}s
+    <div className="text-lg font-mono text-center flex items-center gap-2">
+      <span>Timer:</span>
+      <NumberFlow value={duration} />
+      <span>s</span>
     </div>
   );
 };

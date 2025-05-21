@@ -51,7 +51,7 @@
 
 ## 4. Game Core Mechanics
 
-- [x] **4.1. Game Engine**
+- [x] **🎮4.1. Game Engine**
 
 [(Issue 1)](https://github.com/PatrionDigital/kissmintdash/issues/1)
 
@@ -59,27 +59,27 @@
 - Implement tap detection with <50ms latency.
 - Add real-time feedback (visual/audio) per tap.
 
-- [x] **4.2. Game State & Flow**
+- [x] **🎰4.2. Game State & Flow**
 
 [(Issue 2)](https://github.com/PatrionDigital/kissmintdash/issues/2)
 
 - Manage game states: idle, running, finished.
 - Handle start, end, and reset logic.
 
-- [ ] **4.3. Anti-Cheat (Client)**
+- [x] **👾4.3. Anti-Cheat (Client)**
 
 [(Issue 3)](https://github.com/PatrionDigital/kissmintdash/issues/3)
 
 - Track tap timestamps, intervals, and device fingerprint.
 - Generate integrity hash for each session.
 
-- [ ] **4.4. Polish and Juice**
+- [ ] **🎨4.4. Polish and Juice**
 
 [(Issue 5)](https://github.com/PatrionDigital/kissmintdash/issues/5)
 
 - Add visual polish and interaction juice
-  - [react-led-light](https://github.com/aBoudourakis/react-led-light) - LED style for Tap counter
-  - [NumberFlow](https://number-flow.barvian.me) - NumberFlow for timer
+  - [react-7-segment-display](https://github.com/eduardomoroni/react-7-segment-display) - Segmented LED-style display for the score
+  - [NumberFlow](https://number-flow.barvian.me) - NumberFlow for animated number transitions for the timer.
   - VHS static effect for background
 
 ---
