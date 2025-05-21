@@ -78,8 +78,8 @@
 [(Issue 5)](https://github.com/PatrionDigital/kissmintdash/issues/5)
 
 - Add visual polish and interaction juice
-  - [react-7-segment-display](https://github.com/eduardomoroni/react-7-segment-display) - Segmented LED-style display for the timer (and optionally the score)
-  - [NumberFlow](https://number-flow.barvian.me) - NumberFlow for animated number transitions (score)
+  - [react-7-segment-display](https://github.com/eduardomoroni/react-7-segment-display) - Segmented LED-style display for the score
+  - [NumberFlow](https://number-flow.barvian.me) - NumberFlow for animated number transitions for the timer.
   - VHS static effect for background
 
 ---
