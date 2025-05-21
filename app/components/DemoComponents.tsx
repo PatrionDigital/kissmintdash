@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useCallback, useMemo, useState } from "react";
+
 import { UserProfileCard } from "./UserProfileCard";
 import { useAccount } from "wagmi";
 import {
@@ -77,6 +78,18 @@ type CardProps = {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
+}
+
+// --- Demo Game Card ---
+import { GameEngine } from "./game";
+function GameDemoCard() {
+  return (
+    <Card title="Game Demo" className="my-8">
+      <div className="flex flex-col items-center justify-center">
+        <GameEngine />
+      </div>
+    </Card>
+  );
 }
 
 function Card({
@@ -159,6 +172,8 @@ type HomeProps = {
 };
 
 export function Home({ setActiveTab }: HomeProps) {
+  // GameDemoCard is in scope above
+
   return (
     <div className="space-y-6 animate-fade-in">
       <Card title="User Profile" className="border-4 border-cyber">
@@ -177,6 +192,9 @@ export function Home({ setActiveTab }: HomeProps) {
       </Card>
 
       <TodoList />
+
+      {/* Insert Game Demo Card here */}
+      <GameDemoCard />
 
       <TransactionCard />
     </div>
@@ -299,9 +317,7 @@ function TodoList() {
 
   const addTodo = () => {
     if (newTodo.trim() === "") return;
-
-    const newId =
-      todos.length > 0 ? Math.max(...todos.map((t) => t.id)) + 1 : 1;
+    const newId = todos.length > 0 ? Math.max(...todos.map((t) => t.id)) + 1 : 1;
     setTodos([...todos, { id: newId, text: newTodo, completed: false }]);
     setNewTodo("");
   };
@@ -309,19 +325,13 @@ function TodoList() {
   const toggleTodo = (id: number) => {
     setTodos(
       todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
     );
   };
 
   const deleteTodo = (id: number) => {
     setTodos(todos.filter((todo) => todo.id !== id));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      addTodo();
-    }
   };
 
   return (
@@ -334,7 +344,7 @@ function TodoList() {
             placeholder="Add a new todo..."
             value={newTodo}
             onChange={(e) => setNewTodo(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={(e) => { if (e.key === "Enter") addTodo(); }}
           />
           <Button
             variant="primary"
@@ -345,7 +355,6 @@ function TodoList() {
             Add
           </Button>
         </div>
-
         <ul className="space-y-2">
           {todos.map((todo) => (
             <li key={todo.id} className="flex items-center justify-between">
@@ -385,7 +394,6 @@ function TodoList() {
     </Card>
   );
 }
-
 
 function TransactionCard() {
   const { address } = useAccount();
