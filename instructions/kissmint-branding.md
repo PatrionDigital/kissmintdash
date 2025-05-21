@@ -2,11 +2,11 @@
 
 ## Project Name
 
-**KISSMINT DASH: Tap Runner '99**
+KISSMINT DASH: Tap Runner '99
 
 ## Main Tagline
 
-**"Tap Fast, Run Far, Mint Glory"**
+### "Tap Fast, Run Far, Mint Glory"
 
 ## Catch Copy Options
 

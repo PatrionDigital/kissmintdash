@@ -1,12 +1,13 @@
 # KISSMINT DASH: Tap Runner '99
 
-**"Tap Fast, Run Far, Mint Glory"**
+## "Tap Fast, Run Far, Mint Glory"
 
 KissMint DASH: Tap Runner '99 is a web-based, mobile-first, button-tapping game built as a Farcaster Mini App. Players compete to tap as many times as possible in 25 seconds, battling for leaderboard dominance and earning $GLICO tokens as rewards. The project leverages blockchain, anti-cheat, and social sharing integrations for an engaging, fair, and rewarding experience.
 
 ---
 
 ## Table of Contents
+
 - [Branding & Identity](#branding--identity)
 - [Project Overview](#project-overview)
 - [Game Mechanics](#game-mechanics)
@@ -22,6 +23,7 @@ KissMint DASH: Tap Runner '99 is a web-based, mobile-first, button-tapping game 
 ---
 
 ## Branding & Identity
+
 - **Main Tagline:** Tap Fast, Run Far, Mint Glory
 - **Mascot:** Minty (anime-style, mint-green hair, retro track suit)
 - **Color Palette:** Mint green (#3DFFC0), bubblegum pink (#FF6EB3), electric blue (#00C2FF), cyber yellow (#FFE94A)
@@ -31,7 +33,9 @@ KissMint DASH: Tap Runner '99 is a web-based, mobile-first, button-tapping game 
 ---
 
 ## Project Overview
+
 KissMint DASH: Tap Runner '99 is a Farcaster-integrated, rapid-tapping game where users:
+
 - Tap a button as many times as possible in 25 seconds
 - Compete on daily, weekly, and all-time leaderboards
 - Purchase extra attempts and earn rewards via $GLICO tokens
@@ -41,6 +45,7 @@ KissMint DASH: Tap Runner '99 is a Farcaster-integrated, rapid-tapping game wher
 ---
 
 ## Game Mechanics
+
 - 25-second rapid tap challenge
 - Free attempts refresh twice daily (9am/9pm Tokyo)
 - Additional attempts via $GLICO purchases
@@ -52,6 +57,7 @@ KissMint DASH: Tap Runner '99 is a Farcaster-integrated, rapid-tapping game wher
 ---
 
 ## Token & Rewards
+
 - $GLICO token for purchases and rewards
 - Diminishing returns pricing for extra attempts (50/100/200/400 $GLICO)
 - Weekly prize pool from attempt purchases
@@ -63,6 +69,7 @@ KissMint DASH: Tap Runner '99 is a Farcaster-integrated, rapid-tapping game wher
 ---
 
 ## Tech Stack
+
 - **Frontend:** React 18+, Next.js, TailwindCSS, Framer Motion, React Hook Form
 - **Authentication:** Farcaster Auth Kit, MiniKit hooks
 - **Blockchain:** Base Network, ethers.js, wagmi, Rainbow Kit, OpenZeppelin
@@ -72,18 +79,21 @@ KissMint DASH: Tap Runner '99 is a Farcaster-integrated, rapid-tapping game wher
 ---
 
 ## Architecture
-```
+
+```shell
 kissmintdash/
 ├── frontend/ (Next.js, UI, context, hooks, styles)
 ├── backend/ (API, models, services, utils)
 ├── contracts/ ($GLICO smart contracts)
 ├── public/ (static assets)
 ```
+
 - See `/instructions/application-flow.md` and `/instructions/backend-structure.md` for full diagrams and details.
 
 ---
 
 ## Development Plan
+
 - **Phase 1: MVP**
   - Core tap gameplay, leaderboard, $GLICO integration, client-side anti-cheat, basic UI
 - **Phase 2: Social & Rewards**
@@ -94,21 +104,26 @@ kissmintdash/
 ---
 
 ## Project Requirements
+
 - Tap challenge, leaderboard, $GLICO purchases, anti-cheat, auth, streaks, dynamic pricing, Farcaster integration
 - See `/instructions/project-requirements.md` for full PRD
 
 ---
 
 ## Setup & Environment
+
 1. **Install dependencies:**
+
    ```bash
    npm install
-   # or
-yarn install
+   ## or
+   yarn install
    ```
+
 2. **Environment Variables:**
    - See `.env.example` and `/instructions/detailed-workplan.md` for required variables (Farcaster, Redis, $GLICO, etc.)
 3. **Run locally:**
+
    ```bash
    npm run dev
    ```
@@ -116,6 +131,7 @@ yarn install
 ---
 
 ## Customization
+
 - Update theme in `theme.css` and branding assets in `public/`
 - Adjust MiniKit and OnchainKit config in `providers.tsx`
 - See `/instructions/frontend-guidelines.md` for UI/UX and code standards
@@ -123,6 +139,7 @@ yarn install
 ---
 
 ## Learn More
+
 - [MiniKit Documentation](https://docs.base.org/builderkits/minikit/overview)
 - [OnchainKit Documentation](https://docs.base.org/builderkits/onchainkit/getting-started)
 - [Next.js Documentation](https://nextjs.org/docs)
@@ -135,49 +152,58 @@ NEXT_PUBLIC_APP_OG_TITLE=
 NEXT_PUBLIC_APP_OG_DESCRIPTION=
 NEXT_PUBLIC_APP_OG_IMAGE=
 
-# Redis config
+## Redis config
+
 REDIS_URL=
 REDIS_TOKEN=
-```
+
+````shell
 
 3. Start the development server:
 ```bash
 npm run dev
-```
+````
 
 ## Template Features
 
 ### Frame Configuration
+
 - `.well-known/farcaster.json` endpoint configured for Frame metadata and account association
 - Frame metadata automatically added to page headers in `layout.tsx`
 
 ### Background Notifications
+
 - Redis-backed notification system using Upstash
 - Ready-to-use notification endpoints in `api/notify` and `api/webhook`
 - Notification client utilities in `lib/notification-client.ts`
 
 ### Theming
+
 - Custom theme defined in `theme.css` with OnchainKit variables
 - Pixel font integration with Pixelify Sans
 - Dark/light mode support through OnchainKit
 
 ### MiniKit Provider
+
 The app is wrapped with `MiniKitProvider` in `providers.tsx`, configured with:
+
 - OnchainKit integration
 - Access to Frames context
 - Sets up Wagmi Connectors
 - Sets up Frame SDK listeners
 - Applies Safe Area Insets
 
-## Customization
+## Project Customization
 
 To get started building your own frame, follow these steps:
 
 1. Remove the DemoComponents:
+
    - Delete `components/DemoComponents.tsx`
    - Remove demo-related imports from `page.tsx`
 
 2. Start building your Frame:
+
    - Modify `page.tsx` to create your Frame UI
    - Update theme variables in `theme.css`
    - Adjust MiniKit configuration in `providers.tsx`
@@ -186,7 +212,7 @@ To get started building your own frame, follow these steps:
    - Cast your frame to see it in action
    - Share your frame with others to start building your community
 
-## Learn More
+## Links to Learn More
 
 - [MiniKit Documentation](https://docs.base.org/builderkits/minikit/overview)
 - [OnchainKit Documentation](https://docs.base.org/builderkits/onchainkit/getting-started)

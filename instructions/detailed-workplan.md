@@ -2,22 +2,19 @@
 
 ## 1. Project Initialization & Environment Setup
 
-1.1. **Review MiniKit Quickstart Output**
+- [x] **1.1. Review MiniKit Quickstart Output**
+  - Verify that the MiniKit quickstart created the expected project structure and dependencies.
+  - Ensure the project runs locally (`yarn dev` or `npm run dev`).
 
-- Verify that the MiniKit quickstart created the expected project structure and dependencies.
-- Ensure the project runs locally (`yarn dev` or `npm run dev`).
+- [x] **1.2. Version Control & CI/CD**
+  - Set up GitHub repository if not already done.
+  - Configure GitHub Actions for CI (lint, typecheck, tests, build).
+  - Add branch protection and PR review rules.
 
-  1.2. **Version Control & CI/CD**
-
-- Set up GitHub repository if not already done.
-- Configure GitHub Actions for CI (lint, typecheck, tests, build).
-- Add branch protection and PR review rules.
-
-  1.3. **Environment Variables & Secrets**
-
-- Set up `.env` for local development (API keys, MiniKit project ID, Redis, etc.).
-- Verify environment variables, these will be set up by the `npx create-onchain --mini` command:
-- Document required environment variables in `README.md`.
+- [x] **1.3. Environment Variables & Secrets**
+  - Set up `.env` for local development (API keys, MiniKit project ID, Redis, etc.).
+  - Verify environment variables, these will be set up by the `npx create-onchain --mini` command:
+  - Document required environment variables in `README.md`.
 
 ---
 
