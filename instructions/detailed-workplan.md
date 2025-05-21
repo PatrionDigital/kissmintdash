@@ -20,10 +20,9 @@
 
 ## 2. Core Architecture & Boilerplate
 
-2.1. **Directory Structure**
-
-- Align folders with documentation: `src/components/`, `src/hooks/`, `src/context/`, `src/lib/`, `src/pages/`, `src/styles/`, `contracts/`, `api/`, `tests/`.
-- Create placeholder files for each major module.
+- [x] **2.1. Directory Structure**
+  - Align folders with documentation: `src/components/`, `src/hooks/`, `src/context/`, `src/lib/`, `src/pages/`, `src/styles/`, `contracts/`, `api/`, `tests/`.
+  - Create placeholder files for each major module.
 
   2.2. **TypeScript & Linting**
 
