@@ -59,7 +59,7 @@
 - Implement tap detection with <50ms latency.
 - Add real-time feedback (visual/audio) per tap.
 
-- [ ] **4.2. Game State & Flow**
+- [x] **4.2. Game State & Flow**
 
 [(Issue 2)](https://github.com/PatrionDigital/kissmintdash/issues/2)
 
