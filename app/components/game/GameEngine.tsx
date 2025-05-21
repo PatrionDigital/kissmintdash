@@ -6,6 +6,22 @@ import GameFeedback from "./GameFeedback";
 import { Button } from "../DemoComponents";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
+// Device info interface for anti-cheat
+interface DeviceInfo {
+  userAgent: string;
+  platform: string;
+  language: string;
+  screen: {
+    width: number;
+    height: number;
+    colorDepth: number;
+    pixelRatio: number;
+  };
+  memory?: number;
+  hardwareConcurrency?: number;
+  touchSupport: boolean;
+}
+
 // 1. Game States
 export enum GameState {
   Idle = "idle",
@@ -20,7 +36,7 @@ type GameAction =
   | { type: "END_GAME" }
   | { type: "RESET_GAME" }
   | { type: "END_FEEDBACK" }
-  | { type: "SET_DEVICE_INFO"; payload: Record<string, any> }
+  | { type: "SET_DEVICE_INFO"; payload: DeviceInfo }
   | { type: "SET_DEVICE_FINGERPRINT"; payload: string }
   | { type: "SET_PERFORMANCE_SCORE"; payload: number }
   | { type: "SET_INTEGRITY_HASH"; payload: string };
@@ -35,7 +51,7 @@ interface GameStateModel {
 
   // --- Anti-cheat fields ---
   tapTimestamps: number[]; // High-precision tap timestamps
-  deviceInfo?: Record<string, any>; // Device info snapshot
+  deviceInfo?: DeviceInfo; // Device info snapshot
   deviceFingerprint?: string; // Device fingerprint string
   performanceScore?: number; // Device performance benchmark (ms)
   integrityHash?: string; // Session integrity hash
@@ -104,7 +120,7 @@ function gameReducer(state: GameStateModel, action: GameAction): GameStateModel 
 
 export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initialGameState = GameState.Idle }) => {
   // --- Anti-cheat state ---
-  const [deviceInfo, setDeviceInfo] = useState<Record<string, any> | null>(null);
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [deviceFingerprint, setDeviceFingerprint] = useState<string | null>(null);
   const [performanceScore, setPerformanceScore] = useState<number | null>(null);
   const [integrityHash, setIntegrityHash] = useState<string | null>(null);
@@ -137,21 +153,21 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
             colorDepth: window.screen.colorDepth,
             pixelRatio: window.devicePixelRatio,
           },
-          memory: (navigator as any).deviceMemory || undefined,
-          hardwareConcurrency: (navigator as any).hardwareConcurrency || undefined,
+          memory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory || undefined,
+          hardwareConcurrency: navigator.hardwareConcurrency || undefined,
           touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
         };
-        dispatch({ type: 'SET_DEVICE_INFO', payload: deviceInfo } as any);
+        dispatch({ type: 'SET_DEVICE_INFO', payload: deviceInfo });
       }
       // Fingerprint (only set once)
       if (!state.deviceFingerprint) {
         FingerprintJS.load()
           .then(fp => fp.get())
           .then(result => {
-            dispatch({ type: 'SET_DEVICE_FINGERPRINT', payload: result.visitorId } as any);
+            dispatch({ type: 'SET_DEVICE_FINGERPRINT', payload: result.visitorId });
           })
           .catch(() => {
-            dispatch({ type: 'SET_DEVICE_FINGERPRINT', payload: 'unavailable' } as any);
+            dispatch({ type: 'SET_DEVICE_FINGERPRINT', payload: 'unavailable' });
           });
       }
       // Performance benchmark (only set once)
@@ -159,13 +175,12 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
         // Micro-benchmark: time for 1 million empty iterations
         const iterations = 1_000_000;
         const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
-        let x = 0;
         for (let i = 0; i < iterations; i++) {
-          x++;
+          // empty loop for performance benchmark
         }
         const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
         const elapsed = t1 - t0;
-        dispatch({ type: 'SET_PERFORMANCE_SCORE', payload: elapsed } as any);
+        dispatch({ type: 'SET_PERFORMANCE_SCORE', payload: elapsed });
       }
     }
   }, [state.gameState, state.deviceFingerprint, state.deviceInfo, state.performanceScore]);
@@ -187,12 +202,12 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
       const encoder = new TextEncoder();
       const data = encoder.encode(json);
       try {
-        const hashBuffer = await (window.crypto.subtle || (window as any).crypto.subtle).digest('SHA-256', data);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        dispatch({ type: 'SET_INTEGRITY_HASH', payload: hashHex } as any);
+        dispatch({ type: 'SET_INTEGRITY_HASH', payload: hashHex });
       } catch {
-        dispatch({ type: 'SET_INTEGRITY_HASH', payload: 'unavailable' } as any);
+        dispatch({ type: 'SET_INTEGRITY_HASH', payload: 'unavailable' });
       }
     }
     if (
@@ -255,19 +270,21 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
     // Only collect once per game session
     if (state.gameState === GameState.Running && !deviceInfo) {
       // Device info
-      const info: Record<string, any> = {
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-        platform: typeof navigator !== 'undefined' ? navigator.platform : '',
-        language: typeof navigator !== 'undefined' ? navigator.language : '',
-        screen: typeof window !== 'undefined' ? {
-          width: window.screen.width,
-          height: window.screen.height,
-          colorDepth: window.screen.colorDepth,
-          pixelRatio: window.devicePixelRatio,
-        } : {},
-        memory: (navigator as any)?.deviceMemory || undefined,
-        hardwareConcurrency: (navigator as any)?.hardwareConcurrency || undefined,
-        touchSupport: typeof window !== 'undefined' ? ('ontouchstart' in window || navigator.maxTouchPoints > 0) : false,
+      const nav = typeof navigator !== 'undefined' ? navigator : undefined;
+      const win = typeof window !== 'undefined' ? window : undefined;
+      const info: DeviceInfo = {
+        userAgent: nav?.userAgent || '',
+        platform: nav?.platform || '',
+        language: nav?.language || '',
+        screen: win ? {
+          width: win.screen.width,
+          height: win.screen.height,
+          colorDepth: win.screen.colorDepth,
+          pixelRatio: win.devicePixelRatio,
+        } : { width: 0, height: 0, colorDepth: 0, pixelRatio: 1 },
+        memory: (nav && 'deviceMemory' in nav) ? (nav as Navigator & { deviceMemory?: number }).deviceMemory : undefined,
+        hardwareConcurrency: nav?.hardwareConcurrency,
+        touchSupport: win ? ('ontouchstart' in win || (typeof nav?.maxTouchPoints === 'number' && nav.maxTouchPoints > 0)) : false,
       };
       setDeviceInfo(info);
       // FingerprintJS
@@ -283,8 +300,9 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
       // Performance micro-benchmark
       const iterations = 1_000_000;
       const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      let x = 0;
-      for (let i = 0; i < iterations; i++) x++;
+      for (let i = 0; i < iterations; i++) {
+        // intentionally empty loop for timing
+      }
       const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
       const elapsed = t1 - t0;
       setPerformanceScore(elapsed);
