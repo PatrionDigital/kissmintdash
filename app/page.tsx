@@ -23,6 +23,7 @@ import { Button } from "./components/DemoComponents";
 import { Icon } from "./components/DemoComponents";
 import { Home } from "./components/DemoComponents";
 import { Features } from "./components/DemoComponents";
+import { useViewProfile } from '@coinbase/onchainkit/minikit';
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -70,6 +71,12 @@ export default function App() {
     return null;
   }, [context, frameAdded, handleAddFrame]);
 
+  const viewProfile = useViewProfile();
+
+  const handleViewProfile = () => {
+    viewProfile();
+  };
+
   return (
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       <div className="w-full max-w-md mx-auto px-4 py-3">
@@ -92,7 +99,16 @@ export default function App() {
               </Wallet>
             </div>
           </div>
-          <div>{saveFrameButton}</div>
+          <div className="flex items-center gap-2">
+            {saveFrameButton}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleViewProfile}
+            >
+              PROFILE
+            </Button>
+          </div>
         </header>
 
         <main className="flex-1">

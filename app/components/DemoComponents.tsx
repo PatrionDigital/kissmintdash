@@ -161,9 +161,8 @@ type HomeProps = {
 export function Home({ setActiveTab }: HomeProps) {
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card title="Cyber Yellow Border Demo" className="border-4 border-cyber">
+      <Card title="User Profile" className="border-4 border-cyber">
         <UserProfileCard />
-        <p className="text-accent font-bold">This card uses <span className="text-[var(--color-cyber)]">Cyber Yellow</span> for its border.</p>
       </Card>
       <Card title="My First Mini App">
         <p className="text-[var(--app-foreground-muted)] mb-4">
