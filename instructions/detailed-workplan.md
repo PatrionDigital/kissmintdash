@@ -53,16 +53,22 @@
 
 - [ ] **4.1. Game Engine**
 
+[(Issue 1)](https://github.com/PatrionDigital/kissmintdash/issues/1)
+
 - Build the tap button, timer, and score counter components.
 - Implement tap detection with <50ms latency.
 - Add real-time feedback (visual/audio) per tap.
 
 - [ ] **4.2. Game State & Flow**
 
+[(Issue 2)](https://github.com/PatrionDigital/kissmintdash/issues/2)
+
 - Manage game states: idle, running, finished.
 - Handle start, end, and reset logic.
 
 - [ ] **4.3. Anti-Cheat (Client)**
+
+[(Issue 3)](https://github.com/PatrionDigital/kissmintdash/issues/3)
 
 - Track tap timestamps, intervals, and device fingerprint.
 - Generate integrity hash for each session.
