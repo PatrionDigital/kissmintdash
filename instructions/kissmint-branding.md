@@ -1,24 +1,30 @@
 # KISSMINT DASH: Tap Runner '99
 
 ## Project Name
+
 **KISSMINT DASH: Tap Runner '99**
 
 ## Main Tagline
+
 **"Tap Fast, Run Far, Mint Glory"**
 
 ## Catch Copy Options
 
 ### 1. "Bubble Up Your Score!"
-*Branding:* Combines the bubble gum reference with the idea of increasing scores. The visual identity features colorful bubble typography with a gradient reminiscent of bubble gum stretching or popping, paired with an upward arrow indicating score growth.
+
+_Branding:_ Combines the bubble gum reference with the idea of increasing scores. The visual identity features colorful bubble typography with a gradient reminiscent of bubble gum stretching or popping, paired with an upward arrow indicating score growth.
 
 ### 2. "Every Tap Counts, Every Runner Wins"
-*Branding:* This plays on both the game mechanics and the Running Man iconography. The design features a series of Running Man silhouettes in progressive motion across the screen, with tap counters above each one increasing, using bright neon colors on a dark background for that 90s arcade feel.
+
+_Branding:_ This plays on both the game mechanics and the Running Man iconography. The design features a series of Running Man silhouettes in progressive motion across the screen, with tap counters above each one increasing, using bright neon colors on a dark background for that 90s arcade feel.
 
 ### 3. "Fresh Taps, Sweet Rewards"
-*Branding:* Connects the mint freshness of the gum with the gameplay rewards. Visually presented with mint-green to blue gradient text that "sparkles" at the edges like the fresh feeling of mint gum, accompanied by coin icons with the Running Man logo that appear to cascade down like a reward shower.
+
+_Branding:_ Connects the mint freshness of the gum with the gameplay rewards. Visually presented with mint-green to blue gradient text that "sparkles" at the edges like the fresh feeling of mint gum, accompanied by coin icons with the Running Man logo that appear to cascade down like a reward shower.
 
 ### 4. "Press Play, Outrun Reality"
-*Branding:* This references both the dystopian Running Man theme and the escapist nature of games. The design features a split visual - half showing a glitchy, VHS-style reality being torn away to reveal a vibrant, pixel-art game world with the Running Man character breaking through the barrier between worlds.
+
+_Branding:_ This references both the dystopian Running Man theme and the escapist nature of games. The design features a split visual - half showing a glitchy, VHS-style reality being torn away to reveal a vibrant, pixel-art game world with the Running Man character breaking through the barrier between worlds.
 
 ## Visual Identity Elements
 
