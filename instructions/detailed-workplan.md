@@ -51,7 +51,7 @@
 
 ## 4. Game Core Mechanics
 
-- [ ] **4.1. Game Engine**
+- [x] **4.1. Game Engine**
 
 [(Issue 1)](https://github.com/PatrionDigital/kissmintdash/issues/1)
 
@@ -72,6 +72,15 @@
 
 - Track tap timestamps, intervals, and device fingerprint.
 - Generate integrity hash for each session.
+
+- [ ] **4.4. Polish and Juice**
+
+[(Issue 5)](https://github.com/PatrionDigital/kissmintdash/issues/5)
+
+- Add visual polish and interaction juice
+  - [react-led-light](https://github.com/aBoudourakis/react-led-light) - LED style for Tap counter
+  - [NumberFlow](https://number-flow.barvian.me) - NumberFlow for timer
+  - VHS static effect for background
 
 ---
 
