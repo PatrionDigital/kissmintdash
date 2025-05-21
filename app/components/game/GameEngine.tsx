@@ -1,4 +1,4 @@
-import React, { useReducer, useRef, useEffect } from "react";
+import React, { useReducer, useRef, useEffect, useState } from "react";
 import TapButton from "./TapButton";
 import GameTimer from "./GameTimer";
 import ScoreCounter from "./ScoreCounter";
@@ -103,6 +103,12 @@ function gameReducer(state: GameStateModel, action: GameAction): GameStateModel 
 }
 
 export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initialGameState = GameState.Idle }) => {
+  // --- Anti-cheat state ---
+  const [deviceInfo, setDeviceInfo] = useState<Record<string, any> | null>(null);
+  const [deviceFingerprint, setDeviceFingerprint] = useState<string | null>(null);
+  const [performanceScore, setPerformanceScore] = useState<number | null>(null);
+  const [integrityHash, setIntegrityHash] = useState<string | null>(null);
+
   const [state, dispatch] = useReducer(gameReducer, {
     gameState: initialGameState,
     score: 0,
@@ -242,6 +248,86 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
       dispatch({ type: "END_FEEDBACK" });
     }
   }, [state.gameState, state.feedback]);
+
+  // --- Anti-cheat: Collect device info, fingerprint, and performance score ---
+  useEffect(() => {
+    let cancelled = false;
+    // Only collect once per game session
+    if (state.gameState === GameState.Running && !deviceInfo) {
+      // Device info
+      const info: Record<string, any> = {
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+        platform: typeof navigator !== 'undefined' ? navigator.platform : '',
+        language: typeof navigator !== 'undefined' ? navigator.language : '',
+        screen: typeof window !== 'undefined' ? {
+          width: window.screen.width,
+          height: window.screen.height,
+          colorDepth: window.screen.colorDepth,
+          pixelRatio: window.devicePixelRatio,
+        } : {},
+        memory: (navigator as any)?.deviceMemory || undefined,
+        hardwareConcurrency: (navigator as any)?.hardwareConcurrency || undefined,
+        touchSupport: typeof window !== 'undefined' ? ('ontouchstart' in window || navigator.maxTouchPoints > 0) : false,
+      };
+      setDeviceInfo(info);
+      // FingerprintJS
+      import('@fingerprintjs/fingerprintjs').then(FingerprintJS => {
+        return FingerprintJS.load();
+      }).then(fp => {
+        return fp.get();
+      }).then(result => {
+        if (!cancelled) setDeviceFingerprint(result.visitorId);
+      }).catch(() => {
+        if (!cancelled) setDeviceFingerprint('unavailable');
+      });
+      // Performance micro-benchmark
+      const iterations = 1_000_000;
+      const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      let x = 0;
+      for (let i = 0; i < iterations; i++) x++;
+      const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const elapsed = t1 - t0;
+      setPerformanceScore(elapsed);
+    }
+    return () => { cancelled = true; };
+  }, [state.gameState, deviceInfo]);
+
+  // --- Anti-cheat: Generate session integrity hash at game end ---
+  useEffect(() => {
+    async function generateIntegrityHash() {
+      const sessionData = {
+        tapTimestamps: state.taps,
+        deviceInfo,
+        deviceFingerprint,
+        performanceScore,
+        score: state.score,
+        sessionEnd: Date.now(),
+      };
+      const json = JSON.stringify(sessionData);
+      if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+        try {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(json);
+          const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          setIntegrityHash(hashHex);
+        } catch {
+          setIntegrityHash('unavailable');
+        }
+      } else {
+        setIntegrityHash('unavailable');
+      }
+    }
+    if (
+      state.gameState === GameState.Finished &&
+      state.taps && state.taps.length > 0 &&
+      deviceInfo && deviceFingerprint && performanceScore &&
+      !integrityHash
+    ) {
+      generateIntegrityHash();
+    }
+  }, [state.gameState, state.taps, deviceInfo, deviceFingerprint, performanceScore, state.score, integrityHash]);
 
   // UI event handlers
   const handleStart = () => dispatch({ type: "START_GAME" });
