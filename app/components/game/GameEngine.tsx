@@ -1,4 +1,5 @@
 import React, { useReducer, useRef, useEffect, useState } from "react";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import TapButton from "./TapButton";
 import GameTimer from "./GameTimer";
 import ScoreCounter from "./ScoreCounter";
@@ -118,15 +119,16 @@ function gameReducer(state: GameStateModel, action: GameAction): GameStateModel 
   }
 }
 
-export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initialGameState = GameState.Idle }) => {
+function GameEngine() {
   // --- Anti-cheat state ---
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [deviceFingerprint, setDeviceFingerprint] = useState<string | null>(null);
   const [performanceScore, setPerformanceScore] = useState<number | null>(null);
   const [integrityHash, setIntegrityHash] = useState<string | null>(null);
 
-  const [state, dispatch] = useReducer(gameReducer, {
-    gameState: initialGameState,
+  // --- Initial game state ---
+  const initialGameState: GameStateModel = {
+    gameState: GameState.Idle,
     score: 0,
     timeLeft: GAME_DURATION,
     taps: [],
@@ -136,7 +138,9 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
     deviceFingerprint: undefined,
     performanceScore: undefined,
     integrityHash: undefined,
-  });
+  };
+
+  const [state, dispatch] = useReducer(gameReducer, initialGameState);
 
   // --- Anti-cheat: Device fingerprinting and info ---
   useEffect(() => {
@@ -371,6 +375,7 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
       {state.gameState === GameState.Finished && (
         <>
           <div className="text-xl font-bold text-center">Game Over! Final Score: {state.score}</div>
+          <SubmitScoreSection score={state.score} />
           <Button variant="secondary" className="mt-2" onClick={handleReset}>
             Play Again
           </Button>
@@ -381,4 +386,51 @@ export const GameEngine: React.FC<{ initialGameState?: GameState }> = ({ initial
   );
 };
 
-export default GameEngine;
+// --- SubmitScoreSection ---
+type SubmitScoreSectionProps = { score: number };
+const SubmitScoreSection: React.FC<SubmitScoreSectionProps> = ({ score }) => {
+  const { context } = useMiniKit();
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+    try {
+      const res = await fetch("/api/leaderboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tab: "daily",
+          name: context?.user?.username || "Anonymous",
+          score,
+          reward: ""
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to submit score");
+      setSuccess(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-2 mt-2">
+      <Button
+        variant="primary"
+        onClick={handleSubmit}
+        disabled={loading || success}
+      >
+        {loading ? "Submitting..." : success ? "Score Submitted!" : "Submit Score"}
+      </Button>
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+      {success && <div className="text-green-600 text-sm">Score submitted successfully!</div>}
+    </div>
+  );
+};
+
+export { GameEngine };
