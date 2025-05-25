@@ -73,7 +73,7 @@
 - Track tap timestamps, intervals, and device fingerprint.
 - Generate integrity hash for each session.
 
-- [ ] **🎨4.4. Polish and Juice**
+- [x] **🎨4.4. Polish and Juice**
 
 [(Issue 5)](https://github.com/PatrionDigital/kissmintdash/issues/5)
 
@@ -85,6 +85,8 @@
 ---
 
 ## 5. Leaderboards & Social
+
+[(Issue 9)](https://github.com/PatrionDigital/kissmintdash/issues/9)
 
 - [ ] **5.1. Leaderboard UI**
 
