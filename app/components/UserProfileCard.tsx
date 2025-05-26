@@ -4,6 +4,7 @@ import { useUserProfile } from "../../src/context/UserContext";
 import { useAccount, useContractRead } from "wagmi";
 import Image from "next/image";
 import { sdk } from '@farcaster/frame-sdk';
+import { TokenTransactionHistory } from "./TokenTransactionHistory";
 
 const GLICO_ADDRESS = "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
 const GLICO_CAIP19 = "eip155:8453/erc20:0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
@@ -143,6 +144,11 @@ export const UserProfileCard = () => {
           <div className="text-xl font-semibold text-center tracking-wider">{profile.streak}</div>
         </div>
       </div>
+
+      {/* Transaction History Section */}
+      {isConnected && address && (
+        <TokenTransactionHistory tokenAddress={GLICO_ADDRESS} />
+      )}
     </div>
   );
 };
