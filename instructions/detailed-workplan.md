@@ -109,7 +109,7 @@
 
 ## 6. Token Economy & Blockchain Integration
 
-- [ ] **6.1. $GLICO Token Integration**
+- [x] **6.1. $GLICO Token Integration**
       [(Issue 13)](https://github.com/PatrionDigital/kissmintdash/issues/13)
 
 - Confirm wallet connection.

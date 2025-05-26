@@ -3,7 +3,9 @@ import React, { createContext, useContext, useMemo, useState, useCallback } from
 
 // Game-specific user profile type
 export interface GameUserProfile {
-  attempts: number;
+  freeAttempts: number; // Free attempts (max 1, granted at midnight and noon Tokyo time)
+  bonusAttempts: number; // Purchased attempts that roll over
+  lastFreeAttemptTime: number; // Timestamp of when the last free attempt was granted
   streak: number;
   balance: number;
   // Add other game-specific fields as needed
@@ -15,7 +17,9 @@ export interface UserProfileContextValue {
 }
 
 const defaultProfile: GameUserProfile = {
-  attempts: 0,
+  freeAttempts: 0,
+  bonusAttempts: 0,
+  lastFreeAttemptTime: 0,
   streak: 0,
   balance: 0,
 };

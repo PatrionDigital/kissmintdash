@@ -1,10 +1,12 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useUserProfile } from "../../src/context/UserContext";
 import { useAccount, useContractRead } from "wagmi";
 import Image from "next/image";
 import { sdk } from '@farcaster/frame-sdk';
 import { TokenTransactionHistory } from "./TokenTransactionHistory";
+import { PurchaseAttemptsButton } from "./PurchaseAttemptsButton";
+import { checkFreeAttempt, formatTimeUntilNextAttempt, getTotalAttempts } from "../../src/utils/attemptsManager";
 
 const GLICO_ADDRESS = "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
 const GLICO_CAIP19 = "eip155:8453/erc20:0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
@@ -26,7 +28,7 @@ const ERC20_ABI = [
 ];
 
 export const UserProfileCard = () => {
-  const { profile } = useUserProfile();
+  const { profile, updateProfile } = useUserProfile();
   const { address, isConnected } = useAccount();
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +54,27 @@ export const UserProfileCard = () => {
     },
   });
   
+  // State for next free attempt timer
+  const [nextAttemptTime, setNextAttemptTime] = useState<number>(0);
+  const [nextAttemptTimer, setNextAttemptTimer] = useState<string>("");
+
+  // Check and grant free attempts based on Tokyo time
+  const checkAndGrantFreeAttempt = useCallback(() => {
+    const { shouldGrantAttempt, nextAttemptTime } = checkFreeAttempt(profile);
+    
+    // Update the next attempt time
+    setNextAttemptTime(nextAttemptTime);
+    setNextAttemptTimer(formatTimeUntilNextAttempt(nextAttemptTime));
+    
+    // Grant a free attempt if eligible
+    if (shouldGrantAttempt) {
+      updateProfile({
+        freeAttempts: 1, // Max 1 free attempt at a time
+        lastFreeAttemptTime: Date.now(),
+      });
+    }
+  }, [profile, updateProfile]);
+
   // Initialize and handle wallet connection changes
   useEffect(() => {
     setIsInitialized(true);
@@ -61,7 +84,22 @@ export const UserProfileCard = () => {
       setIsLoading(true);
       refetchBalance().finally(() => setIsLoading(false));
     }
-  }, [isConnected, address, refetchBalance]);
+    
+    // Check for free attempts
+    checkAndGrantFreeAttempt();
+    
+    // Set up timer to update the next attempt countdown
+    const timer = setInterval(() => {
+      setNextAttemptTimer(formatTimeUntilNextAttempt(nextAttemptTime));
+      
+      // Check if it's time to grant a new attempt
+      if (Date.now() >= nextAttemptTime) {
+        checkAndGrantFreeAttempt();
+      }
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(timer);
+  }, [isConnected, address, refetchBalance, checkAndGrantFreeAttempt, nextAttemptTime]);
   
   // Determine if we're loading the balance data
   const isLoadingData = isLoading || isBalanceLoading || isDecimalsLoading;
@@ -137,14 +175,20 @@ export const UserProfileCard = () => {
       <div className="flex flex-row w-full justify-center mt-2">
         <div className="flex flex-col items-center w-1/2">
           <div className="text-lg font-bold text-center tracking-wide">Attempts</div>
-          <div className="text-xl font-semibold text-center tracking-wider">{profile.attempts} <span className={"text-base font-normal"}>Left</span></div>
+          <div className="text-xl font-semibold text-center tracking-wider">{getTotalAttempts(profile)}</div>
+          {profile.freeAttempts === 0 && (
+            <div className="text-xs text-gray-400 mt-1">Next free: {nextAttemptTimer}</div>
+          )}
         </div>
         <div className="flex flex-col items-center w-1/2">
-          <div className="text-lg font-bold text-center tracking-wide">Daily Streak</div>
+          <div className="text-lg font-bold text-center tracking-wide">Streak</div>
           <div className="text-xl font-semibold text-center tracking-wider">{profile.streak}</div>
         </div>
       </div>
 
+      {/* Purchase Attempts Button */}
+      <PurchaseAttemptsButton />
+      
       {/* Transaction History Section */}
       {isConnected && address && (
         <TokenTransactionHistory tokenAddress={GLICO_ADDRESS} />
