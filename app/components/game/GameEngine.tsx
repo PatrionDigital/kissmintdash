@@ -5,6 +5,7 @@ import GameTimer from "./GameTimer";
 import ScoreCounter from "./ScoreCounter";
 import GameFeedback from "./GameFeedback";
 import { Button } from "../DemoComponents";
+import { ShareFrameButton } from "./ShareFrameButton";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 // Device info interface for anti-cheat
@@ -429,6 +430,7 @@ const SubmitScoreSection: React.FC<SubmitScoreSectionProps> = ({ score }) => {
       </Button>
       {error && <div className="text-red-500 text-sm">{error}</div>}
       {success && <div className="text-green-600 text-sm">Score submitted successfully!</div>}
+      {success && <ShareFrameButton score={score} />}
     </div>
   );
 };
