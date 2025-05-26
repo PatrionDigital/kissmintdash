@@ -8,7 +8,7 @@ export const ShareFrameButton = ({ score }: ShareFrameButtonProps) => {
   const handleShare = () => {
     const text = encodeURIComponent(`Check out my score in KissMint Dash! 🏆`);
     const imageUrl = encodeURIComponent(`${window.location.origin}/api/frame-image?score=${score}`);
-    const url = `https://warpcast.com/~/compose?text=${text}&embeds[]=${imageUrl}`;
+    const url = `https://farcaster.xyz/~/compose?text=${text}&embeds[]=${imageUrl}`;
     window.open(url, "_blank");
   };
 
