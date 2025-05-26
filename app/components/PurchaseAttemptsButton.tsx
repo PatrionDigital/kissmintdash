@@ -155,6 +155,7 @@ export const PurchaseAttemptsButton = () => {
                   onSuccess={handleSuccess}
                   onError={handleError}
                   chainId={8453} // Base chain ID
+                  resetAfter={0} // Disable auto-reset
                 >
                   <TransactionButton 
                     className="w-full bg-cyber text-white font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors"
