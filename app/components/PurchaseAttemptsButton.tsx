@@ -16,8 +16,16 @@ import {
 } from "@coinbase/onchainkit/transaction";
 
 // Payment wallet address from environment variables
-const PAYMENT_ADDRESS = process.env.NEXT_PUBLIC_PAYMENT_ADDRESS || "0xYourPaymentWalletAddressHere";
-const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}` || "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
+const paymentAddressFromEnv = process.env.NEXT_PUBLIC_PAYMENT_ADDRESS || "0x48FFCbCaBb0B10B2A185D398EE67c48080b9D7e7";
+const PAYMENT_ADDRESS = paymentAddressFromEnv.startsWith('0x') ? 
+  paymentAddressFromEnv : 
+  `0x${paymentAddressFromEnv}`;
+
+// Ensure TOKEN_ADDRESS has the correct 0x prefix without duplication
+const tokenAddressFromEnv = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
+const TOKEN_ADDRESS = tokenAddressFromEnv.startsWith('0x') ? 
+  tokenAddressFromEnv as `0x${string}` : 
+  `0x${tokenAddressFromEnv}` as `0x${string}`;
 
 // ERC20 transfer function selector: keccak256("transfer(address,uint256)").slice(0, 10)
 const TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
