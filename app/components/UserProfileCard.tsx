@@ -33,8 +33,10 @@ export const UserProfileCard = () => {
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    enabled: !!address,
-    watch: true,
+    query: {
+      enabled: !!address,
+      refetchInterval: 5000, // Refresh every 5 seconds instead of using watch
+    },
   });
   const { data: decimals } = useContractRead({
     address: GLICO_ADDRESS,
