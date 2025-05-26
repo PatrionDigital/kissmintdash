@@ -3,32 +3,22 @@ import React, { useState, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useUserProfile } from "../../src/context/UserContext";
 import { useNotification } from "@coinbase/onchainkit/minikit";
-import { 
-  Transaction, 
-  TransactionButton, 
-  TransactionStatus, 
-  TransactionStatusAction, 
-  TransactionStatusLabel, 
-  TransactionToast, 
-  TransactionToastAction, 
-  TransactionToastIcon, 
-  TransactionToastLabel 
-} from "@coinbase/onchainkit/transaction";
+import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 
 // Payment wallet address from environment variables
-const paymentAddressFromEnv = process.env.NEXT_PUBLIC_PAYMENT_ADDRESS || "0x48FFCbCaBb0B10B2A185D398EE67c48080b9D7e7";
-const PAYMENT_ADDRESS = paymentAddressFromEnv.startsWith('0x') ? 
-  paymentAddressFromEnv : 
-  `0x${paymentAddressFromEnv}`;
+import {
+  Transaction,
+  TransactionButton,
+  TransactionStatus,
+  TransactionStatusAction,
+  TransactionStatusLabel,
+  TransactionToast,
+  TransactionToastAction,
+  TransactionToastIcon,
+  TransactionToastLabel
+} from "@coinbase/onchainkit/transaction";
 
-// Ensure TOKEN_ADDRESS has the correct 0x prefix without duplication
-const tokenAddressFromEnv = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
-const TOKEN_ADDRESS = tokenAddressFromEnv.startsWith('0x') ? 
-  tokenAddressFromEnv as `0x${string}` : 
-  `0x${tokenAddressFromEnv}` as `0x${string}`;
-
-// ERC20 transfer function selector: keccak256("transfer(address,uint256)").slice(0, 10)
-const TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
+// Using ABI approach instead of function selector
 
 // Dynamic pricing model
 const ATTEMPTS_PRICING = [
@@ -45,50 +35,35 @@ export const PurchaseAttemptsButton = () => {
   const sendNotification = useNotification();
 
 
-  // Create contract call for token transfer using the ERC20 transfer function
+  // Prepare contract call for token transfer using the ERC20 transfer function
   const tokenTransferCall = useMemo(() => {
     if (!isConnected || !address) return [];
-    
-    // Convert price to token units (with 6 decimals for GLICO)
-    const tokenAmount = BigInt(Math.floor(selectedPackage.price * 1000000));
-    
-    // Encode the ERC20 transfer function call
-    // The ERC20 transfer function has the signature: transfer(address,uint256)
-    // We need to encode the function selector (first 4 bytes of the keccak256 hash of the function signature)
-    // followed by the encoded arguments (recipient address and amount)
-    
-    // For simplicity, we'll use a direct transaction call format
+    // Use 18 decimals for GLICO token
+    const tokenAmount = BigInt(Math.floor(Number(selectedPackage.price) * 10 ** 18));
+    // ERC20 transfer(address,uint256) selector: 0xa9059cbb
+    const TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
     return [{
-      to: TOKEN_ADDRESS, // The token contract address
-      data: `${TRANSFER_FUNCTION_SELECTOR}${PAYMENT_ADDRESS.slice(2).padStart(64, '0')}${tokenAmount.toString(16).padStart(64, '0')}` as `0x${string}`, // Encoded transfer function call
-      value: BigInt(0) // No ETH is being sent
+      to: process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}`,
+      data: `${TRANSFER_FUNCTION_SELECTOR}${(process.env.NEXT_PUBLIC_PAYMENT_ADDRESS as string).slice(2).padStart(64, '0')}${tokenAmount.toString(16).padStart(64, '0')}` as `0x${string}`,
+      value: BigInt(0)
     }];
   }, [isConnected, address, selectedPackage.price]);
-  
-  // Handle successful transaction
+
+  // Handle transaction success
   const handleSuccess = useCallback(async () => {
-    console.log(`Attempts purchase successful!`);
-    
-    // Update user's bonus attempts
     updateProfile({
       bonusAttempts: profile.bonusAttempts + selectedPackage.attempts,
     });
-    
-    // Close modal
     setIsModalOpen(false);
-    
-    // Send notification
     await sendNotification({
       title: "Bonus Attempts Purchased!",
       body: `You've successfully purchased ${selectedPackage.attempts} bonus attempts for ${selectedPackage.price} GLICO!`,
     });
   }, [profile, selectedPackage, sendNotification, updateProfile]);
-  
+
   // Handle transaction error
   const handleError = useCallback(async (error: Error | unknown) => {
     console.error("Error during purchase:", error);
-    
-    // Send error notification
     await sendNotification({
       title: "Purchase Error",
       body: "An error occurred while processing your purchase.",
@@ -154,9 +129,10 @@ export const PurchaseAttemptsButton = () => {
                   calls={tokenTransferCall}
                   onSuccess={handleSuccess}
                   onError={handleError}
+                  resetAfter={0}
                 >
-                  <TransactionButton 
-                    className="w-full bg-cyber text-white font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors"
+                  <TransactionButton
+                    className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors"
                     text={`Purchase ${selectedPackage.attempts} Attempts for ${selectedPackage.price} GLICO`}
                   />
                   <TransactionStatus className="mt-2 text-center">
@@ -170,9 +146,11 @@ export const PurchaseAttemptsButton = () => {
                   </TransactionToast>
                 </Transaction>
               ) : (
-                <p className="text-yellow-400 text-sm text-center mt-2">
-                  Connect your wallet to purchase attempts
-                </p>
+                <div className="flex flex-col items-center w-full mt-2">
+                  <Wallet>
+                    <ConnectWallet />
+                  </Wallet>
+                </div>
               )}
             </div>
             
