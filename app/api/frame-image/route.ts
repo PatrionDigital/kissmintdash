@@ -7,7 +7,7 @@ import path from "path";
 const WIDTH = 600;
 const HEIGHT = 400;
 const TEMPLATE_PATH = path.resolve(process.cwd(), "public/share.png");
-const FONT_SIZE = 48;
+// const FONT_SIZE = 48; // Unused variable removed to fix ESLint error
 const FONT_FAMILY = "Arial"; // Change if you want a custom font
 const SCORE_COLOR = "#fff";
 const SCORE_X = 30; // Top left corner
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   let template;
   try {
     template = await loadImage(TEMPLATE_PATH);
-  } catch (e) {
+  } catch {
     return new Response("Could not load template image", { status: 500 });
   }
 
