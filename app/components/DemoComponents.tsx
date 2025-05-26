@@ -80,7 +80,7 @@ type CardProps = {
   onClick?: () => void;
 }
 
-function Card({
+export function Card({
   title,
   children,
   className = "",
@@ -172,16 +172,23 @@ export function Home({ setActiveTab }: HomeProps) {
         </div>
       </Card>
 
-      <Card title="My First Mini App">
-        <p className="text-[var(--app-foreground-muted)] mb-4">
-          This is a minimalistic Mini App built with OnchainKit components.
-        </p>
-        <Button
-          onClick={() => setActiveTab("features")}
-          icon={<Icon name="arrow-right" size="sm" />}
-        >
-          Explore Features
-        </Button>
+      <Card title="Game Menu">
+        <div className="flex flex-col gap-3">
+          <Button
+            onClick={() => setActiveTab("leaderboard")}
+            icon={<Icon name="trophy" size="sm" />}
+            variant="primary"
+          >
+            Leaderboard
+          </Button>
+          <Button
+            onClick={() => setActiveTab("features")}
+            icon={<Icon name="star" size="sm" />}
+            variant="primary"
+          >
+            Features
+          </Button>
+        </div>
       </Card>
 
       <TodoList />
@@ -192,7 +199,7 @@ export function Home({ setActiveTab }: HomeProps) {
 }
 
 type IconProps = {
-  name: "heart" | "star" | "check" | "plus" | "arrow-right";
+  name: "heart" | "star" | "check" | "plus" | "arrow-right" | "gamepad" | "trophy";
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -280,6 +287,44 @@ export function Icon({ name, size = "md", className = "" }: IconProps) {
         <title>Arrow Right</title>
         <line x1="5" y1="12" x2="19" y2="12" />
         <polyline points="12 5 19 12 12 19" />
+      </svg>
+    ),
+    gamepad: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Gamepad</title>
+        <rect x="2" y="7" width="20" height="10" rx="5" />
+        <circle cx="7" cy="12" r="1.5" />
+        <circle cx="17" cy="12" r="1.5" />
+        <line x1="12" y1="10" x2="12" y2="14" />
+        <line x1="10" y1="12" x2="14" y2="12" />
+      </svg>
+    ),
+    trophy: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Trophy</title>
+        <path d="M8 21h8" />
+        <path d="M12 17v4" />
+        <path d="M7 4h10v5a5 5 0 0 1-10 0V4z" />
+        <path d="M17 9a5 5 0 0 0 5-5" />
+        <path d="M7 9a5 5 0 0 1-5-5" />
       </svg>
     ),
   };

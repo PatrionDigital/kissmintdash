@@ -73,7 +73,7 @@
 - Track tap timestamps, intervals, and device fingerprint.
 - Generate integrity hash for each session.
 
-- [ ] **🎨4.4. Polish and Juice**
+- [x] **🎨4.4. Polish and Juice**
 
 [(Issue 5)](https://github.com/PatrionDigital/kissmintdash/issues/5)
 
@@ -86,12 +86,14 @@
 
 ## 5. Leaderboards & Social
 
-- [ ] **5.1. Leaderboard UI**
+[(Issue 9)](https://github.com/PatrionDigital/kissmintdash/issues/9)
+
+- [x] **5.1. Leaderboard UI**
 
 - Implement daily/weekly/all-time leaderboard tabs.
 - Show player’s rank, score, and reward status.
 
-- [ ] **5.2. Leaderboard Backend**
+- [x] **5.2. Leaderboard Backend**
 
 - API endpoints for fetching and submitting scores.
 - Integrate with Redis for real-time updates.
