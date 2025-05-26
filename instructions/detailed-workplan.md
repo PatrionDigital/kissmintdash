@@ -98,27 +98,30 @@
 - API endpoints for fetching and submitting scores.
 - Integrate with Redis for real-time updates.
 
-- [ ] **5.3. Social Sharing (Frames)**
+- [x] **5.3. Social Sharing (Frames)**
       [(Issue 11)](https://github.com/PatrionDigital/kissmintdash/issues/11)
 
-- Use Farcaster SDK (react) for Farcaster Frame generation.
+- Use Farcaster Links.
 - Allow users to share scores and achievements.
+- TODO: Proper Farcast Frame (meta tags, etc.) with link to Mini App.
 
 ---
 
 ## 6. Token Economy & Blockchain Integration
 
 - [ ] **6.1. $GLICO Token Integration**
+      [(Issue 13)](https://github.com/PatrionDigital/kissmintdash/issues/13)
 
-- Integrate ethers.js/wagmi/RainbowKit for wallet connections.
+- Confirm wallet connection.
 - Display $GLICO balance and transaction history.
 
 - [ ] **6.2. Purchasing Attempts**
-
-- Implement modal for buying attempts with dynamic pricing.
+      [(Issue 14)](https://github.com/PatrionDigital/kissmintdash/issues/14)
+- Use Farcaster modal for buying attempts with dynamic pricing.
 - Handle token transactions and update attempts.
 
 - [ ] **6.3. Reward Distribution**
+      [(Issue 15)](https://github.com/PatrionDigital/kissmintdash/issues/15)
 
 - Backend logic for prize pool and streak rewards.
 - UI for reward claiming and history.
