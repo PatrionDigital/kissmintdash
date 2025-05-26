@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import { Card, Button } from "./DemoComponents";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
