@@ -1,30 +1,121 @@
 "use client";
 import React from "react";
 import { useUserProfile } from "../../src/context/UserContext";
+import { useAccount, useContractRead } from "wagmi";
+import Image from "next/image";
+import { sdk } from '@farcaster/frame-sdk';
+
+const GLICO_ADDRESS = "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
+const GLICO_CAIP19 = "eip155:8453/erc20:0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
+const ERC20_ABI = [
+  {
+    "constant": true,
+    "inputs": [{ "name": "owner", "type": "address" }],
+    "name": "balanceOf",
+    "outputs": [{ "name": "balance", "type": "uint256" }],
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [{ "name": "", "type": "uint8" }],
+    "type": "function"
+  }
+];
 
 export const UserProfileCard = () => {
   const { profile } = useUserProfile();
+  const { address } = useAccount();
+  // Fetch GLICO balance
+  const { data: rawBalance } = useContractRead({
+    address: GLICO_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    enabled: !!address,
+    watch: true,
+  });
+  const { data: decimals } = useContractRead({
+    address: GLICO_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "decimals",
+  });
+  let glicoBalance = "-";
+  if (rawBalance && decimals !== undefined) {
+    const divisor = 10 ** Number(decimals);
+    glicoBalance = (Number(rawBalance) / divisor).toLocaleString(undefined, { maximumFractionDigits: 4 });
+  }
 
   if (!profile) return <div className="p-4">No profile found.</div>;
 
   return (
-    <div>
+    <div className="w-full max-w-xs mx-auto bg-[var(--app-card-bg)] rounded-xl shadow-lg border-2 border-cyber p-4 flex flex-col items-center gap-3">
+      {/* $GLICO label */}
+      <div
+        className="text-lg font-bold text-center tracking-wide cursor-pointer select-none hover:text-cyber transition"
+        aria-label="View $GLICO Token Info"
+        title="View $GLICO Token Info"
+        tabIndex={0}
+        role="button"
+        onClick={async () => {
+          try {
+            await sdk.actions.viewToken({ token: GLICO_CAIP19 });
+          } catch (e) {
+            console.error('Failed to open token info', e);
+          }
+        }}
+        onKeyDown={async (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            try {
+              await sdk.actions.viewToken({ token: GLICO_CAIP19 });
+            } catch (e) {
+              console.error('Failed to open token info', e);
+            }
+          }
+        }}
+      >
+        $GLICO
+      </div>
 
-      {/* Game stats section */}
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <div className="text-sm text-[var(--app-foreground-muted)]">Attempts</div>
-            <div className="text-xl font-semibold">{profile.attempts}</div>
-          </div>
-          <div className="flex-1">
-            <div className="text-sm text-[var(--app-foreground-muted)]">Streak</div>
-            <div className="text-xl font-semibold">{profile.streak}</div>
-          </div>
-          <div className="flex-1">
-            <div className="text-sm text-[var(--app-foreground-muted)]">Balance</div>
-            <div className="text-xl font-semibold">{profile.balance}</div>
-          </div>
+      {/* Token logo and balance */}
+      <div
+        className="flex items-center justify-center gap-2 cursor-pointer select-none hover:text-cyber transition"
+        aria-label="View $GLICO Token Info"
+        title="View $GLICO Token Info"
+        tabIndex={0}
+        role="button"
+        onClick={async () => {
+          try {
+            await sdk.actions.viewToken({ token: GLICO_CAIP19 });
+          } catch (e) {
+            console.error('Failed to open token info', e);
+          }
+        }}
+        onKeyDown={async (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            try {
+              await sdk.actions.viewToken({ token: GLICO_CAIP19 });
+            } catch (e) {
+              console.error('Failed to open token info', e);
+            }
+          }
+        }}
+      >
+        <Image src="/token.png" alt="$GLICO Token" width={32} height={32} className="rounded-full border border-cyber object-cover" />
+        <span className="text-2xl font-extrabold tabular-nums">{glicoBalance}</span>
+      </div>
+
+
+      {/* Attempts and Streak labels/values aligned */}
+      <div className="flex flex-row w-full justify-center mt-2">
+        <div className="flex flex-col items-center w-1/2">
+          <div className="text-lg font-bold text-center tracking-wide">Attempts</div>
+          <div className="text-xl font-semibold text-center tracking-wider">{profile.attempts} <span className={"text-base font-normal"}>Left</span></div>
+        </div>
+        <div className="flex flex-col items-center w-1/2">
+          <div className="text-lg font-bold text-center tracking-wide">Daily Streak</div>
+          <div className="text-xl font-semibold text-center tracking-wider">{profile.streak}</div>
         </div>
       </div>
     </div>
