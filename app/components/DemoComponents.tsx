@@ -166,7 +166,7 @@ export function Home({ setActiveTab }: HomeProps) {
         <UserProfileCard />
       </Card>
 
-      <Card title="Game Demo" className="my-8">
+      <Card title="Tap Dash'99" className="my-8">
         <div className="flex flex-col items-center justify-center">
           <GameEngine />
         </div>
