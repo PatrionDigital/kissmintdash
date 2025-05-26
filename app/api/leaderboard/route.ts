@@ -38,11 +38,15 @@ export async function GET(req: NextRequest) {
   for (let i = 0; i < raw.length; i += 2) {
     const value = raw[i];
     const score = Number(raw[i + 1]);
-    try {
-      const parsed = JSON.parse(value);
-      entries.push({ ...parsed, score });
-    } catch {
-      entries.push({ name: value, score, reward: "" });
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+        entries.push({ ...parsed, score });
+      } catch {
+        entries.push({ name: value, score, reward: "" });
+      }
+    } else {
+      entries.push({ name: String(value), score, reward: "" });
     }
   }
   entries.forEach((entry, i) => (entry.rank = i + 1));
