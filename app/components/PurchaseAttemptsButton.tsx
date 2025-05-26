@@ -3,18 +3,16 @@ import React, { useState, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useUserProfile } from "../../src/context/UserContext";
 import { useNotification } from "@coinbase/onchainkit/minikit";
-import {
-  Transaction,
-  TransactionButton,
-  TransactionStatus,
-  TransactionStatusAction,
-  TransactionStatusLabel,
-  TransactionToast,
-  TransactionToastAction,
-  TransactionToastIcon,
-  TransactionToastLabel,
-  type TransactionError,
-  type TransactionResponse,
+import { 
+  Transaction, 
+  TransactionButton, 
+  TransactionStatus, 
+  TransactionStatusAction, 
+  TransactionStatusLabel, 
+  TransactionToast, 
+  TransactionToastAction, 
+  TransactionToastIcon, 
+  TransactionToastLabel 
 } from "@coinbase/onchainkit/transaction";
 
 // Payment wallet address from environment variables
@@ -38,6 +36,7 @@ export const PurchaseAttemptsButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const sendNotification = useNotification();
 
+
   // Create contract call for token transfer using the ERC20 transfer function
   const tokenTransferCall = useMemo(() => {
     if (!isConnected || !address) return [];
@@ -59,9 +58,8 @@ export const PurchaseAttemptsButton = () => {
   }, [isConnected, address, selectedPackage.price]);
   
   // Handle successful transaction
-  const handleSuccess = useCallback(async (response: TransactionResponse) => {
-    const transactionHash = response.transactionReceipts[0].transactionHash;
-    console.log(`Attempts purchase successful: ${transactionHash}`);
+  const handleSuccess = useCallback(async () => {
+    console.log(`Attempts purchase successful!`);
     
     // Update user's bonus attempts
     updateProfile({
@@ -79,7 +77,7 @@ export const PurchaseAttemptsButton = () => {
   }, [profile, selectedPackage, sendNotification, updateProfile]);
   
   // Handle transaction error
-  const handleError = useCallback(async (error: TransactionError) => {
+  const handleError = useCallback(async (error: Error | unknown) => {
     console.error("Error during purchase:", error);
     
     // Send error notification
@@ -88,6 +86,8 @@ export const PurchaseAttemptsButton = () => {
       body: "An error occurred while processing your purchase.",
     });
   }, [sendNotification]);
+  
+  
 
   // Toggle modal
   const toggleModal = () => {
@@ -146,6 +146,7 @@ export const PurchaseAttemptsButton = () => {
                   contracts={tokenTransferCall}
                   onSuccess={handleSuccess}
                   onError={handleError}
+                  chainId={8453} // Base chain ID
                 >
                   <TransactionButton 
                     className="w-full bg-cyber text-white font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors"
