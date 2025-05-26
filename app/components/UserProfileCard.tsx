@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useUserProfile } from "../../src/context/UserContext";
 import { useAccount, useContractRead } from "wagmi";
 import Image from "next/image";
@@ -26,25 +26,48 @@ const ERC20_ABI = [
 
 export const UserProfileCard = () => {
   const { profile } = useUserProfile();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
   // Fetch GLICO balance
-  const { data: rawBalance } = useContractRead({
+  const { data: rawBalance, refetch: refetchBalance, isLoading: isBalanceLoading } = useContractRead({
     address: GLICO_ADDRESS,
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address,
-      refetchInterval: 5000, // Refresh every 5 seconds instead of using watch
+      enabled: !!address && isInitialized,
+      refetchInterval: 5000, // Refresh every 5 seconds
     },
   });
-  const { data: decimals } = useContractRead({
+  
+  const { data: decimals, isLoading: isDecimalsLoading } = useContractRead({
     address: GLICO_ADDRESS,
     abi: ERC20_ABI,
     functionName: "decimals",
+    query: {
+      enabled: isInitialized,
+    },
   });
-  let glicoBalance = "-";
-  if (rawBalance && decimals !== undefined) {
+  
+  // Initialize and handle wallet connection changes
+  useEffect(() => {
+    setIsInitialized(true);
+    
+    // Refetch balance when wallet connects
+    if (isConnected && address) {
+      setIsLoading(true);
+      refetchBalance().finally(() => setIsLoading(false));
+    }
+  }, [isConnected, address, refetchBalance]);
+  
+  // Determine if we're loading the balance data
+  const isLoadingData = isLoading || isBalanceLoading || isDecimalsLoading;
+  
+  // Format the balance for display
+  let glicoBalance = isLoadingData ? "Loading..." : "-";
+  if (!isLoadingData && rawBalance && decimals !== undefined) {
     const divisor = 10 ** Number(decimals);
     glicoBalance = (Number(rawBalance) / divisor).toLocaleString(undefined, { maximumFractionDigits: 4 });
   }
