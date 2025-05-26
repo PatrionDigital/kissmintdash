@@ -99,8 +99,9 @@
 - Integrate with Redis for real-time updates.
 
 - [ ] **5.3. Social Sharing (Frames)**
+      [(Issue 11)](https://github.com/PatrionDigital/kissmintdash/issues/11)
 
-- Use MiniKit and OnchainKit for Farcaster Frame generation.
+- Use Farcaster SDK (react) for Farcaster Frame generation.
 - Allow users to share scores and achievements.
 
 ---
