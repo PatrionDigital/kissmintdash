@@ -8,8 +8,9 @@ import { TokenTransactionHistory } from "./TokenTransactionHistory";
 import { PurchaseAttemptsButton } from "./PurchaseAttemptsButton";
 import { checkFreeAttempt, formatTimeUntilNextAttempt, getTotalAttempts } from "../../src/utils/attemptsManager";
 
-const GLICO_ADDRESS = "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
-const GLICO_CAIP19 = "eip155:8453/erc20:0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
+// Cast address to `0x${string}` type for wagmi compatibility
+const GLICO_ADDRESS = (process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe") as `0x${string}`;
+const GLICO_CAIP19 = `eip155:8453/erc20:${process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe"}`;
 const ERC20_ABI = [
   {
     "constant": true,

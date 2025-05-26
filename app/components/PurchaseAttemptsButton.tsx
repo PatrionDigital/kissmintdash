@@ -1,13 +1,28 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useUserProfile } from "../../src/context/UserContext";
 import { useNotification } from "@coinbase/onchainkit/minikit";
+import {
+  Transaction,
+  TransactionButton,
+  TransactionStatus,
+  TransactionStatusAction,
+  TransactionStatusLabel,
+  TransactionToast,
+  TransactionToastAction,
+  TransactionToastIcon,
+  TransactionToastLabel,
+  type TransactionError,
+  type TransactionResponse,
+} from "@coinbase/onchainkit/transaction";
 
-// Note: In a real implementation, you would use the GLICO Token CAIP-19 identifier
+// Payment wallet address from environment variables
+const PAYMENT_ADDRESS = process.env.NEXT_PUBLIC_PAYMENT_ADDRESS || "0xYourPaymentWalletAddressHere";
+const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}` || "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe";
 
-// Game treasury FID (replace with actual treasury FID)
-const TREASURY_FID = 123456; // Example FID
+// ERC20 transfer function selector: keccak256("transfer(address,uint256)").slice(0, 10)
+const TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
 
 // Dynamic pricing model
 const ATTEMPTS_PRICING = [
@@ -17,52 +32,62 @@ const ATTEMPTS_PRICING = [
 ];
 
 export const PurchaseAttemptsButton = () => {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { profile, updateProfile } = useUserProfile();
   const [selectedPackage, setSelectedPackage] = useState(ATTEMPTS_PRICING[0]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const sendNotification = useNotification();
 
-  // Handle token purchase using Farcaster sendToken action
-  const handlePurchase = useCallback(async () => {
-    if (!isConnected) return;
+  // Create contract call for token transfer using the ERC20 transfer function
+  const tokenTransferCall = useMemo(() => {
+    if (!isConnected || !address) return [];
     
-    try {
-      // Convert price to token units (with 6 decimals for GLICO)
-      const tokenAmount = Math.floor(selectedPackage.price * 1000000).toString();
-      
-      // In a real implementation, you would use the Farcaster SDK to send tokens
-      // For this demo, we're simulating a successful transaction
-      console.log(`Sending ${tokenAmount} GLICO to FID ${TREASURY_FID}`);
-      
-      // Simulate a successful transaction
-      const transactionHash = `0x${Math.random().toString(16).slice(2)}`;
-      
-      // Update user's bonus attempts
-      updateProfile({
-        bonusAttempts: profile.bonusAttempts + selectedPackage.attempts,
-      });
-      
-      // Close modal
-      setIsModalOpen(false);
-      
-      // Send notification
-      await sendNotification({
-        title: "Bonus Attempts Purchased!",
-        body: `You've successfully purchased ${selectedPackage.attempts} bonus attempts for ${selectedPackage.price} GLICO!`,
-      });
-      
-      console.log(`Attempts purchase successful: ${transactionHash}`);
-    } catch (error) {
-      console.error("Error during purchase:", error);
-      
-      // Show error notification
-      await sendNotification({
-        title: "Purchase Error",
-        body: "An error occurred while processing your purchase.",
-      });
-    }
-  }, [isConnected, profile, selectedPackage, sendNotification, updateProfile]);
+    // Convert price to token units (with 6 decimals for GLICO)
+    const tokenAmount = BigInt(Math.floor(selectedPackage.price * 1000000));
+    
+    // Encode the ERC20 transfer function call
+    // The ERC20 transfer function has the signature: transfer(address,uint256)
+    // We need to encode the function selector (first 4 bytes of the keccak256 hash of the function signature)
+    // followed by the encoded arguments (recipient address and amount)
+    
+    // For simplicity, we'll use a direct transaction call format
+    return [{
+      to: TOKEN_ADDRESS, // The token contract address
+      data: `${TRANSFER_FUNCTION_SELECTOR}${PAYMENT_ADDRESS.slice(2).padStart(64, '0')}${tokenAmount.toString(16).padStart(64, '0')}` as `0x${string}`, // Encoded transfer function call
+      value: BigInt(0) // No ETH is being sent
+    }];
+  }, [isConnected, address, selectedPackage.price]);
+  
+  // Handle successful transaction
+  const handleSuccess = useCallback(async (response: TransactionResponse) => {
+    const transactionHash = response.transactionReceipts[0].transactionHash;
+    console.log(`Attempts purchase successful: ${transactionHash}`);
+    
+    // Update user's bonus attempts
+    updateProfile({
+      bonusAttempts: profile.bonusAttempts + selectedPackage.attempts,
+    });
+    
+    // Close modal
+    setIsModalOpen(false);
+    
+    // Send notification
+    await sendNotification({
+      title: "Bonus Attempts Purchased!",
+      body: `You've successfully purchased ${selectedPackage.attempts} bonus attempts for ${selectedPackage.price} GLICO!`,
+    });
+  }, [profile, selectedPackage, sendNotification, updateProfile]);
+  
+  // Handle transaction error
+  const handleError = useCallback(async (error: TransactionError) => {
+    console.error("Error during purchase:", error);
+    
+    // Send error notification
+    await sendNotification({
+      title: "Purchase Error",
+      body: "An error occurred while processing your purchase.",
+    });
+  }, [sendNotification]);
 
   // Toggle modal
   const toggleModal = () => {
@@ -114,15 +139,28 @@ export const PurchaseAttemptsButton = () => {
               ))}
             </div>
             
-            {/* Purchase Button */}
+            {/* Purchase Button with Transaction Component */}
             <div className="flex flex-col items-center">
               {isConnected ? (
-                <button
-                  onClick={handlePurchase}
-                  className="w-full bg-cyber text-white font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors"
+                <Transaction
+                  contracts={tokenTransferCall}
+                  onSuccess={handleSuccess}
+                  onError={handleError}
                 >
-                  Purchase {selectedPackage.attempts} Attempts for {selectedPackage.price} GLICO
-                </button>
+                  <TransactionButton 
+                    className="w-full bg-cyber text-white font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors"
+                    text={`Purchase ${selectedPackage.attempts} Attempts for ${selectedPackage.price} GLICO`}
+                  />
+                  <TransactionStatus className="mt-2 text-center">
+                    <TransactionStatusLabel />
+                    <TransactionStatusAction />
+                  </TransactionStatus>
+                  <TransactionToast className="mb-4">
+                    <TransactionToastIcon />
+                    <TransactionToastLabel />
+                    <TransactionToastAction />
+                  </TransactionToast>
+                </Transaction>
               ) : (
                 <p className="text-yellow-400 text-sm text-center mt-2">
                   Connect your wallet to purchase attempts
