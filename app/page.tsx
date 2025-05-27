@@ -108,21 +108,17 @@ export default function App() {
               aria-label="Features"
             />
           </div>
-          <div className="flex-shrink-0 h-full">
-            <Button
-              variant="ghost"
-              className="p-0 hover:bg-transparent h-full w-24 flex items-center justify-center"
-              aria-label="Site Logo"
-            >
+          <div className="relative" style={{ width: '5.1rem', height: '5.1rem', marginTop: '-0.8rem', marginRight: '0.5rem' }}>
+            <div className="absolute inset-0 flex items-center justify-center">
               <Image 
                 src="/logo.png" 
                 alt="Site Logo" 
-                width={96} 
-                height={96} 
-                className="h-5/6 w-auto object-contain" 
+                width={81}
+                height={81}
+                className="h-full w-auto object-contain"
                 priority
               />
-            </Button>
+            </div>
           </div>
         </header>
 
