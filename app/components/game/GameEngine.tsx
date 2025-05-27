@@ -30,6 +30,7 @@ interface DeviceInfo {
 // 1. Game States
 export enum GameState {
   Idle = "idle",
+  Countdown = "countdown",
   Running = "running",
   Finished = "finished",
 }
@@ -44,7 +45,8 @@ type GameAction =
   | { type: "SET_DEVICE_INFO"; payload: DeviceInfo }
   | { type: "SET_DEVICE_FINGERPRINT"; payload: string }
   | { type: "SET_PERFORMANCE_SCORE"; payload: number }
-  | { type: "SET_INTEGRITY_HASH"; payload: string };
+  | { type: "SET_INTEGRITY_HASH"; payload: string }
+  | { type: "SET_GAME_STATE"; payload: GameState };
 
 
 interface GameStateModel {
@@ -68,6 +70,7 @@ function gameReducer(state: GameStateModel, action: GameAction): GameStateModel 
   switch (action.type) {
     case "START_GAME":
       return {
+        ...state,
         gameState: GameState.Running,
         score: 0,
         timeLeft: GAME_DURATION,
@@ -78,6 +81,11 @@ function gameReducer(state: GameStateModel, action: GameAction): GameStateModel 
         deviceFingerprint: undefined, // TODO: Populate at game start
         performanceScore: undefined, // TODO: Populate at game start
         integrityHash: undefined, // TODO: Generate at game end
+      };
+    case "SET_GAME_STATE":
+      return {
+        ...state,
+        gameState: action.payload,
       };
     case "TAP":
       if (state.gameState !== GameState.Running) return state;
@@ -137,7 +145,7 @@ function GameEngine() {
   const [integrityHash, setIntegrityHash] = useState<string | null>(null);
 
   // --- Initial game state ---
-  const initialGameState: GameStateModel = {
+  const [state, dispatch] = useReducer(gameReducer, {
     gameState: GameState.Idle,
     score: 0,
     timeLeft: GAME_DURATION,
@@ -148,9 +156,10 @@ function GameEngine() {
     deviceFingerprint: undefined,
     performanceScore: undefined,
     integrityHash: undefined,
-  };
+  });
 
-  const [state, dispatch] = useReducer(gameReducer, initialGameState);
+  // Countdown state
+  const [countdown, setCountdown] = useState(3);
 
   // --- Anti-cheat: Device fingerprinting and info ---
   useEffect(() => {
@@ -361,6 +370,24 @@ function GameEngine() {
     }
   }, [state.gameState, state.taps, deviceInfo, deviceFingerprint, performanceScore, state.score, integrityHash]);
 
+  // Start the countdown
+  useEffect(() => {
+    if (state.gameState !== GameState.Countdown || countdown <= 0) return;
+    
+    const timer = setTimeout(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          // Start the game when countdown reaches 0
+          dispatch({ type: 'START_GAME' });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [state.gameState, countdown]);
+
   // UI event handlers
   const handleStart = useCallback(() => {
     if (hasNoAttempts) {
@@ -382,9 +409,11 @@ function GameEngine() {
     
     // Update the profile
     updateProfile(updatedProfile);
-    // Start the game after a small delay to ensure the profile is updated
+    // Start the countdown after a small delay to ensure the profile is updated
     setTimeout(() => {
-      dispatch({ type: 'START_GAME' });
+      setCountdown(3);
+      dispatch({ type: 'RESET_GAME' });
+      dispatch({ type: 'SET_GAME_STATE', payload: GameState.Countdown });
     }, 100);
   }, [hasFreeAttempts, hasPurchasedAttempts, hasNoAttempts, profile, updateProfile]);
   const handleTap = () => dispatch({ type: "TAP", timestamp: Date.now() });
@@ -393,7 +422,15 @@ function GameEngine() {
 
   // Render UI based on game state
   return (
-    <div className="flex flex-col items-center w-full gap-6">
+    <div className="flex flex-col items-center w-full gap-6 relative">
+      {/* Countdown Overlay */}
+      {state.gameState === GameState.Countdown && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="text-yellow-400 text-9xl font-bold animate-ping">
+            {countdown}
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-xs sm:max-w-md -mt-2 mx-auto">
         <div className="flex justify-between gap-4">
           {/* TAPS Container */}
@@ -432,7 +469,7 @@ function GameEngine() {
       </div>
       {state.gameState === GameState.Running && (
         <div className="relative w-32 h-32 flex items-center justify-center">
-          <TapButton onTap={handleTap} disabled={false} />
+          <TapButton onTap={handleTap} disabled={state.gameState !== GameState.Running} />
           <GameFeedback trigger={state.feedback} type="visual" />
         </div>
       )}
