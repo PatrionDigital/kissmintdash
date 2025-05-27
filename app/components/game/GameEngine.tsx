@@ -7,6 +7,7 @@ import GameFeedback from "./GameFeedback";
 import { Button } from "../DemoComponents";
 import { ShareFrameButton } from "./ShareFrameButton";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import { SpaceInvaderIcon } from "../icons/SpaceInvaderIcon";
 
 // Device info interface for anti-cheat
 interface DeviceInfo {
@@ -396,63 +397,73 @@ function GameEngine() {
         </div>
       )}
       {state.gameState === GameState.Finished && (
-        <>
-          <div className="text-xl font-bold text-center">Game Over! Final Score: {state.score}</div>
-          <SubmitScoreSection score={state.score} />
-          <Button variant="secondary" className="mt-2" onClick={handleReset}>
-            Play Again
-          </Button>
-        </>
+        <div className="w-full">
+          <div className="text-xl font-bold text-center mb-4">Game Over! Final Score: {state.score}</div>
+          <AutoSubmitScore score={state.score} onReset={handleReset} />
+        </div>
       )}
       {/* GameFeedback moved inside tap button container */}
     </div>
   );
 };
 
-// --- SubmitScoreSection ---
-type SubmitScoreSectionProps = { score: number };
-const SubmitScoreSection: React.FC<SubmitScoreSectionProps> = ({ score }) => {
+// --- AutoSubmitScore ---
+type AutoSubmitScoreProps = { 
+  score: number;
+  onReset: () => void;
+};
+
+const AutoSubmitScore: React.FC<AutoSubmitScoreProps> = ({ score, onReset }) => {
   const { context } = useMiniKit();
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccess(false);
-    try {
-      const res = await fetch("/api/leaderboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tab: "daily",
-          name: context?.user?.username || "Anonymous",
-          score,
-          reward: ""
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to submit score");
-      setSuccess(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const submitScore = async () => {
+      try {
+        const res = await fetch("/api/leaderboard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tab: "daily",
+            name: context?.user?.username || "Anonymous",
+            score,
+            reward: ""
+          }),
+        });
+        if (!res.ok) throw new Error("Failed to submit score");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to submit score");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    submitScore();
+  }, [score, context?.user?.username]);
 
   return (
-    <div className="flex flex-col items-center gap-2 mt-2">
-      <Button
-        variant="primary"
-        onClick={handleSubmit}
-        disabled={loading || success}
-      >
-        {loading ? "Submitting..." : success ? "Score Submitted!" : "Submit Score"}
-      </Button>
-      {error && <div className="text-red-500 text-sm">{error}</div>}
-      {success && <div className="text-green-600 text-sm">Score submitted successfully!</div>}
-      {success && <ShareFrameButton score={score} />}
+    <div className="w-full">
+      <div className="flex flex-row gap-4 w-full">
+        <Button 
+          variant="primary" 
+          onClick={onReset}
+          className="flex-1 bg-mint-green hover:bg-mint-green/90 focus:ring-mint-green/50 flex items-center justify-center gap-2"
+        >
+          <SpaceInvaderIcon className="text-black" />
+          <span>Play Again</span>
+        </Button>
+        <ShareFrameButton 
+          score={score} 
+          disabled={loading} 
+          className="flex-1 bg-purple-600 hover:bg-purple-700 focus:ring-purple-500"
+        />
+      </div>
+      {error && (
+        <div className="text-red-500 text-sm text-center mt-2">
+          {error}
+        </div>
+      )}
     </div>
   );
 };
