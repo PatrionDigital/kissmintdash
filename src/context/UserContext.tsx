@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useMemo, useState, useCallback } from "react";
+import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from "react";
 
 // Game-specific user profile type
 export interface GameUserProfile {
@@ -22,28 +22,53 @@ const defaultProfile: GameUserProfile = {
   balance: 0,
 };
 
-const BONUS_ATTEMPTS_KEY = 'bonusAttempts';
+const PROFILE_STORAGE_KEY = 'userProfile';
+
+// Helper to safely parse and validate profile from localStorage
+const getStoredProfile = (): GameUserProfile => {
+  if (typeof window === 'undefined') {
+    return { ...defaultProfile };
+  }
+  
+  try {
+    const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!saved) return { ...defaultProfile };
+    
+    const parsed = JSON.parse(saved);
+    return {
+      freeAttempts: typeof parsed.freeAttempts === 'number' ? Math.max(0, parsed.freeAttempts) : defaultProfile.freeAttempts,
+      bonusAttempts: typeof parsed.bonusAttempts === 'number' ? Math.max(0, parsed.bonusAttempts) : defaultProfile.bonusAttempts,
+      lastFreeAttemptTime: typeof parsed.lastFreeAttemptTime === 'number' ? parsed.lastFreeAttemptTime : defaultProfile.lastFreeAttemptTime,
+      balance: typeof parsed.balance === 'number' ? parsed.balance : defaultProfile.balance,
+    };
+  } catch (error) {
+    console.error('Failed to load profile from localStorage:', error);
+    return { ...defaultProfile };
+  }
+};
 
 const UserProfileContext = createContext<UserProfileContextValue | undefined>(undefined);
 
 export const UserProfileProvider = ({ children }: { children: React.ReactNode }) => {
-  const [profile, setProfile] = useState<GameUserProfile>(() => {
-    // On initial load, check localStorage for bonusAttempts
-    if (typeof window !== 'undefined') {
-      const storedBonus = localStorage.getItem(BONUS_ATTEMPTS_KEY);
-      if (storedBonus !== null) {
-        return { ...defaultProfile, bonusAttempts: Number(storedBonus) };
+  const [isClient, setIsClient] = useState(false);
+  const [profile, setProfile] = useState<GameUserProfile>(defaultProfile);
+
+  // Initialize profile from localStorage on client side only
+  useEffect(() => {
+    setIsClient(true);
+    setProfile(getStoredProfile());
+  }, []);
+
+  // Persist entire profile to localStorage whenever it changes
+  useEffect(() => {
+    if (isClient) {
+      try {
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+      } catch (error) {
+        console.error('Failed to save profile to localStorage:', error);
       }
     }
-    return defaultProfile;
-  });
-
-  // Persist bonusAttempts to localStorage whenever it changes
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(BONUS_ATTEMPTS_KEY, String(profile.bonusAttempts));
-    }
-  }, [profile.bonusAttempts]);
+  }, [profile, isClient]);
 
   const updateProfile = useCallback((updates: Partial<GameUserProfile>) => {
     setProfile((prev) => ({ ...prev, ...updates }));
