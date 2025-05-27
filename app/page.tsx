@@ -39,9 +39,9 @@ function MainContent() {
 
   useEffect(() => {
     if (!isFrameReady) {
-      setFrameReady();
+      setFrameReady().catch(console.error);
     }
-  }, [setFrameReady, isFrameReady]);
+  }, [isFrameReady, setFrameReady]);
 
   const handleAddFrame = useCallback(async () => {
     const frameAdded = await addFrame();
@@ -164,10 +164,58 @@ function MainContent() {
 
 export default function App() {
   const [showWelcome, setShowWelcome] = useState(true);
+  const [frameError, setFrameError] = useState<Error | null>(null);
+  const [isFrameInitialized, setIsFrameInitialized] = useState(false);
+  const { setFrameReady, isFrameReady } = useMiniKit();
+  
+  // Initialize frame as soon as the app loads
+  useEffect(() => {
+    const initializeFrame = async () => {
+      if (!isFrameReady) {
+        console.log('Initializing frame...');
+        try {
+          await setFrameReady();
+          console.log('Frame initialized successfully');
+          setIsFrameInitialized(true);
+        } catch (error) {
+          console.error('Failed to initialize frame:', error);
+          setFrameError(error instanceof Error ? error : new Error('Failed to initialize frame'));
+          // Don't set isFrameInitialized to true on error
+        }
+      } else {
+        console.log('Frame already initialized');
+        setIsFrameInitialized(true);
+      }
+    };
+    
+    initializeFrame();
+  }, [setFrameReady, isFrameReady]);
+  
+  // Show error message if frame initialization fails
+  if (frameError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-red-500 p-4 text-center">
+        <div>
+          <h1 className="text-2xl font-bold mb-2">Failed to Initialize</h1>
+          <p className="mb-4">{frameError.message}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   const handleStartGame = () => {
     setShowWelcome(false);
   };
+  
+  if (!isFrameInitialized) {
+    return null;
+  }
   
   return (
     <>
