@@ -5,6 +5,8 @@ import {
   useAddFrame,
   useOpenUrl,
 } from "@coinbase/onchainkit/minikit";
+import "./theme.css";
+import Image from "next/image";
 import {
   Name,
   Identity,
@@ -81,26 +83,13 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       <div className="w-full max-w-md mx-auto px-4 py-3">
-        <header className="flex justify-between items-center mb-3 h-11">
+        <header className="flex justify-between items-center mb-3 bg-[var(--app-background)] shadow-md z-[9999] relative">
           <div>
             <div className="flex items-center space-x-2">
-              <Wallet className="z-10">
-                <ConnectWallet>
-                  <Name className="text-inherit" />
-                </ConnectWallet>
-                <WalletDropdown>
-                  <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-                    <Avatar />
-                    <Name />
-                    <Address />
-                    <EthBalance />
-                  </Identity>
-                  <WalletDropdownDisconnect />
-                </WalletDropdown>
-              </Wallet>
+              
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {saveFrameButton}
             <Button
               variant="primary"
@@ -108,6 +97,31 @@ export default function App() {
               onClick={handleViewProfile}
             >
               PROFILE
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Icon name="trophy" size="sm" />}
+              onClick={() => setActiveTab("leaderboard")}
+            >
+              Leaderboard
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Icon name="star" size="sm" />}
+              onClick={() => setActiveTab("features")}
+            >
+              Features
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-2 p-1"
+              aria-label="Site Logo"
+              onClick={() => setActiveTab("home")}
+            >
+              <Image src="/logo.png" alt="Site Logo" width={32} height={32} className="h-8 w-auto" />
             </Button>
           </div>
         </header>
@@ -119,6 +133,20 @@ export default function App() {
         </main>
 
         <footer className="mt-2 pt-4 flex justify-center">
+          <Wallet className="z-10">
+            <ConnectWallet>
+              <Name className="text-inherit" />
+            </ConnectWallet>
+            <WalletDropdown>
+              <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+                <Avatar />
+                <Name />
+                <Address />
+                <EthBalance />
+              </Identity>
+              <WalletDropdownDisconnect />
+            </WalletDropdown>
+          </Wallet>
           <Button
             variant="ghost"
             size="sm"
