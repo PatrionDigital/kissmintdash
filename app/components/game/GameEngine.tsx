@@ -460,9 +460,11 @@ const AutoSubmitScore: React.FC<AutoSubmitScoreProps> = ({ score, onReset }) => 
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tab: "daily",
-            name: context?.user?.username || "Anonymous",
+            name:
+              context?.user?.username ||
+              context?.user?.displayName ||
+              String(context?.user?.fid || "Anonymous"),
             score,
-            reward: ""
           }),
         });
         if (!res.ok) throw new Error("Failed to submit score");

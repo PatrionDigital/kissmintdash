@@ -5,16 +5,14 @@ import { redis } from "@/lib/redis";
 const LEADERBOARD_TABS = ["daily", "weekly", "allTime"] as const;
 type LeaderboardTab = typeof LEADERBOARD_TABS[number];
 type LeaderboardEntry = {
-  rank?: number;
   name: string;
   score: number;
-  reward: string;
+  rank: number;
 };
 type PostBody = {
   tab: LeaderboardTab;
-  name: string;
+  name: string | { username?: string; [key: string]: unknown };
   score: number;
-  reward: string;
 };
 const LEADERBOARD_SIZE = 25;
 function leaderboardKey(tab: LeaderboardTab) {
@@ -34,19 +32,13 @@ export async function GET(req: NextRequest) {
     withScores: true,
     rev: true,
   });
+  
   const entries: LeaderboardEntry[] = [];
   for (let i = 0; i < raw.length; i += 2) {
-    const value = raw[i];
+    const name = raw[i];
     const score = Number(raw[i + 1]);
-    if (typeof value === "string") {
-      try {
-        const parsed = JSON.parse(value);
-        entries.push({ ...parsed, score });
-      } catch {
-        entries.push({ name: value, score, reward: "" });
-      }
-    } else {
-      entries.push({ name: String(value), score, reward: "" });
+    if (typeof name === 'string' && name.trim().length > 0) {
+      entries.push({ name, score, rank: 0 });
     }
   }
   entries.forEach((entry, i) => (entry.rank = i + 1));
@@ -63,13 +55,18 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const { tab, name, score, reward } = body;
+  const { tab, name, score } = body;
   if (!tab || !LEADERBOARD_TABS.includes(tab) || !name || typeof score !== "number") {
     return NextResponse.json({ error: "Missing or invalid fields" }, { status: 400 });
   }
+  // Ensure name is a string before storing
+  const nameStr = typeof name === 'object' ? 
+    (name && 'username' in name ? String(name.username || 'Player') : 'Player') : 
+    String(name);
+    
   await redis.zadd(leaderboardKey(tab), {
     score,
-    member: JSON.stringify({ name, reward }),
+    member: nameStr,
   });
   return NextResponse.json({ success: true });
 }

@@ -31,41 +31,23 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ setActiveTab }) => {
         const res = await fetch(`/api/leaderboard?tab=${leaderboardTab}`);
         if (!res.ok) throw new Error("Failed to fetch leaderboard");
         const data = await res.json();
+        console.log('Leaderboard data:', data); // Debug log
         if (!ignore) {
-          // Patch: ensure each entry is a flat object with rank, name, score, reward
-          type ApiLeaderboardEntry = {
+          // Define the expected entry type
+          type LeaderboardApiEntry = {
             rank?: number;
             name?: string | { name?: string };
-            player?: string;
             score?: number;
             reward?: string;
           };
-          const entries = (data.entries || []).map((entry: ApiLeaderboardEntry, idx: number) => {
-            if (typeof entry.name === "object" && entry.name !== null) {
-              return {
-                rank: entry.rank ?? idx + 1,
-                name: entry.name.name ?? String(entry.name),
-                score: entry.score ?? 0,
-                reward: entry.reward ?? "",
-              };
-            } else if (typeof entry.name === "string") {
-              return {
-                rank: entry.rank ?? idx + 1,
-                name: entry.name,
-                score: entry.score ?? 0,
-                reward: entry.reward ?? "",
-              };
-            } else if (typeof entry.player === "string") {
-              return {
-                rank: entry.rank ?? idx + 1,
-                name: entry.player,
-                score: entry.score ?? 0,
-                reward: entry.reward ?? "",
-              };
-            } else {
-              return { rank: idx + 1, name: String(entry), score: 0, reward: "" };
-            }
-          });
+          
+          // Ensure each entry has the correct structure
+          const entries = (data.entries || []).map((entry: LeaderboardApiEntry, idx: number) => ({
+            rank: entry.rank ?? idx + 1,
+            name: String(entry.name || ''), // Ensure name is always a string
+            score: Number(entry.score) || 0, // Ensure score is always a number
+            reward: String(entry.reward || '') // Ensure reward is always a string
+          }));
           setEntries(entries);
         }
       } catch (err: unknown) {
@@ -119,14 +101,19 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ setActiveTab }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((entry: LeaderboardEntry, idx) => (
-                    <tr key={idx} className="border-b last:border-b-0">
-                      <td className="py-2 px-2 font-bold">{entry.rank}</td>
-                      <td className="py-2 px-2">{entry.name}</td>
-                      <td className="py-2 px-2">{entry.score}</td>
-                      <td className="py-2 px-2 text-green-600">{entry.reward}</td>
-                    </tr>
-                  ))}
+                  {entries.map((entry: LeaderboardEntry, idx) => {
+                    // Display the name directly - API now handles proper string conversion
+                    const displayName = String(entry.name || `Player ${entry.rank}`);
+                    
+                    return (
+                      <tr key={idx} className="border-b last:border-b-0">
+                        <td className="py-2 px-2 font-bold">{entry.rank}</td>
+                        <td className="py-2 px-2">{displayName}</td>
+                        <td className="py-2 px-2">{entry.score}</td>
+                        <td className="py-2 px-2 text-green-600">{entry.reward}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               {entries.length === 0 && (
