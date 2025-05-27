@@ -133,6 +133,9 @@ function gameReducer(state: GameStateModel, action: GameAction): GameStateModel 
 }
 
 function GameEngine() {
+  // --- State ---
+  const [showTimesUp, setShowTimesUp] = useState(false);
+  
   // --- User profile and attempts ---
   const { profile, updateProfile } = useUserProfile();
   const hasFreeAttempts = profile.freeAttempts > 0;
@@ -250,17 +253,26 @@ function GameEngine() {
   // Timer interval ref
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timer effect
+  // Game timer effect
   useEffect(() => {
-    if (state.gameState === GameState.Running && state.timeLeft > 0) {
-      timerRef.current = setInterval(() => {
+    if (state.gameState !== GameState.Running) return;
+
+    const timer = setInterval(() => {
+      const newTimeLeft = state.timeLeft - 1;
+      if (newTimeLeft <= 0) {
+        clearInterval(timer);
+        setShowTimesUp(true);
+        // Wait for the animation to finish before ending the game
+        setTimeout(() => {
+          dispatch({ type: "END_GAME" });
+          setShowTimesUp(false);
+        }, 1500); // Show for 1.5 seconds
+      } else {
         dispatch({ type: "TIMER_TICK" });
-      }, 1000);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      timerRef.current = null;
-    };
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [state.gameState, state.timeLeft]);
 
   // Stop timer if finished
@@ -436,6 +448,15 @@ function GameEngine() {
         </div>
       )}
       
+      {/* Time's Up Overlay */}
+      {showTimesUp && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
+          <div className="text-white text-6xl font-bold animate-bounce">
+            TIME&apos;S UP!
+          </div>
+        </div>
+      )}
+      
       {/* Ready to start overlay - using onClick directly on the overlay */}
       {state.gameState === GameState.Ready && (
         <div 
@@ -489,24 +510,31 @@ function GameEngine() {
         )}
       </div>
 
-      {/* Tap Button - Always visible except when game is idle or finished */}
-      {state.gameState !== GameState.Idle && state.gameState !== GameState.Finished && (
-        <div className="relative w-32 h-32 flex items-center justify-center">
-          <TapButton 
-            onTap={state.gameState === GameState.Ready ? handleStartGame : handleTap} 
-            disabled={state.gameState !== GameState.Running} 
-          />
-          <GameFeedback trigger={state.feedback} type="visual" />
-        </div>
-      )}
+      {/* Game Controls Container */}
+      <div className="relative w-full flex flex-col items-center gap-6">
+        {/* Tap Button - Hidden when game is idle or finished */}
+        {state.gameState !== GameState.Idle && state.gameState !== GameState.Finished && (
+          <div className="relative w-32 h-32 flex items-center justify-center">
+            <TapButton 
+              onTap={state.gameState === GameState.Ready ? handleStartGame : handleTap} 
+              disabled={state.gameState !== GameState.Running} 
+            />
+            <GameFeedback trigger={state.feedback} type="visual" />
+          </div>
+        )}
 
-      {/* Game Over Screen */}
-      {state.gameState === GameState.Finished && (
-        <div className="w-full">
-          <div className="text-xl font-bold text-center mb-4">Game Over! Final Score: {state.score}</div>
-          <AutoSubmitScore score={state.score} onReset={handleReset} />
-        </div>
-      )}
+        {/* Game Over Content - Only shown when game is finished */}
+        {state.gameState === GameState.Finished && (
+          <div className="w-full text-center">
+            <div className="text-2xl font-bold text-white mb-2">Game Over!</div>
+            <div className="text-3xl font-bold text-yellow-400 mb-6">Score: {state.score}</div>
+            <AutoSubmitScore score={state.score} onReset={handleReset} />
+            <div className="mt-4 text-gray-400 text-sm">
+              Take a moment to see your score!
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
