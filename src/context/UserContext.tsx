@@ -24,10 +24,28 @@ const defaultProfile: GameUserProfile = {
   balance: 0,
 };
 
+const BONUS_ATTEMPTS_KEY = 'bonusAttempts';
+
 const UserProfileContext = createContext<UserProfileContextValue | undefined>(undefined);
 
 export const UserProfileProvider = ({ children }: { children: React.ReactNode }) => {
-  const [profile, setProfile] = useState<GameUserProfile>(defaultProfile);
+  const [profile, setProfile] = useState<GameUserProfile>(() => {
+    // On initial load, check localStorage for bonusAttempts
+    if (typeof window !== 'undefined') {
+      const storedBonus = localStorage.getItem(BONUS_ATTEMPTS_KEY);
+      if (storedBonus !== null) {
+        return { ...defaultProfile, bonusAttempts: Number(storedBonus) };
+      }
+    }
+    return defaultProfile;
+  });
+
+  // Persist bonusAttempts to localStorage whenever it changes
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(BONUS_ATTEMPTS_KEY, String(profile.bonusAttempts));
+    }
+  }, [profile.bonusAttempts]);
 
   const updateProfile = useCallback((updates: Partial<GameUserProfile>) => {
     setProfile((prev) => ({ ...prev, ...updates }));

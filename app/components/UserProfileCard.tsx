@@ -4,7 +4,7 @@ import { useUserProfile } from "../../src/context/UserContext";
 import { useAccount, useContractRead } from "wagmi";
 import Image from "next/image";
 import { sdk } from '@farcaster/frame-sdk';
-import { TokenTransactionHistory } from "./TokenTransactionHistory";
+// import { TokenTransactionHistory } from "./TokenTransactionHistory"; // Recent Transactions panel hidden
 import { PurchaseAttemptsButton } from "./PurchaseAttemptsButton";
 import { checkFreeAttempt, formatTimeUntilNextAttempt, getTotalAttempts } from "../../src/utils/attemptsManager";
 
@@ -115,8 +115,7 @@ export const UserProfileCard = () => {
   if (!profile) return <div className="p-4">No profile found.</div>;
 
   return (
-    <div className="w-full max-w-xs mx-auto bg-[var(--app-card-bg)] rounded-xl shadow-lg border-2 border-cyber p-4 flex flex-col items-center gap-3">
-      {/* $GLICO label */}
+    <>
       <div
         className="text-lg font-bold text-center tracking-wide cursor-pointer select-none hover:text-cyber transition"
         aria-label="View $GLICO Token Info"
@@ -192,8 +191,8 @@ export const UserProfileCard = () => {
       
       {/* Transaction History Section */}
       {isConnected && address && (
-        <TokenTransactionHistory tokenAddress={GLICO_ADDRESS} />
+        {/* <TokenTransactionHistory tokenAddress={GLICO_ADDRESS} /> */}
       )}
-    </div>
+    </>
   );
 };

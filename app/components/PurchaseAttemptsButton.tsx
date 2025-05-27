@@ -82,7 +82,7 @@ export const PurchaseAttemptsButton = () => {
       {/* Purchase Button */}
       <button
         onClick={toggleModal}
-        className="w-full bg-cyber text-white font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors mt-4"
+        className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors mt-4"
         disabled={!isConnected}
       >
         Buy Game Attempts
