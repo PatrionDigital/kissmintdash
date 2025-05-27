@@ -361,8 +361,8 @@ function GameEngine() {
 
   // Render UI based on game state
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="w-full max-w-xs sm:max-w-md -mt-2">
+    <div className="flex flex-col items-center w-full gap-6">
+      <div className="w-full max-w-xs sm:max-w-md -mt-2 mx-auto">
         <div className="flex justify-between gap-4">
           {/* TAPS Container */}
           <div className="w-1/2 border border-cyber rounded-lg overflow-hidden flex flex-col h-[120px]">
@@ -385,11 +385,18 @@ function GameEngine() {
           </div>
         </div>
       </div>
-      {state.gameState === GameState.Idle && (
-        <Button variant="secondary" onClick={handleStart}>
-          Start Game
-        </Button>
-      )}
+      <div className="w-full px-4">
+        {state.gameState === GameState.Idle && (
+          <Button 
+            variant="primary"
+            onClick={handleStart}
+            className="w-full bg-mint-green hover:bg-mint-green/90 focus:ring-mint-green/50 flex items-center justify-center gap-2 py-3 text-lg"
+          >
+            <SpaceInvaderIcon className="text-black" />
+            <span>Start Game</span>
+          </Button>
+        )}
+      </div>
       {state.gameState === GameState.Running && (
         <div className="relative w-32 h-32 flex items-center justify-center">
           <TapButton onTap={handleTap} disabled={false} />

@@ -40,9 +40,9 @@ export function Button({
   };
 
   const sizeClasses = {
-    sm: "text-xs px-4 py-2 rounded-md w-12 h-8 flex items-center justify-center",
-    md: "text-sm px-6 py-2.5 rounded-lg w-16 h-10 flex items-center justify-center",
-    lg: "text-base px-8 py-3 rounded-lg w-20 h-12 flex items-center justify-center",
+    sm: "text-xs px-4 py-2 rounded-md h-8 flex items-center justify-center",
+    md: "text-sm px-6 py-2.5 rounded-lg h-10 flex items-center justify-center",
+    lg: "text-base px-8 py-3 rounded-lg h-12 flex items-center justify-center",
   };
 
   const isIconOnly = !children && icon;
