@@ -1,13 +1,15 @@
-import React, { useReducer, useRef, useEffect, useState } from "react";
+import React, { useReducer, useRef, useEffect, useState, useCallback } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import TapButton from "./TapButton";
 import GameTimer from "./GameTimer";
 import ScoreCounter from "./ScoreCounter";
-import GameFeedback from "./GameFeedback";
 import { Button } from "../DemoComponents";
 import { ShareFrameButton } from "./ShareFrameButton";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { SpaceInvaderIcon } from "../icons/SpaceInvaderIcon";
+import { useUserProfile } from "@/src/context/UserContext";
+import { toast } from "sonner";
+import { GameFeedback } from "./GameFeedback";
 
 // Device info interface for anti-cheat
 interface DeviceInfo {
@@ -122,6 +124,12 @@ function gameReducer(state: GameStateModel, action: GameAction): GameStateModel 
 }
 
 function GameEngine() {
+  // --- User profile and attempts ---
+  const { profile, updateProfile } = useUserProfile();
+  const hasFreeAttempts = profile.freeAttempts > 0;
+  const hasPurchasedAttempts = profile.bonusAttempts > 0;
+  const hasNoAttempts = !hasFreeAttempts && !hasPurchasedAttempts;
+
   // --- Anti-cheat state ---
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [deviceFingerprint, setDeviceFingerprint] = useState<string | null>(null);
@@ -354,7 +362,25 @@ function GameEngine() {
   }, [state.gameState, state.taps, deviceInfo, deviceFingerprint, performanceScore, state.score, integrityHash]);
 
   // UI event handlers
-  const handleStart = () => dispatch({ type: "START_GAME" });
+  const handleStart = useCallback(() => {
+    if (hasNoAttempts) {
+      toast.error("No game attempts available. Please purchase more attempts.");
+      return;
+    }
+
+    // Consume free attempts first, then purchased attempts
+    if (hasFreeAttempts) {
+      updateProfile({
+        freeAttempts: Math.max(0, profile.freeAttempts - 1)
+      });
+    } else if (hasPurchasedAttempts) {
+      updateProfile({
+        bonusAttempts: Math.max(0, profile.bonusAttempts - 1)
+      });
+    }
+
+    dispatch({ type: "START_GAME" });
+  }, [hasFreeAttempts, hasPurchasedAttempts, hasNoAttempts, profile.freeAttempts, profile.bonusAttempts, updateProfile]);
   const handleTap = () => dispatch({ type: "TAP", timestamp: Date.now() });
   const handleReset = () => dispatch({ type: "RESET_GAME" });
   const handleEnd = () => dispatch({ type: "END_GAME" });
@@ -390,10 +416,11 @@ function GameEngine() {
           <Button 
             variant="primary"
             onClick={handleStart}
-            className="w-full bg-mint-green hover:bg-mint-green/90 focus:ring-mint-green/50 flex items-center justify-center gap-2 py-3 text-lg"
+            disabled={hasNoAttempts}
+            className={`w-full ${hasNoAttempts ? 'bg-gray-400 cursor-not-allowed' : 'bg-mint-green hover:bg-mint-green/90 focus:ring-mint-green/50'} flex items-center justify-center gap-2 py-3 text-lg`}
           >
             <SpaceInvaderIcon className="text-black" />
-            <span>Start Game</span>
+            <span>{hasNoAttempts ? 'No Attempts Left' : 'Start Game'}</span>
           </Button>
         )}
       </div>

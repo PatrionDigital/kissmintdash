@@ -4,9 +4,10 @@ import { useUserProfile } from "../../src/context/UserContext";
 import { useAccount, useContractRead } from "wagmi";
 import Image from "next/image";
 import { sdk } from '@farcaster/frame-sdk';
+import NumberFlow from '@number-flow/react';
 // import { TokenTransactionHistory } from "./TokenTransactionHistory"; // Recent Transactions panel hidden
 import { PurchaseAttemptsButton } from "./PurchaseAttemptsButton";
-import { checkFreeAttempt, formatTimeUntilNextAttempt, getTotalAttempts } from "../../src/utils/attemptsManager";
+import { checkFreeAttempt, getTotalAttempts } from "../../src/utils/attemptsManager";
 
 // Cast address to `0x${string}` type for wagmi compatibility
 const GLICO_ADDRESS = (process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe") as `0x${string}`;
@@ -57,7 +58,7 @@ export const UserProfileCard = () => {
   
   // State for next free attempt timer
   const [nextAttemptTime, setNextAttemptTime] = useState<number>(0);
-  const [nextAttemptTimer, setNextAttemptTimer] = useState<string>("");
+  const [timeRemaining, setTimeRemaining] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
   // Check and grant free attempts based on Tokyo time
   const checkAndGrantFreeAttempt = useCallback(() => {
@@ -65,7 +66,7 @@ export const UserProfileCard = () => {
     
     // Update the next attempt time
     setNextAttemptTime(nextAttemptTime);
-    setNextAttemptTimer(formatTimeUntilNextAttempt(nextAttemptTime));
+    updateTimeRemaining(nextAttemptTime);
     
     // Grant a free attempt if eligible
     if (shouldGrantAttempt) {
@@ -89,21 +90,37 @@ export const UserProfileCard = () => {
     // Check for free attempts
     checkAndGrantFreeAttempt();
     
+    // Update time remaining immediately
+    updateTimeRemaining(nextAttemptTime);
+    
     // Set up timer to update the next attempt countdown
     const timer = setInterval(() => {
-      setNextAttemptTimer(formatTimeUntilNextAttempt(nextAttemptTime));
+      updateTimeRemaining(nextAttemptTime);
       
       // Check if it's time to grant a new attempt
       if (Date.now() >= nextAttemptTime) {
         checkAndGrantFreeAttempt();
       }
-    }, 60000); // Update every minute
+    }, 1000); // Update every second
     
     return () => clearInterval(timer);
   }, [isConnected, address, refetchBalance, checkAndGrantFreeAttempt, nextAttemptTime]);
   
+  // Format time remaining into hh:mm:ss
+  const updateTimeRemaining = (nextTime: number) => {
+    const now = Date.now();
+    const remaining = Math.max(0, nextTime - now);
+    
+    const hours = Math.floor(remaining / (1000 * 60 * 60));
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+    
+    setTimeRemaining({ hours, minutes, seconds });
+  };
+  
   // Determine if we're loading the balance data
   const isLoadingData = isLoading || isBalanceLoading || isDecimalsLoading;
+  
   
   // Format the balance for display
   let glicoBalance = isLoadingData ? "Loading..." : "-";
@@ -177,7 +194,16 @@ export const UserProfileCard = () => {
           <div className="text-lg font-bold text-center tracking-wide">Attempts</div>
           <div className="text-xl font-semibold text-center tracking-wider">{getTotalAttempts(profile)}</div>
           {profile.freeAttempts === 0 && (
-            <div className="text-xs text-gray-400 mt-1">Next free: {nextAttemptTimer}</div>
+            <div className="text-xs text-gray-400 mt-1 flex items-center justify-center">
+              <span className="mr-1">Next free:</span>
+              <div className="inline-flex items-center font-mono">
+                <NumberFlow value={timeRemaining.hours} className="inline-block w-4 text-center" />
+                <span>:</span>
+                <NumberFlow value={timeRemaining.minutes} className="inline-block w-4 text-center" />
+                <span>:</span>
+                <NumberFlow value={timeRemaining.seconds} className="inline-block w-4 text-center" />
+              </div>
+            </div>
           )}
         </div>
         <div className="flex flex-col items-center w-1/2">

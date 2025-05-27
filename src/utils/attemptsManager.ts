@@ -108,23 +108,24 @@ function calculateNextAttemptTime(now: number, tokyoTime: Date): {
   };
 }
 
-// Format the time until next free attempt in a human-readable format
+// Format the time until next free attempt in hh:mm:ss format
 export function formatTimeUntilNextAttempt(nextAttemptTime: number): string {
   const now = Date.now();
-  const timeRemaining = nextAttemptTime - now;
+  const timeRemaining = Math.max(0, nextAttemptTime - now);
   
   if (timeRemaining <= 0) {
-    return "Available now";
+    return "00:00:00";
   }
   
   const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
   const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
   
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else {
-    return `${minutes}m`;
-  }
+  return [
+    hours.toString().padStart(2, '0'),
+    minutes.toString().padStart(2, '0'),
+    seconds.toString().padStart(2, '0')
+  ].join(':');
 }
 
 // Get total available attempts (free + bonus)

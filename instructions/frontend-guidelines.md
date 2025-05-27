@@ -43,6 +43,7 @@ KissMint DASH: Tap Runner '99 is a button-tapping game built on Farcaster, allow
 - **Farcaster SDK** - Farcaster integration
 - **ethers.js/wagmi** - Blockchain integration
 - **Rainbow Kit** - Wallet connection UI
+- **Sonner** - Toast notifications
 
 ### Styling
 
@@ -50,11 +51,51 @@ KissMint DASH: Tap Runner '99 is a button-tapping game built on Farcaster, allow
 - CSS Modules for component-specific styles
 - Custom design system based on the "Tap Fast, Run Far, Mint Glory" branding
 
+## Toast Notifications
+
+### Implementation
+
+We use Sonner for displaying toast notifications throughout the application. To use toasts:
+
+1. **Setup**: The Toaster is already configured in the root layout.
+
+   ```tsx
+   import { Toaster } from 'sonner';
+   
+   // In your layout component
+   <Toaster position="bottom-center" />
+   ```
+
+2. **Basic Usage**: Import and use the `toast` function anywhere in your components.
+
+   ```tsx
+   import { toast } from 'sonner';
+   
+   // Success toast
+   toast.success('Operation completed successfully');
+   
+   // Error toast
+   toast.error('An error occurred');
+   
+   // Loading toast
+   const toastId = toast.loading('Loading...');
+   // Later...
+   toast.dismiss(toastId);
+   ```
+
+3. **Best Practices**:
+   - Use for non-critical notifications that don't require user action
+   - Keep messages concise and actionable
+   - Use appropriate toast types (success, error, loading, etc.)
+   - For critical errors or actions requiring confirmation, consider using a modal instead
+
 ### State Management
 
-- React Context API for global state
-- React Query for server state management
-- Local state for component-specific state
+- **React Context API** for global state
+- **React Query** for server state management
+- **Local state** for component-specific state
+- **Redux** (if needed for complex state management)
+- **Zustand** (as a lightweight alternative to Redux)
 
 ## Code Structure
 

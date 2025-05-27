@@ -5,6 +5,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { UserProfileProvider } from "../src/context/UserContext";
 import VhsStaticBackground from "./components/VhsStaticBackground";
+import { Toaster } from "sonner";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -54,7 +55,10 @@ export default function RootLayout({
         {/* VHS Static Canvas Background */}
         <VhsStaticBackground />
         <UserProfileProvider>
-          <Providers>{children}</Providers>
+          <Providers>
+            {children}
+            <Toaster position="bottom-center" />
+          </Providers>
         </UserProfileProvider>
       </body>
     </html>
