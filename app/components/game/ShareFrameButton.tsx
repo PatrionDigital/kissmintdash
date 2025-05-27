@@ -12,6 +12,7 @@ interface ShareFrameButtonProps {
 interface WindowWithFarcaster extends Window {
   farcaster?: {
     // From @farcaster/frame-sdk
+    isInMiniApp: (timeoutMs?: number) => Promise<boolean>;
     actions?: {
       composeCast: (params: {
         text: string;
@@ -20,23 +21,10 @@ interface WindowWithFarcaster extends Window {
         channelKey?: string;
       }) => Promise<{ cast: { hash: string; channelKey?: string } | null }>;
     };
-    // Add other Farcaster SDK methods as needed
   };
 }
 
 declare let window: WindowWithFarcaster;
-
-// Check if we're running in a Farcaster frame
-const isFarcasterFrame = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  
-  try {
-    return window.self !== window.top;
-  } catch {
-    // If we can't access window.top, we're probably in a frame
-    return true;
-  }
-};
 
 export const ShareFrameButton = ({ 
   score, 
@@ -48,18 +36,21 @@ export const ShareFrameButton = ({
     const text = `Check out my score in KissMint Dash! ${trophyEmoji}`;
     const imageUrl = `${window.location.origin}/api/frame-image?score=${score}`;
     
-    if (isFarcasterFrame() && typeof window.farcaster !== 'undefined') {
-      // Running in Farcaster frame
-      try {
-        await sdk.actions.composeCast({
+    try {
+      // Check if we're in a Farcaster Mini App
+      const isMiniApp = await sdk.isInMiniApp?.() ?? false;
+      
+      if (isMiniApp && window.farcaster?.actions?.composeCast) {
+        // Running in Farcaster Mini App
+        await window.farcaster.actions.composeCast({
           text,
           embeds: [imageUrl] as [string],
         });
         return;
-      } catch (error) {
-        console.error('Error sharing to Farcaster:', error);
-        // Continue to fallback if there's an error
       }
+    } catch (error) {
+      console.error('Error sharing to Farcaster:', error);
+      // Continue to fallback if there's an error
     }
     
     // Fallback for web or if Farcaster sharing fails
