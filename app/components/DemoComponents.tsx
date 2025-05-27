@@ -180,7 +180,7 @@ export function Home() {
 }
 
 type IconProps = {
-  name: "heart" | "star" | "check" | "plus" | "arrow-right" | "gamepad" | "trophy" | "user";
+  name: "heart" | "star" | "check" | "plus" | "arrow-right" | "gamepad" | "trophy" | "user" | "shopping-cart" | "x-circle";
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -324,11 +324,48 @@ export function Icon({ name, size = "md", className = "" }: IconProps) {
         <path d="M7 9a5 5 0 0 1-5-5" />
       </svg>
     ),
+    'shopping-cart': (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Shopping Cart</title>
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+      </svg>
+    ),
+    'x-circle': (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Close</title>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+    ),
   };
+
+  const IconComponent = icons[name];
+  if (!IconComponent) return null;
 
   return (
     <span className={`inline-block ${sizeClasses[size]} ${className}`}>
-      {icons[name]}
+      {IconComponent}
     </span>
   );
 }

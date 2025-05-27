@@ -3,6 +3,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useUserProfile } from "../../src/context/UserContext";
 import { useNotification } from "@coinbase/onchainkit/minikit";
+import { Icon } from "./DemoComponents";
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 
 // Payment wallet address from environment variables
@@ -98,15 +99,13 @@ export const PurchaseAttemptsButton = () => {
       {/* Purchase Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[var(--app-card-bg)] rounded-xl p-6 max-w-md w-full mx-4 border-2 border-cyber">
-            <h2 className="text-xl font-bold mb-4 text-center">Purchase Game Attempts</h2>
-            
+          <div className="bg-[var(--app-card-bg)] rounded-xl p-6 max-w-md w-full mx-4">            
             {/* Package Selection */}
-            <div className="grid gap-3 mb-6">
+            <div className="grid gap-2 mb-4">
               {ATTEMPTS_PRICING.map((pkg) => (
                 <div 
                   key={pkg.attempts}
-                  className={`border-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                  className={`border-2 p-2 rounded-lg cursor-pointer transition-colors ${
                     selectedPackage.attempts === pkg.attempts 
                       ? "border-cyber bg-cyber/10" 
                       : "border-gray-700 hover:border-cyber/50"
@@ -114,14 +113,14 @@ export const PurchaseAttemptsButton = () => {
                   onClick={() => setSelectedPackage(pkg)}
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-lg">{pkg.attempts} Attempts</span>
+                    <span className="font-medium">{pkg.attempts} Attempts</span>
                     <span className="text-right">
-                      <span className="font-bold text-lg">{pkg.price}</span>
-                      <span className="text-sm ml-1">GLICO</span>
+                      <span className="font-medium">{pkg.price}</span>
+                      <span className="text-xs ml-1">GLICO</span>
                     </span>
                   </div>
                   {pkg.attempts > 1 && (
-                    <div className="text-right text-xs text-green-400 mt-1">
+                    <div className="text-right text-[10px] text-green-400">
                       {pkg.attempts === 3 ? "20% discount" : "30% discount"}
                     </div>
                   )}
@@ -129,19 +128,38 @@ export const PurchaseAttemptsButton = () => {
               ))}
             </div>
             
-            {/* Purchase Button with Transaction Component */}
-            <div className="flex flex-col items-center">
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-4">
+              {/* Cancel Button */}
+              <button
+                onClick={toggleModal}
+                className="flex-1 flex items-center justify-center gap-2 border border-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors"
+                aria-label="Cancel"
+              >
+                <Icon name="x-circle" className="w-5 h-5" />
+                <span>Cancel</span>
+              </button>
+              
+              {/* Purchase Button */}
               {isConnected ? (
                 <Transaction
                   calls={tokenTransferCall}
                   onSuccess={handleSuccess}
                   onError={handleError}
                   resetAfter={0}
+                  className="flex-1"
                 >
-                  <TransactionButton
-                    className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors"
-                    text={`Purchase ${selectedPackage.attempts} Attempts for ${selectedPackage.price} GLICO`}
-                  />
+                  <div className="w-full">
+                    <TransactionButton
+                      className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors"
+                      text={
+                        <div className="flex items-center justify-center gap-2">
+                          <Icon name="shopping-cart" className="w-5 h-5" />
+                          <span>Purchase</span>
+                        </div>
+                      }
+                    />
+                  </div>
                   <TransactionStatus className="mt-2 text-center">
                     <TransactionStatusLabel />
                     <TransactionStatusAction />
@@ -153,21 +171,13 @@ export const PurchaseAttemptsButton = () => {
                   </TransactionToast>
                 </Transaction>
               ) : (
-                <div className="flex flex-col items-center w-full mt-2">
+                <div className="flex-1">
                   <Wallet>
-                    <ConnectWallet />
+                    <ConnectWallet className="w-full justify-center" />
                   </Wallet>
                 </div>
               )}
             </div>
-            
-            {/* Close Button */}
-            <button
-              onClick={toggleModal}
-              className="w-full mt-4 border border-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}
