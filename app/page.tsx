@@ -108,14 +108,14 @@ export default function App() {
               aria-label="Features"
             />
           </div>
-          <div className="relative" style={{ width: '5.1rem', height: '5.1rem', marginTop: '-0.8rem', marginRight: '0.5rem' }}>
-            <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative overflow-hidden rounded-full border-2 border-pink-500" style={{ width: '5.1rem', height: '5.1rem', marginTop: '-0.8rem', marginRight: '0.5rem' }}>
+            <div className="absolute inset-0 flex items-center justify-center bg-white">
               <Image 
                 src="/logo.png" 
                 alt="Site Logo" 
                 width={81}
                 height={81}
-                className="h-full w-auto object-contain"
+                className="h-full w-full object-cover"
                 priority
               />
             </div>
