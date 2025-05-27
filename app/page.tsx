@@ -85,7 +85,6 @@ export default function App() {
       <div className="w-full max-w-md mx-auto px-4 py-3">
         <header className="flex items-center justify-between mb-3 bg-transparent z-[9999] relative h-24">
           <div className="flex-1 flex items-center justify-end gap-2 pr-2">
-            {saveFrameButton}
             <Button
               variant="primary"
               size="lg"
@@ -128,7 +127,18 @@ export default function App() {
           {activeTab === "leaderboard" && <Leaderboard setActiveTab={setActiveTab} />}
         </main>
 
-        <footer className="mt-2 pt-4 flex justify-center">
+        <footer className="mt-2 pt-4 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2">
+            {saveFrameButton}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[var(--ock-text-foreground-muted)] text-xs"
+              onClick={() => openUrl("https://base.org/builders/minikit")}
+            >
+              Built on Base with MiniKit
+            </Button>
+          </div>
           <Wallet className="z-10">
             <ConnectWallet>
               <Name className="text-inherit" />
@@ -143,14 +153,6 @@ export default function App() {
               <WalletDropdownDisconnect />
             </WalletDropdown>
           </Wallet>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-[var(--ock-text-foreground-muted)] text-xs"
-            onClick={() => openUrl("https://base.org/builders/minikit")}
-          >
-            Built on Base with MiniKit
-          </Button>
         </footer>
       </div>
     </div>
