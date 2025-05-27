@@ -258,17 +258,18 @@ function GameEngine() {
     if (state.gameState !== GameState.Running) return;
 
     const timer = setInterval(() => {
-      const newTimeLeft = state.timeLeft - 1;
-      if (newTimeLeft <= 0) {
+      // First update the timer
+      dispatch({ type: "TIMER_TICK" });
+      
+      // If we just hit 0, show the TIME'S UP! overlay
+      if (state.timeLeft - 1.5 <= 0) {
         clearInterval(timer);
         setShowTimesUp(true);
-        // Wait for the animation to finish before ending the game
+        // Wait for the overlay to show, then end the game
         setTimeout(() => {
           dispatch({ type: "END_GAME" });
           setShowTimesUp(false);
-        }, 1500); // Show for 1.5 seconds
-      } else {
-        dispatch({ type: "TIMER_TICK" });
+        }, 2500); // Show for 2.5 seconds
       }
     }, 1000);
 
