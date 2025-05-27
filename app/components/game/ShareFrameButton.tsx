@@ -33,7 +33,8 @@ export const ShareFrameButton = ({
 }: ShareFrameButtonProps) => {
   const handleShare = async () => {
     const trophyEmoji = String.fromCodePoint(0x1F3C6); // 🏆
-    const text = `Check out my score in KissMint Dash! ${trophyEmoji}`;
+    const appUrl = 'https://farcaster.xyz/miniapps/h41-FxJhcLVK/kissmintdash';
+    const text = `Check out my score in KissMint Dash! ${trophyEmoji}\n\n${appUrl}`;
     const imageUrl = `${window.location.origin}/api/frame-image?score=${score}`;
     
     try {
