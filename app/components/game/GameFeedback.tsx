@@ -11,7 +11,7 @@ export const GameFeedback: React.FC<GameFeedbackProps> = ({ trigger, type = 'vis
   const _dummy = type;
   // Placeholder: implement feedback effect later
   return trigger ? (
-    <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
       <div className="animate-ping w-32 h-32 rounded-full bg-accent opacity-50" />
     </div>
   ) : null;

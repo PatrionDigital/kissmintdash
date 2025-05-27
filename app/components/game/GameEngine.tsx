@@ -390,7 +390,10 @@ function GameEngine() {
         </Button>
       )}
       {state.gameState === GameState.Running && (
-        <TapButton onTap={handleTap} disabled={false} />
+        <div className="relative w-32 h-32 flex items-center justify-center">
+          <TapButton onTap={handleTap} disabled={false} />
+          <GameFeedback trigger={state.feedback} type="visual" />
+        </div>
       )}
       {state.gameState === GameState.Finished && (
         <>
@@ -401,7 +404,7 @@ function GameEngine() {
           </Button>
         </>
       )}
-      <GameFeedback trigger={state.feedback} type="visual" />
+      {/* GameFeedback moved inside tap button container */}
     </div>
   );
 };
