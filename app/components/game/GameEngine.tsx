@@ -361,9 +361,28 @@ function GameEngine() {
   // Render UI based on game state
   return (
     <div className="flex flex-col items-center gap-6">
-      <div className="flex flex-row items-center justify-center gap-6 w-full max-w-xs sm:max-w-md">
-        <ScoreCounter score={state.score} />
-        <GameTimer duration={state.timeLeft} onComplete={handleEnd} running={state.gameState === GameState.Running} />
+      <div className="w-full max-w-xs sm:max-w-md -mt-2">
+        <div className="flex justify-between gap-4">
+          {/* TAPS Container */}
+          <div className="w-1/2 border border-cyber rounded-lg overflow-hidden flex flex-col h-[120px]">
+            <div className="text-center pt-1 pb-0.5 bg-cyber/10">
+              <div className="text-sm font-bold text-cyber">TAPS</div>
+            </div>
+            <div className="flex-1 flex items-center justify-center pb-3">
+              <ScoreCounter score={state.score} />
+            </div>
+          </div>
+          
+          {/* TIMER Container */}
+          <div className="w-1/2 border border-cyber rounded-lg overflow-hidden flex flex-col h-[120px]">
+            <div className="text-center pt-1 pb-0.5 bg-cyber/10">
+              <div className="text-sm font-bold text-cyber">TIMER</div>
+            </div>
+            <div className="flex-1 flex items-center justify-center pb-3">
+              <GameTimer duration={state.timeLeft} onComplete={handleEnd} running={state.gameState === GameState.Running} />
+            </div>
+          </div>
+        </div>
       </div>
       {state.gameState === GameState.Idle && (
         <Button variant="secondary" onClick={handleStart}>
