@@ -30,6 +30,7 @@ interface DeviceInfo {
 // 1. Game States
 export enum GameState {
   Idle = "idle",
+  Ready = "ready",  // Ready for player to tap to start countdown
   Countdown = "countdown",
   Running = "running",
   Finished = "finished",
@@ -389,6 +390,13 @@ function GameEngine() {
   }, [state.gameState, countdown]);
 
   // UI event handlers
+  const handleStartGame = useCallback(() => {
+    // Start the countdown
+    setCountdown(3);
+    dispatch({ type: 'RESET_GAME' });
+    dispatch({ type: 'SET_GAME_STATE', payload: GameState.Countdown });
+  }, []);
+
   const handleStart = useCallback(() => {
     if (hasNoAttempts) {
       toast.error("No game attempts available. Please purchase more attempts.");
@@ -409,12 +417,8 @@ function GameEngine() {
     
     // Update the profile
     updateProfile(updatedProfile);
-    // Start the countdown after a small delay to ensure the profile is updated
-    setTimeout(() => {
-      setCountdown(3);
-      dispatch({ type: 'RESET_GAME' });
-      dispatch({ type: 'SET_GAME_STATE', payload: GameState.Countdown });
-    }, 100);
+    // Show the tap to start UI
+    dispatch({ type: 'SET_GAME_STATE', payload: GameState.Ready });
   }, [hasFreeAttempts, hasPurchasedAttempts, hasNoAttempts, profile, updateProfile]);
   const handleTap = () => dispatch({ type: "TAP", timestamp: Date.now() });
   const handleReset = () => dispatch({ type: "RESET_GAME" });
@@ -423,14 +427,29 @@ function GameEngine() {
   // Render UI based on game state
   return (
     <div className="flex flex-col items-center w-full gap-6 relative">
-      {/* Countdown Overlay */}
+      {/* Countdown Overlay - Semi-transparent but shows the game below */}
       {state.gameState === GameState.Countdown && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
           <div className="text-yellow-400 text-9xl font-bold animate-ping">
             {countdown}
           </div>
         </div>
       )}
+      
+      {/* Ready to start overlay - using onClick directly on the overlay */}
+      {state.gameState === GameState.Ready && (
+        <div 
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-40 cursor-pointer"
+          onClick={handleStartGame}
+        >
+          <div className="text-white text-2xl font-bold text-center">
+            <p className="text-4xl mb-4">Tap to Start</p>
+            <p className="text-lg text-gray-300">Get ready to tap as fast as you can!</p>
+          </div>
+        </div>
+      )}
+
+      {/* Game UI - Score and Timer */}
       <div className="w-full max-w-xs sm:max-w-md -mt-2 mx-auto">
         <div className="flex justify-between gap-4">
           {/* TAPS Container */}
@@ -454,6 +473,8 @@ function GameEngine() {
           </div>
         </div>
       </div>
+
+      {/* Start Button (only shown when game is idle) */}
       <div className="w-full px-4">
         {state.gameState === GameState.Idle && (
           <Button 
@@ -467,19 +488,25 @@ function GameEngine() {
           </Button>
         )}
       </div>
-      {state.gameState === GameState.Running && (
+
+      {/* Tap Button - Always visible except when game is idle or finished */}
+      {state.gameState !== GameState.Idle && state.gameState !== GameState.Finished && (
         <div className="relative w-32 h-32 flex items-center justify-center">
-          <TapButton onTap={handleTap} disabled={state.gameState !== GameState.Running} />
+          <TapButton 
+            onTap={state.gameState === GameState.Ready ? handleStartGame : handleTap} 
+            disabled={state.gameState !== GameState.Running} 
+          />
           <GameFeedback trigger={state.feedback} type="visual" />
         </div>
       )}
+
+      {/* Game Over Screen */}
       {state.gameState === GameState.Finished && (
         <div className="w-full">
           <div className="text-xl font-bold text-center mb-4">Game Over! Final Score: {state.score}</div>
           <AutoSubmitScore score={state.score} onReset={handleReset} />
         </div>
       )}
-      {/* GameFeedback moved inside tap button container */}
     </div>
   );
 };
@@ -492,10 +519,10 @@ type AutoSubmitScoreProps = {
 
 const AutoSubmitScore: React.FC<AutoSubmitScoreProps> = ({ score, onReset }) => {
   const { context } = useMiniKit();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const submitScore = async () => {
       try {
         const res = await fetch("/api/leaderboard", {
@@ -519,7 +546,7 @@ const AutoSubmitScore: React.FC<AutoSubmitScoreProps> = ({ score, onReset }) => 
     };
 
     submitScore();
-  }, [score, context?.user?.username]);
+  }, [score, context?.user?.username, context?.user?.displayName, context?.user?.fid]);
 
   return (
     <div className="w-full">
