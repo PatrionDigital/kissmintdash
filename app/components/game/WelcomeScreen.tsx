@@ -22,10 +22,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
           <Image
             src="/MintyFullBody.png"
             alt="Minty Character"
-            fill
-            sizes="100vw"
-            className="object-contain object-right-bottom"
+            width={800}
+            height={1200}
             priority
+            className="object-contain object-right-bottom w-full h-full"
+            unoptimized={process.env.NODE_ENV !== 'production'}
+            loading="eager"
           />
         </div>
       </div>
