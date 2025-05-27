@@ -63,10 +63,26 @@ export async function POST(req: NextRequest) {
   const nameStr = typeof name === 'object' ? 
     (name && 'username' in name ? String(name.username || 'Player') : 'Player') : 
     String(name);
-    
-  await redis.zadd(leaderboardKey(tab), {
-    score,
-    member: nameStr,
+
+  // Check if user already has a score
+  const currentScore = await redis.zscore(leaderboardKey(tab), nameStr);
+  
+  // Only update if no score exists or new score is higher
+  if (currentScore === null || score > Number(currentScore)) {
+    await redis.zadd(leaderboardKey(tab), {
+      score,
+      member: nameStr,
+    });
+    return NextResponse.json({ 
+      success: true, 
+      updated: true,
+      previousScore: currentScore ? Number(currentScore) : null
+    });
+  }
+  
+  return NextResponse.json({ 
+    success: true, 
+    updated: false,
+    currentScore: Number(currentScore)
   });
-  return NextResponse.json({ success: true });
 }
