@@ -27,12 +27,13 @@ import { Home } from "./components/DemoComponents";
 import { Features } from "./components/DemoComponents";
 import { useViewProfile } from '@coinbase/onchainkit/minikit';
 import Leaderboard from "./components/Leaderboard";
+import { WelcomeScreen } from "./components/game/WelcomeScreen";
 
-export default function App() {
+function MainContent() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const [frameAdded, setFrameAdded] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
-
+  
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
 
@@ -81,7 +82,8 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
+    <div className="relative min-h-screen">
+      <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       <div className="w-full max-w-md mx-auto px-4 py-3">
         <header className="flex items-center justify-between mb-3 bg-transparent z-[9999] relative h-24">
           <div className="flex-1 flex items-center justify-end gap-2 pr-2">
@@ -155,6 +157,25 @@ export default function App() {
           </Wallet>
         </footer>
       </div>
+      </div>
     </div>
+  );
+}
+
+export default function App() {
+  const [showWelcome, setShowWelcome] = useState(true);
+  
+  const handleStartGame = () => {
+    setShowWelcome(false);
+  };
+  
+  return (
+    <>
+      {showWelcome ? (
+        <WelcomeScreen onStart={handleStartGame} />
+      ) : (
+        <MainContent />
+      )}
+    </>
   );
 }

@@ -1,0 +1,45 @@
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('/fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.arcadeButton {
+  font-family: 'Press Start 2P', monospace;
+  background: transparent !important;
+  color: #3DFFC0 !important;
+  border: 2px solid #3DFFC0 !important;
+  text-shadow: 0 0 5px rgba(61, 255, 192, 0.7);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(61, 255, 192, 0.5);
+}
+
+.arcadeButton:hover {
+  background: rgba(61, 255, 192, 0.1) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(61, 255, 192, 0.8);
+}
+
+.arcadeButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 5px rgba(61, 255, 192, 0.5);
+}
+
+.arcadeButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(61, 255, 192, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.arcadeButton:hover::before {
+  left: 100%;
+}
