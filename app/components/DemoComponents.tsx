@@ -3,6 +3,7 @@
 import { type ReactNode } from "react";
 import { GameEngine } from "./game";
 import { UserProfileCard } from "./UserProfileCard";
+import { QuestList } from "./QuestList";
 
 type ButtonProps = {
   children?: ReactNode;
@@ -113,6 +114,7 @@ type FeaturesProps = {
 export function Features({ setActiveTab }: FeaturesProps) {
   return (
     <div className="space-y-6 animate-fade-in">
+      <QuestList />
       <Card title="Key Features">
         <ul className="space-y-3 mb-4">
           <li className="flex items-start">
@@ -157,12 +159,9 @@ export function Features({ setActiveTab }: FeaturesProps) {
   );
 }
 
-import { QuestList } from "./QuestList";
-
 export function Home() {
   return (
     <div className="space-y-6 animate-fade-in">
-
       <Card className="border-4 border-cyber">
         <UserProfileCard />
       </Card>
@@ -172,9 +171,6 @@ export function Home() {
           <GameEngine />
         </div>
       </Card>
-
-
-      <QuestList />
     </div>
   );
 }
