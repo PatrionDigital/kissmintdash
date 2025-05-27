@@ -6,7 +6,6 @@ export interface GameUserProfile {
   freeAttempts: number; // Free attempts (max 1, granted at midnight and noon Tokyo time)
   bonusAttempts: number; // Purchased attempts that roll over
   lastFreeAttemptTime: number; // Timestamp of when the last free attempt was granted
-  streak: number;
   balance: number;
   // Add other game-specific fields as needed
 }
@@ -17,10 +16,9 @@ export interface UserProfileContextValue {
 }
 
 const defaultProfile: GameUserProfile = {
-  freeAttempts: 0,
+  freeAttempts: 1, // Start with 1 free attempt
   bonusAttempts: 0,
-  lastFreeAttemptTime: 0,
-  streak: 0,
+  lastFreeAttemptTime: 0, // Will be set when the first attempt is used
   balance: 0,
 };
 

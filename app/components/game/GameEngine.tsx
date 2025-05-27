@@ -368,19 +368,25 @@ function GameEngine() {
       return;
     }
 
+    // First, update the profile to consume the attempt
+    const updatedProfile = { ...profile };
+    
     // Consume free attempts first, then purchased attempts
     if (hasFreeAttempts) {
-      updateProfile({
-        freeAttempts: Math.max(0, profile.freeAttempts - 1)
-      });
+      updatedProfile.freeAttempts = Math.max(0, profile.freeAttempts - 1);
+      // Set lastFreeAttemptTime when consuming a free attempt
+      updatedProfile.lastFreeAttemptTime = Date.now();
     } else if (hasPurchasedAttempts) {
-      updateProfile({
-        bonusAttempts: Math.max(0, profile.bonusAttempts - 1)
-      });
+      updatedProfile.bonusAttempts = Math.max(0, profile.bonusAttempts - 1);
     }
-
-    dispatch({ type: "START_GAME" });
-  }, [hasFreeAttempts, hasPurchasedAttempts, hasNoAttempts, profile.freeAttempts, profile.bonusAttempts, updateProfile]);
+    
+    // Update the profile
+    updateProfile(updatedProfile);
+    // Start the game after a small delay to ensure the profile is updated
+    setTimeout(() => {
+      dispatch({ type: 'START_GAME' });
+    }, 100);
+  }, [hasFreeAttempts, hasPurchasedAttempts, hasNoAttempts, profile, updateProfile]);
   const handleTap = () => dispatch({ type: "TAP", timestamp: Date.now() });
   const handleReset = () => dispatch({ type: "RESET_GAME" });
   const handleEnd = () => dispatch({ type: "END_GAME" });

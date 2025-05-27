@@ -23,15 +23,7 @@ export function checkFreeAttempt(profile: GameUserProfile): {
   const now = Date.now();
   const tokyoTime = new Date(now + TOKYO_TIMEZONE_OFFSET);
   
-  // Get the last time a free attempt was granted
-  const lastAttemptTime = profile.lastFreeAttemptTime;
-  
-  // If user already has a free attempt, no need to grant another
-  if (profile.freeAttempts >= 1) {
-    return calculateNextAttemptTime(now, tokyoTime);
-  }
-  
-  // Get the current Tokyo day
+  // Get the current Tokyo day and hour
   const tokyoDay = tokyoTime.getUTCDate();
   const tokyoHour = tokyoTime.getUTCHours();
   
@@ -50,16 +42,22 @@ export function checkFreeAttempt(profile: GameUserProfile): {
     12, 0, 0, 0
   )).getTime() - TOKYO_TIMEZONE_OFFSET;
   
+  // If user already has a free attempt, calculate next refresh time
+  if (profile.freeAttempts >= 1) {
+    return calculateNextAttemptTime(now, tokyoTime);
+  }
+  
   // Determine if we should grant an attempt
   let shouldGrantAttempt = false;
+  const lastAttemptTime = profile.lastFreeAttemptTime || 0;
   
   // If it's after noon and the last attempt was before noon, grant an attempt
-  if (tokyoHour >= 12 && lastAttemptTime < lastNoon) {
-    shouldGrantAttempt = true;
-  }
-  // If it's after midnight and the last attempt was before midnight, grant an attempt
-  else if (lastAttemptTime < lastMidnight) {
-    shouldGrantAttempt = true;
+  if (tokyoHour >= 12) {
+    shouldGrantAttempt = lastAttemptTime < lastNoon;
+  } 
+  // If it's after midnight, grant an attempt if last attempt was before midnight
+  else {
+    shouldGrantAttempt = lastAttemptTime < lastMidnight;
   }
   
   // Calculate the next attempt time

@@ -60,7 +60,7 @@ export const UserProfileCard = () => {
   const [nextAttemptTime, setNextAttemptTime] = useState<number>(0);
   const [timeRemaining, setTimeRemaining] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
-  // Check and grant free attempts based on Tokyo time
+  // Check and grant free attempts
   const checkAndGrantFreeAttempt = useCallback(() => {
     const { shouldGrantAttempt, nextAttemptTime } = checkFreeAttempt(profile);
     
@@ -90,15 +90,13 @@ export const UserProfileCard = () => {
     // Check for free attempts
     checkAndGrantFreeAttempt();
     
-    // Update time remaining immediately
-    updateTimeRemaining(nextAttemptTime);
-    
     // Set up timer to update the next attempt countdown
     const timer = setInterval(() => {
+      const now = Date.now();
       updateTimeRemaining(nextAttemptTime);
       
       // Check if it's time to grant a new attempt
-      if (Date.now() >= nextAttemptTime) {
+      if (now >= nextAttemptTime) {
         checkAndGrantFreeAttempt();
       }
     }, 1000); // Update every second
@@ -188,28 +186,22 @@ export const UserProfileCard = () => {
       </div>
 
 
-      {/* Attempts and Streak labels/values aligned */}
-      <div className="flex flex-row w-full justify-center mt-2">
-        <div className="flex flex-col items-center w-1/2">
-          <div className="text-lg font-bold text-center tracking-wide">Attempts</div>
-          <div className="text-xl font-semibold text-center tracking-wider">{getTotalAttempts(profile)}</div>
-          {profile.freeAttempts === 0 && (
-            <div className="text-xs text-gray-400 mt-1 flex items-center justify-center">
-              <span className="mr-1">Next free:</span>
-              <div className="inline-flex items-center font-mono">
-                <NumberFlow value={timeRemaining.hours} className="inline-block w-4 text-center" />
-                <span>:</span>
-                <NumberFlow value={timeRemaining.minutes} className="inline-block w-4 text-center" />
-                <span>:</span>
-                <NumberFlow value={timeRemaining.seconds} className="inline-block w-4 text-center" />
-              </div>
+      {/* Attempts display */}
+      <div className="flex flex-col items-center w-full mt-2">
+        <div className="text-lg font-bold text-center tracking-wide">Attempts</div>
+        <div className="text-2xl font-semibold text-center tracking-wider">{getTotalAttempts(profile)}</div>
+        {profile.freeAttempts === 0 && (
+          <div className="text-xs text-gray-400 mt-1 flex items-center justify-center">
+            <span className="mr-1">Next free:</span>
+            <div className="inline-flex items-center font-mono">
+              <NumberFlow value={timeRemaining.hours} className="inline-block w-4 text-center" />
+              <span>:</span>
+              <NumberFlow value={timeRemaining.minutes} className="inline-block w-4 text-center" />
+              <span>:</span>
+              <NumberFlow value={timeRemaining.seconds} className="inline-block w-4 text-center" />
             </div>
-          )}
-        </div>
-        <div className="flex flex-col items-center w-1/2">
-          <div className="text-lg font-bold text-center tracking-wide">Streak</div>
-          <div className="text-xl font-semibold text-center tracking-wider">{profile.streak}</div>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Purchase Attempts Button */}
