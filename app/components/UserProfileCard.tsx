@@ -189,10 +189,7 @@ export const UserProfileCard = () => {
       {/* Purchase Attempts Button */}
       <PurchaseAttemptsButton />
       
-      {/* Transaction History Section */}
-      {isConnected && address && (
-        {/* <TokenTransactionHistory tokenAddress={GLICO_ADDRESS} /> */}
-      )}
+
     </>
   );
 };
