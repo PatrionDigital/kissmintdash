@@ -140,14 +140,9 @@ export function Features({ setActiveTab }: FeaturesProps) {
   );
 }
 
-type HomeProps = {
-  setActiveTab: (tab: string) => void;
-};
-
-
 import { QuestList } from "./QuestList";
 
-export function Home({ setActiveTab }: HomeProps) {
+export function Home() {
   return (
     <div className="space-y-6 animate-fade-in">
 
@@ -161,24 +156,6 @@ export function Home({ setActiveTab }: HomeProps) {
         </div>
       </Card>
 
-      <Card title="Game Menu">
-        <div className="flex flex-col gap-3">
-          <Button
-            onClick={() => setActiveTab("leaderboard")}
-            icon={<Icon name="trophy" size="sm" />}
-            variant="primary"
-          >
-            Leaderboard
-          </Button>
-          <Button
-            onClick={() => setActiveTab("features")}
-            icon={<Icon name="star" size="sm" />}
-            variant="primary"
-          >
-            Features
-          </Button>
-        </div>
-      </Card>
 
       <QuestList />
     </div>

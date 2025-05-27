@@ -116,10 +116,9 @@ export default function App() {
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               className="ml-2 p-1"
               aria-label="Site Logo"
-              onClick={() => setActiveTab("home")}
             >
               <Image src="/logo.png" alt="Site Logo" width={32} height={32} className="h-8 w-auto" />
             </Button>
@@ -127,7 +126,7 @@ export default function App() {
         </header>
 
         <main className="flex-1">
-          {activeTab === "home" && <Home setActiveTab={setActiveTab} />}
+          {activeTab === "home" && <Home />}
           {activeTab === "features" && <Features setActiveTab={setActiveTab} />}
           {activeTab === "leaderboard" && <Leaderboard setActiveTab={setActiveTab} />}
         </main>
