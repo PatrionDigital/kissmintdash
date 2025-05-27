@@ -98,8 +98,8 @@ export const PurchaseAttemptsButton = () => {
 
       {/* Purchase Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[var(--app-card-bg)] rounded-xl p-6 max-w-md w-full mx-4">            
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 pt-4">
+          <div className="bg-[var(--app-card-bg)] rounded-xl p-6 max-w-md w-full mx-0">            
             {/* Package Selection */}
             <div className="grid gap-2 mb-4">
               {ATTEMPTS_PRICING.map((pkg) => (
@@ -133,7 +133,7 @@ export const PurchaseAttemptsButton = () => {
               {/* Cancel Button */}
               <button
                 onClick={toggleModal}
-                className="flex-1 flex items-center justify-center gap-2 border border-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 border border-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors h-[42px]"
                 aria-label="Cancel"
               >
                 <Icon name="x-circle" className="w-5 h-5" />
