@@ -83,44 +83,45 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       <div className="w-full max-w-md mx-auto px-4 py-3">
-        <header className="flex justify-between items-center mb-3 bg-[var(--app-background)] shadow-md z-[9999] relative">
-          <div>
-            <div className="flex items-center space-x-2">
-              
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
+        <header className="flex items-center justify-between mb-3 bg-transparent z-[9999] relative h-24">
+          <div className="flex-1 flex items-center justify-end gap-2 pr-2">
             {saveFrameButton}
             <Button
               variant="primary"
-              size="sm"
+              size="lg"
+              icon={<Icon name="user" size="md" />}
               onClick={handleViewProfile}
-            >
-              PROFILE
-            </Button>
+              aria-label="Profile"
+            />
             <Button
               variant="primary"
-              size="sm"
-              icon={<Icon name="trophy" size="sm" />}
+              size="lg"
+              icon={<Icon name="trophy" size="md" />}
               onClick={() => setActiveTab("leaderboard")}
-            >
-              Leaderboard
-            </Button>
+              aria-label="Leaderboard"
+            />
             <Button
               variant="primary"
-              size="sm"
-              icon={<Icon name="star" size="sm" />}
+              size="lg"
+              icon={<Icon name="star" size="md" />}
               onClick={() => setActiveTab("features")}
-            >
-              Features
-            </Button>
+              aria-label="Features"
+            />
+          </div>
+          <div className="flex-shrink-0 h-full">
             <Button
               variant="ghost"
-              size="sm"
-              className="ml-2 p-1"
+              className="p-0 hover:bg-transparent h-full w-24 flex items-center justify-center"
               aria-label="Site Logo"
             >
-              <Image src="/logo.png" alt="Site Logo" width={32} height={32} className="h-8 w-auto" />
+              <Image 
+                src="/logo.png" 
+                alt="Site Logo" 
+                width={96} 
+                height={96} 
+                className="h-5/6 w-auto object-contain" 
+                priority
+              />
             </Button>
           </div>
         </header>

@@ -5,7 +5,7 @@ import { GameEngine } from "./game";
 import { UserProfileCard } from "./UserProfileCard";
 
 type ButtonProps = {
-  children: ReactNode;
+  children?: ReactNode;
   variant?: "primary" | "secondary" | "outline" | "ghost";
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -40,19 +40,27 @@ export function Button({
   };
 
   const sizeClasses = {
-    sm: "text-xs px-2.5 py-1.5 rounded-md",
-    md: "text-sm px-4 py-2 rounded-lg",
-    lg: "text-base px-6 py-3 rounded-lg",
+    sm: "text-xs px-4 py-2 rounded-md w-12 h-8 flex items-center justify-center",
+    md: "text-sm px-6 py-2.5 rounded-lg w-16 h-10 flex items-center justify-center",
+    lg: "text-base px-8 py-3 rounded-lg w-20 h-12 flex items-center justify-center",
   };
+
+  const isIconOnly = !children && icon;
 
   return (
     <button
       type={type}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${
+        isIconOnly ? 'px-2' : ''
+      } ${className}`}
       onClick={onClick}
       disabled={disabled}
     >
-      {icon && <span className="flex items-center mr-2">{icon}</span>}
+      {icon && (
+        <span className={`flex items-center ${!isIconOnly ? 'mr-2' : ''}`}>
+          {icon}
+        </span>
+      )}
       {children}
     </button>
   );
@@ -163,7 +171,7 @@ export function Home() {
 }
 
 type IconProps = {
-  name: "heart" | "star" | "check" | "plus" | "arrow-right" | "gamepad" | "trophy";
+  name: "heart" | "star" | "check" | "plus" | "arrow-right" | "gamepad" | "trophy" | "user";
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -176,6 +184,22 @@ export function Icon({ name, size = "md", className = "" }: IconProps) {
   };
 
   const icons = {
+    user: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>User</title>
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
     heart: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
