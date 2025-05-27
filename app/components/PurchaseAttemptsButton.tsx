@@ -79,14 +79,21 @@ export const PurchaseAttemptsButton = () => {
 
   return (
     <>
-      {/* Purchase Button */}
-      <button
-        onClick={toggleModal}
-        className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors mt-4"
-        disabled={!isConnected}
-      >
-        Buy Game Attempts
-      </button>
+      {/* Purchase Button - Only show when connected */}
+      {isConnected ? (
+        <button
+          onClick={toggleModal}
+          className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors mt-4"
+        >
+          Buy Game Attempts
+        </button>
+      ) : (
+        <div className="w-full mt-4 flex justify-center">
+          <Wallet className="w-full max-w-xs">
+            <ConnectWallet className="w-full justify-center" />
+          </Wallet>
+        </div>
+      )}
 
       {/* Purchase Modal */}
       {isModalOpen && (
