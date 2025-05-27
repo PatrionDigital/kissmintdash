@@ -1,26 +1,25 @@
 {
-  "name": "kissmintdash",
-  "icon": "icon.png",
-  "icon_url": "https://kissmintdash.vercel.app/icon.png",
-  "splash": "https://kissmintdash.vercel.app/splash.png",
-  "splash_color": "#000000",
-  "background_color": "#000000",
-  "url": "https://kissmintdash.vercel.app",
-  "webhook_url": "https://kissmintdash.vercel.app/api/webhook",
-  "primary_category": "games",
-  "hero_image_url": "https://kissmintdash.vercel.app/hero.png",
-  "tagline": "Tap Fast, Run Far, Mint Glory",
-  "description": "Tap Fast, Run Far, Mint Glory. Compete for glory in 25 seconds.",
-  "og": {
-    "title": "kissmintdash",
-    "description": "Tap Fast, Run Far, Mint Glory. Compete for glory in 25 seconds.",
-    "image": "https://kissmintdash.vercel.app/hero.png"
-  },
-  "screenshots": [],
-  "version": "1.0.0",
   "accountAssociation": {
     "header": "eyJmaWQiOjEzODM3LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4RTA3ZDcxMDBkYzIwOGY0NWJCN0UzMmQ0MWFmNTc3MGQxNzRlNkYwYiJ9",
     "payload": "eyJkb21haW4iOiJraXNzbWludGRhc2gudmVyY2VsLmFwcCJ9",
     "signature": "MHhmMDQxNDM2N2RhMmIwNmQ4NGZjNWUzMTE2NzI4ZGExMjFkZTY4ZGYwYWI3Y2MyNzk1YzIwYWFhZDA5ZTFhOTljNTUzNDI4YWUxM2FjYWUzMmYwYzFkODFjZmM2MGQ2NjZhNGRiMDFmZDNmYmFiZDZiZDE0M2Q3YjY1ZDE1OTFlNjFi"
+  },
+  "frame": {
+    "version": "1",
+    "name": "kissmintdash",
+    "iconUrl": "https://kissmintdash.vercel.app/icon.png",
+    "splashImageUrl": "https://kissmintdash.vercel.app/splash.png",
+    "splashBackgroundColor": "#000000",
+    "homeUrl": "https://kissmintdash.vercel.app",
+    "webhookUrl": "https://kissmintdash.vercel.app/api/webhook",
+    "primaryCategory": "games",
+    "subtitle": "The ultimate tap challenge",
+    "description": "Tap Fast, Run Far, Mint Glory. Compete for glory in 25 seconds.",
+    "heroImageUrl": "https://kissmintdash.vercel.app/hero.png",
+    "tagline": "Tap Fast, Run Far, Mint Glory",
+    "ogTitle": "kissmintdash",
+    "ogDescription": "Tap Fast, Run Far, Mint Glory. Compete for glory in 25 seconds.",
+    "ogImageUrl": "https://kissmintdash.vercel.app/hero.png",
+    "screenshotUrls": []
   }
 }
