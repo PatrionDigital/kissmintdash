@@ -163,7 +163,7 @@ export function Home() {
   return (
     <div className="space-y-6 animate-fade-in">
 
-      <Card title="User Profile" className="border-4 border-cyber">
+      <Card className="border-4 border-cyber">
         <UserProfileCard />
       </Card>
 
