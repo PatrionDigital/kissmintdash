@@ -20,6 +20,9 @@
     "ogTitle": "kissmintdash",
     "ogDescription": "Tap Fast, Run Far, Mint Glory. Compete for glory in 25 seconds.",
     "ogImageUrl": "https://kissmintdash.vercel.app/hero.png",
-    "screenshotUrls": []
+    "screenshotUrls": [],
+    "imageUrl": "https://kissmintdash.vercel.app/hero.png",
+    "buttonTitle": "Play Now",
+    "buttonUrl": "https://kissmintdash.vercel.app"
   }
 }
