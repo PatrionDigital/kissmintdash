@@ -162,14 +162,14 @@ export function Features({ setActiveTab }: FeaturesProps) {
 export function Home() {
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card className="border-4 border-cyber">
-        <UserProfileCard />
-      </Card>
-
-      <Card title="Tap Dash'99" className="my-8">
+      <Card title="Tap Runner'99" className="my-8">
         <div className="flex flex-col items-center justify-center">
           <GameEngine />
         </div>
+      </Card>
+
+      <Card className="border-4 border-cyber">
+        <UserProfileCard />
       </Card>
     </div>
   );
