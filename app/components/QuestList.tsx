@@ -1,18 +1,44 @@
 "use client";
 
 import React, { useState } from "react";
+import { useUserProfile } from "../../src/context/UserContext";
 import { Card } from "./DemoComponents";
 import { Button } from "./DemoComponents";
 import { Icon } from "./DemoComponents";
+import { ShareFrameButton } from "./game/ShareFrameButton";
+
+// Simple account hook replacement since we don't have the actual one
+const useAccount = () => ({
+  isConnected: true, // Assume connected for now
+});
 
 export interface Quest {
-  id: number;
+  id: number | string;
   text: string;
   completed: boolean;
+  reward?: {
+    type: 'GLICO';
+    amount: number;
+    claimed: boolean;
+  };
 }
 
+const SHARE_QUEST_ID = 'share-mintdash';
+
 export function QuestList() {
+  const { profile, updateProfile } = useUserProfile();
+  const { isConnected } = useAccount();
   const [quests, setQuests] = useState<Quest[]>([
+    { 
+      id: SHARE_QUEST_ID, 
+      text: "Share MintDash with your friends", 
+      completed: false,
+      reward: {
+        type: 'GLICO',
+        amount: 100, // 100 GLICO reward
+        claimed: false
+      }
+    },
     { id: 1, text: "Learn about MiniKit", completed: false },
     { id: 2, text: "Build a Mini App", completed: true },
     { id: 3, text: "Deploy to Base and go viral", completed: false },
@@ -21,20 +47,44 @@ export function QuestList() {
 
   const addQuest = () => {
     if (newQuest.trim() === "") return;
-    const newId = quests.length > 0 ? Math.max(...quests.map((q) => q.id)) + 1 : 1;
+    // Only consider numeric IDs when calculating the next ID
+    const numericIds = quests
+      .map(q => typeof q.id === 'number' ? q.id : 0);
+    const newId = quests.length > 0 ? Math.max(...numericIds, 0) + 1 : 1;
     setQuests([...quests, { id: newId, text: newQuest, completed: false }]);
     setNewQuest("");
   };
 
-  const toggleQuest = (id: number) => {
-    setQuests(
-      quests.map((quest) =>
-        quest.id === id ? { ...quest, completed: !quest.completed } : quest
-      )
-    );
+  const toggleQuest = (id: number | string) => {
+    if (typeof id === 'string' && id === SHARE_QUEST_ID) {
+      // For the share quest, we'll handle it via the onShareComplete callback
+      return;
+    }
+    setQuests(prevQuests => {
+      const updatedQuests = prevQuests.map(quest => {
+        if (quest.id === id) {
+          const updatedQuest = { ...quest, completed: !quest.completed };
+          
+          // If this is the share quest being completed and it has a reward
+          if (id === SHARE_QUEST_ID && updatedQuest.completed && updatedQuest.reward && !updatedQuest.reward.claimed) {
+            // Update the reward to claimed
+            updatedQuest.reward.claimed = true;
+            // Update user's GLICO balance
+            updateProfile({
+              balance: (profile.balance || 0) + (updatedQuest.reward.amount || 0)
+            });
+          }
+          
+          return updatedQuest;
+        }
+        return quest;
+      });
+      
+      return updatedQuests;
+    });
   };
 
-  const deleteQuest = (id: number) => {
+  const deleteQuest = (id: number | string) => {
     setQuests(quests.filter((quest) => quest.id !== id));
   };
 
@@ -83,20 +133,52 @@ export function QuestList() {
                     className="text-[var(--app-background)]"
                   />
                 )}
-                <label
-                  htmlFor={`quest-${quest.id}`}
-                  className={`text-[var(--app-foreground-muted)] cursor-pointer ${quest.completed ? "line-through opacity-70" : ""}`}
-                >
-                  {quest.text}
-                </label>
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor={`quest-${quest.id}`}
+                    className={`text-[var(--app-foreground-muted)] cursor-pointer ${quest.completed ? "line-through opacity-70" : ""}`}
+                  >
+                    {quest.text}
+                  </label>
+                  {quest.reward && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-bubblegum/20 text-bubblegum">
+                      {quest.reward.amount} GLICO
+                    </span>
+                  )}
+                  {quest.id === SHARE_QUEST_ID && isConnected && (
+                    <ShareFrameButton 
+                      onShareComplete={() => {
+                        setQuests(prevQuests => 
+                          prevQuests.map(q => 
+                            q.id === SHARE_QUEST_ID 
+                              ? { 
+                                  ...q, 
+                                  completed: true,
+                                  reward: q.reward ? { ...q.reward, claimed: true } : undefined
+                                
+                                } 
+                              : q
+                          )
+                        );
+                        // Update user's balance
+                        updateProfile({
+                          balance: (profile?.balance || 0) + 100 // 100 GLICO reward
+                        });
+                      }}
+                      className="ml-2"
+                    />
+                  )}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => deleteQuest(quest.id)}
-                className="text-[var(--app-foreground-muted)] hover:text-accent"
-              >
-                ×
-              </button>
+              {!quest.reward && (
+                <button
+                  type="button"
+                  onClick={() => deleteQuest(quest.id)}
+                  className="text-[var(--app-foreground-muted)] hover:text-accent"
+                >
+                  ×
+                </button>
+              )}
             </li>
           ))}
         </ul>

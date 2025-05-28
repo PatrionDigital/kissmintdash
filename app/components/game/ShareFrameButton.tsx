@@ -3,9 +3,10 @@ import { FarcasterArchIcon } from "../icons/FarcasterArchIcon";
 import { sdk } from "@farcaster/frame-sdk";
 
 interface ShareFrameButtonProps {
-  score: number;
+  score?: number;
   disabled?: boolean;
   className?: string;
+  onShareComplete?: () => void;
 }
 
 // Extend the Window interface to include Farcaster SDK properties
@@ -37,9 +38,10 @@ const openFallbackShare = (text: string, imageUrl: string) => {
 };
 
 export const ShareFrameButton = ({ 
-  score, 
+  score = 0, 
   disabled = false, 
-  className = '' 
+  className = '',
+  onShareComplete
 }: ShareFrameButtonProps) => {
   const handleShare = async () => {
     const trophyEmoji = String.fromCodePoint(0x1F3C6); // 🏆
@@ -59,8 +61,11 @@ export const ShareFrameButton = ({
             embeds: [imageUrl] as [string],
           });
           
-          // If user canceled the cast (result is undefined) or cast is null, fall back to web
-          if (result === undefined || result.cast === null) {
+          // If cast was successful, call the completion callback
+          if (result?.cast) {
+            onShareComplete?.();
+          } else if (result === undefined || result.cast === null) {
+            // User canceled or cast failed, fall back to web
             openFallbackShare(text, imageUrl);
           }
           return;
@@ -72,6 +77,8 @@ export const ShareFrameButton = ({
       
       // If not in Mini App or composeCast not available, use fallback
       openFallbackShare(text, imageUrl);
+      // Consider the share complete when using fallback
+      onShareComplete?.();
     } catch (error) {
       console.error('Error sharing to Farcaster:', error);
       // Fallback to web sharing on error
