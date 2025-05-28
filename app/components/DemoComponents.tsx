@@ -1,9 +1,9 @@
 "use client";
 
 import { type ReactNode } from "react";
+import Image from "next/image";
 import { GameEngine } from "./game";
 import { UserProfileCard } from "./UserProfileCard";
-import { QuestList } from "./QuestList";
 
 type ButtonProps = {
   children?: ReactNode;
@@ -114,31 +114,70 @@ type FeaturesProps = {
 export function Features({ setActiveTab }: FeaturesProps) {
   return (
     <div className="space-y-6 animate-fade-in">
-      <QuestList />
-      <Card title="Key Features">
+      <Card title="Kiss MINT Dash: Tap Runner '99">
+        <div className="space-y-4">
+          <p className="text-[var(--app-foreground-muted)]">
+            <span className="text-accent font-medium">$GLICO</span> is the token for Kiss MINT Dash, a tap game where you test how many times you can tap in 25 seconds. You get 2 free tries daily, and can buy more with <span className="text-accent font-medium">$GLICO</span> to compete for leaderboard prizes.
+          </p>
+          <p className="text-[var(--app-foreground-muted)]">
+            <span className="text-accent font-medium">$GLICO</span> is listed on{' '}
+            <a 
+              href="https://mint.club/token/base/GLICO" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
+              Mint.Club
+            </a>
+          </p>
+          <div className="flex justify-center items-center space-x-4 pt-2">
+            <a 
+              href="https://mint.club/token/base/GLICO" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex-shrink-0"
+            >
+              <Image 
+                src="/mint-logo.webp" 
+                alt="Mint.Club" 
+                width={80}
+                height={32}
+                className="h-8 w-auto"
+                priority
+              />
+            </a>
+            <span className="text-2xl">🤝</span>
+            <div className="flex-shrink-0 rounded-full overflow-hidden border-2 border-accent">
+              <Image 
+                src="/token.png" 
+                alt="GLICO Token" 
+                width={32}
+                height={32}
+                className="h-8 w-8 object-cover"
+                priority
+              />
+            </div>
+          </div>
+        </div>
+      </Card>
+      <Card title="How to Play">
         <ul className="space-y-3 mb-4">
           <li className="flex items-start">
             <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
-              Minimalistic and beautiful UI design
+              Tap Fast. You have <span className="text-pink-300 font-medium">25 seconds</span> on the clock.
             </span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
-              Responsive layout for all devices
+              You get 2 free attempts to <span className="text-cyan-400 font-medium">Bubble up your Score</span>.
             </span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
-              Dark mode support
-            </span>
-          </li>
-          <li className="flex items-start">
-            <Icon name="check" className="text-accent mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              OnchainKit integration
+              You can buy more Attempts with <span className="text-accent font-medium">$GLICO</span>.
             </span>
           </li>
         </ul>
