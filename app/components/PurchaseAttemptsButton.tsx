@@ -3,8 +3,9 @@ import React, { useState, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useUserProfile } from "../../src/context/UserContext";
 import { useNotification } from "@coinbase/onchainkit/minikit";
-import { Icon } from "./DemoComponents";
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
+import { ImTicket } from "react-icons/im";
+import { Icon } from "./DemoComponents";
 
 // Payment wallet address from environment variables
 import {
@@ -86,7 +87,10 @@ export const PurchaseAttemptsButton = () => {
           onClick={toggleModal}
           className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors mt-4"
         >
-          Buy Game Passes
+          <span className="flex items-center justify-center gap-2">
+            <ImTicket className="w-5 h-5" />
+            <span>Buy Game Passes</span>
+          </span>
         </button>
       ) : (
         <div className="w-full mt-4 flex justify-center">

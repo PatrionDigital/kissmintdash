@@ -7,6 +7,7 @@ import { sdk } from '@farcaster/frame-sdk';
 import NumberFlow from '@number-flow/react';
 // import { TokenTransactionHistory } from "./TokenTransactionHistory"; // Recent Transactions panel hidden
 import { PurchaseAttemptsButton } from "./PurchaseAttemptsButton";
+import { BuyGlicoButton } from "./BuyGlicoButton";
 import { checkFreeAttempt, getTotalAttempts } from "../../src/utils/attemptsManager";
 
 // Cast address to `0x${string}` type for wagmi compatibility
@@ -188,7 +189,7 @@ export const UserProfileCard = () => {
 
       {/* Game Passes display */}
       <div className="flex flex-col items-center w-full mt-2">
-        <div className="text-lg font-bold text-center tracking-wide">Game Passes</div>
+        <div className="text-lg font-bold text-center tracking-wide text-[#00C2FF]">Game Passes</div>
         <div className="text-2xl font-semibold text-center tracking-wider">{getTotalAttempts(profile)}</div>
         {profile.freeAttempts === 0 && (
           <div className="text-xs text-gray-400 mt-1 flex items-center justify-center">
@@ -204,8 +205,15 @@ export const UserProfileCard = () => {
         )}
       </div>
 
-      {/* Purchase Attempts Button */}
-      <PurchaseAttemptsButton />
+      {/* Action Buttons */}
+      <div className="flex gap-3 w-full mt-4">
+        <div className="w-1/2">
+          <PurchaseAttemptsButton />
+        </div>
+        <div className="w-1/2">
+          <BuyGlicoButton />
+        </div>
+      </div>
       
 
     </>
