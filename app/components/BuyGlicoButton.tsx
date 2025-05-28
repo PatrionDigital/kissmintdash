@@ -146,78 +146,16 @@ export function BuyGlicoButton({ onSuccess, onError }: BuyGlicoButtonProps) {
 
   return (
     <div className="w-full">
-      {/* Main Button */}
-      {isConnected ? (
-        <button
-          onClick={toggleModal}
-          className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors mt-4"
-        >
-          <span className="flex items-center justify-center gap-2">
-            <LiaEthereum className="w-7 h-7" />
-            <span>Buy $GLICO on Mint.Club</span>
-          </span>
-        </button>
-      ) : (
-        <div className="w-full mt-4">
-          <Wallet className="w-full">
-            <ConnectWallet className="w-full justify-center" />
-          </Wallet>
-        </div>
-      )}
-
-      {/* Purchase Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4">Purchase $GLICO</h3>
-            
-            <div className="mb-4">
-              <label htmlFor="glico-amount" className="block text-sm font-medium mb-2">
-                Amount of $GLICO to purchase
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  id="glico-amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-cyber focus:border-transparent"
-                  disabled={isPurchasing}
-                  min="0"
-                  step="0.1"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={toggleModal}
-                disabled={isPurchasing}
-                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePurchase}
-                disabled={isPurchasing || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
-                className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                  isPurchasing || !amount || isNaN(Number(amount)) || Number(amount) <= 0
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-cyber text-black hover:bg-cyber/90'
-                }`}
-              >
-                {isPurchasing ? (
-                  <span className="flex items-center">
-                    <span className="animate-spin mr-2">↻</span>
-                    Processing...
-                  </span>
-                ) : 'Purchase'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <a
+        href="https://mint.club/token/base/GLICO"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors mt-4 flex items-center justify-center gap-2 no-underline"
+        style={{ display: 'inline-flex' }}
+      >
+        <LiaEthereum className="w-7 h-7" />
+        <span>Buy $GLICO on Mint.Club</span>
+      </a>
     </div>
   );
 };
