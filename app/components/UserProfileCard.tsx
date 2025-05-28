@@ -186,9 +186,9 @@ export const UserProfileCard = () => {
       </div>
 
 
-      {/* Attempts display */}
+      {/* Game Passes display */}
       <div className="flex flex-col items-center w-full mt-2">
-        <div className="text-lg font-bold text-center tracking-wide">Attempts</div>
+        <div className="text-lg font-bold text-center tracking-wide">Game Passes</div>
         <div className="text-2xl font-semibold text-center tracking-wider">{getTotalAttempts(profile)}</div>
         {profile.freeAttempts === 0 && (
           <div className="text-xs text-gray-400 mt-1 flex items-center justify-center">

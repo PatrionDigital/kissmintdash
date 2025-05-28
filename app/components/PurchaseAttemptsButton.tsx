@@ -22,16 +22,16 @@ import {
 // Using ABI approach instead of function selector
 
 // Dynamic pricing model
-const ATTEMPTS_PRICING = [
-  { attempts: 1, price: 0.5 },  // 0.5 GLICO for 1 attempt
-  { attempts: 3, price: 1.2 },  // 1.2 GLICO for 3 attempts (20% discount)
-  { attempts: 10, price: 3.5 }, // 3.5 GLICO for 10 attempts (30% discount)
+const GAME_PASS_PRICING = [
+  { passes: 1, price: 0.5 },  // 0.5 GLICO for 1 pass
+  { passes: 3, price: 1.2 },  // 1.2 GLICO for 3 passes (20% discount)
+  { passes: 10, price: 3.5 }, // 3.5 GLICO for 10 passes (30% discount)
 ];
 
 export const PurchaseAttemptsButton = () => {
   const { isConnected, address } = useAccount();
   const { profile, updateProfile } = useUserProfile();
-  const [selectedPackage, setSelectedPackage] = useState(ATTEMPTS_PRICING[0]);
+  const [selectedPackage, setSelectedPackage] = useState(GAME_PASS_PRICING[0]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const sendNotification = useNotification();
 
@@ -53,12 +53,12 @@ export const PurchaseAttemptsButton = () => {
   // Handle transaction success
   const handleSuccess = useCallback(async () => {
     updateProfile({
-      bonusAttempts: profile.bonusAttempts + selectedPackage.attempts,
+      bonusAttempts: profile.bonusAttempts + selectedPackage.passes,
     });
     setIsModalOpen(false);
     await sendNotification({
       title: "Bonus Attempts Purchased!",
-      body: `You've successfully purchased ${selectedPackage.attempts} bonus attempts for ${selectedPackage.price} GLICO!`,
+      body: `You've successfully purchased ${selectedPackage.passes} Game Pass${selectedPackage.passes > 1 ? 'es' : ''} for ${selectedPackage.price} GLICO!`,
     });
   }, [profile, selectedPackage, sendNotification, updateProfile]);
 
@@ -86,7 +86,7 @@ export const PurchaseAttemptsButton = () => {
           onClick={toggleModal}
           className="w-full bg-cyber text-black font-bold py-2 px-4 rounded-lg hover:bg-cyber/80 transition-colors mt-4"
         >
-          Buy Game Attempts
+          Buy Game Passes
         </button>
       ) : (
         <div className="w-full mt-4 flex justify-center">
@@ -102,30 +102,32 @@ export const PurchaseAttemptsButton = () => {
           <div className="bg-[var(--app-card-bg)] rounded-xl p-6 max-w-md w-full mx-0">            
             {/* Package Selection */}
             <div className="grid gap-2 mb-4">
-              {ATTEMPTS_PRICING.map((pkg) => (
+              {GAME_PASS_PRICING.map((pkg) => {
+                const passesText = pkg.passes === 1 ? '1 Game Pass' : `${pkg.passes} Game Passes`;
+                return (
                 <div 
-                  key={pkg.attempts}
+                  key={pkg.passes}
                   className={`border-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                    selectedPackage.attempts === pkg.attempts 
+                    selectedPackage.passes === pkg.passes 
                       ? "border-cyber bg-cyber/10" 
                       : "border-gray-700 hover:border-cyber/50"
                   }`}
                   onClick={() => setSelectedPackage(pkg)}
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">{pkg.attempts} Attempts</span>
+                    <span className="font-medium">{passesText}</span>
                     <span className="text-right">
                       <span className="font-medium">{pkg.price}</span>
                       <span className="text-xs ml-1">GLICO</span>
                     </span>
                   </div>
-                  {pkg.attempts > 1 && (
+                  {pkg.passes > 1 && (
                     <div className="text-right text-[10px] text-green-400">
-                      {pkg.attempts === 3 ? "20% discount" : "30% discount"}
+                      {pkg.passes === 3 ? "20% discount" : "30% discount"}
                     </div>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
             
             {/* Action Buttons */}

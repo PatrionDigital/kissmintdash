@@ -171,13 +171,13 @@ export function Features({ setActiveTab }: FeaturesProps) {
           <li className="flex items-start">
             <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
-              You get 2 free attempts to <span className="text-cyan-400 font-medium">Bubble up your Score</span>.
+              You get <span className="text-cyber font-medium">2 free Game Passes</span> to <span className="text-cyan-400 font-medium">Bubble up your Score</span>.
             </span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-accent mt-1 mr-2" />
             <span className="text-[var(--app-foreground-muted)]">
-              You can buy more Attempts with <span className="text-accent font-medium">$GLICO</span>.
+              You can buy more <span className="text-cyber font-medium">Game Passes</span> with <span className="text-accent font-medium">$GLICO</span>.
             </span>
           </li>
         </ul>
