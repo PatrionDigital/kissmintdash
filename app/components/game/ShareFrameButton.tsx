@@ -19,12 +19,22 @@ interface WindowWithFarcaster extends Window {
         embeds?: string[];
         parent?: { type: string; hash: string };
         channelKey?: string;
-      }) => Promise<{ cast: { hash: string; channelKey?: string } | null }>;
+      }) => Promise<{ cast: { hash: string; channelKey?: string } | null } | undefined>;
     };
   };
 }
 
 declare let window: WindowWithFarcaster;
+
+const openFallbackShare = (text: string, imageUrl: string) => {
+  const fallbackText = encodeURIComponent(text);
+  const fallbackImageUrl = encodeURIComponent(imageUrl);
+  window.open(
+    `https://farcaster.xyz/~/compose?text=${fallbackText}&embeds[]=${fallbackImageUrl}`,
+    '_blank',
+    'noopener,noreferrer'
+  );
+};
 
 export const ShareFrameButton = ({ 
   score, 
@@ -42,26 +52,31 @@ export const ShareFrameButton = ({
       const isMiniApp = await sdk.isInMiniApp?.() ?? false;
       
       if (isMiniApp && window.farcaster?.actions?.composeCast) {
-        // Running in Farcaster Mini App
-        await window.farcaster.actions.composeCast({
-          text,
-          embeds: [imageUrl] as [string],
-        });
-        return;
+        try {
+          // Running in Farcaster Mini App
+          const result = await window.farcaster.actions.composeCast({
+            text,
+            embeds: [imageUrl] as [string],
+          });
+          
+          // If user canceled the cast (result is undefined) or cast is null, fall back to web
+          if (result === undefined || result.cast === null) {
+            openFallbackShare(text, imageUrl);
+          }
+          return;
+        } catch (error) {
+          console.error('Error in composeCast:', error);
+          // Continue to fallback if there's an error
+        }
       }
+      
+      // If not in Mini App or composeCast not available, use fallback
+      openFallbackShare(text, imageUrl);
     } catch (error) {
       console.error('Error sharing to Farcaster:', error);
-      // Continue to fallback if there's an error
+      // Fallback to web sharing on error
+      openFallbackShare(text, imageUrl);
     }
-    
-    // Fallback for web or if Farcaster sharing fails
-    const fallbackText = encodeURIComponent(text);
-    const fallbackImageUrl = encodeURIComponent(imageUrl);
-    window.open(
-      `https://farcaster.xyz/~/compose?text=${fallbackText}&embeds[]=${fallbackImageUrl}`,
-      '_blank',
-      'noopener,noreferrer'
-    );
   };
 
   return (
