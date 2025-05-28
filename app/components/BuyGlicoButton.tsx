@@ -20,19 +20,12 @@ export function BuyGlicoButton({ onSuccess, onError }: BuyGlicoButtonProps) {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const showNotification = useNotification();
   
-  const network = 'base';
-  const tokenSymbol = 'GLICO';
-  
   useEffect(() => {
     if (walletClient?.account?.address) {
       console.log('Wallet connected:', walletClient.account.address);
       console.log('Mint.Club SDK should automatically detect the connected wallet');
     }
   }, [walletClient]);
-  
-  const sendNotification = (notification: { title: string; body: string }): void => {
-    showNotification(notification);
-  };
 
   const toggleModal = (): void => {
     if (isPurchasing) {
