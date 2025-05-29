@@ -2,9 +2,10 @@
 import React, { useState } from "react";
 import { Card, Button, Icon } from "./DemoComponents";
 import { useMiniKit, useViewProfile } from "@coinbase/onchainkit/minikit";
-import { FaUserNinja, FaHome } from "react-icons/fa";
+import { FaUserNinja, FaHome, FaMusic } from "react-icons/fa";
 import { IoSpeedometer } from "react-icons/io5";
 import { BiSupport } from "react-icons/bi";
+import AudioPlayer from "./AudioPlayer";
 
 type MenuItem = {
   key: string;
@@ -98,107 +99,87 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
 
   // Render functions
   const renderSettingsPanel = () => (
-    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Settings</h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <FaMusic className="w-5 h-5 text-pink-500" />
+          <span className="font-medium">Background Music</span>
+        </div>
+        <AudioPlayer />
+      </div>
       
-      <div className="space-y-6">
-        {/* Sound Section */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Audio</h4>
-          <div className="space-y-4 pl-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Sound Effects</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={settings.soundEffects}
-                  onChange={(e) => handleSettingChange('soundEffects', e.target.checked)}
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Background Music</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={settings.music}
-                  onChange={(e) => handleSettingChange('music', e.target.checked)}
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Display Section */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Display</h4>
-          <div className="space-y-4 pl-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Theme</span>
-              <select 
-                value={settings.theme}
-                onChange={(e) => handleSettingChange('theme', e.target.value)}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="system">System</option>
-              </select>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Animation Speed</span>
-              <select 
-                value={settings.animationSpeed}
-                onChange={(e) => handleSettingChange('animationSpeed', e.target.value)}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-              >
-                <option value="slow">Slow</option>
-                <option value="medium">Medium</option>
-                <option value="fast">Fast</option>
-              </select>
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        
+        
+        <div className="space-y-6">
+          {/* Display Section */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Display</h4>
+            <div className="space-y-4 pl-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Theme</span>
+                <select 
+                  value={settings.theme}
+                  onChange={(e) => handleSettingChange('theme', e.target.value)}
+                  className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="system">System</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Animation Speed</span>
+                <select 
+                  value={settings.animationSpeed}
+                  onChange={(e) => handleSettingChange('animationSpeed', e.target.value)}
+                  className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                >
+                  <option value="slow">Slow</option>
+                  <option value="medium">Medium</option>
+                  <option value="fast">Fast</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Notifications Section */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Notifications</h4>
-          <div className="space-y-4 pl-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Enable Notifications</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={settings.notifications}
-                  onChange={(e) => handleSettingChange('notifications', e.target.checked)}
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
+          {/* Notifications Section */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Notifications</h4>
+            <div className="space-y-4 pl-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Enable Notifications</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={settings.notifications}
+                    onChange={(e) => handleSettingChange('notifications', e.target.checked)}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-2">
-          <button
-            type="button"
-            onClick={() => setActivePanel(null)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={saveSettings}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Save Changes
-          </button>
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setActivePanel(null)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={saveSettings}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Save Changes
+            </button>
+          </div>
         </div>
       </div>
     </div>
