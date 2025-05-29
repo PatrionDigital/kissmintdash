@@ -2,10 +2,11 @@
 import React, { useState } from "react";
 import { Card, Button, Icon } from "./DemoComponents";
 import { useMiniKit, useViewProfile } from "@coinbase/onchainkit/minikit";
-import { FaUserNinja, FaHome, FaMusic } from "react-icons/fa";
+import { FaUserNinja, FaHome, FaMusic, FaCog, FaUser, FaQuestionCircle, FaTimes, FaChevronLeft, FaMoon, FaSun, FaBell } from "react-icons/fa";
 import { IoSpeedometer } from "react-icons/io5";
 import { BiSupport } from "react-icons/bi";
 import AudioPlayer from "./AudioPlayer";
+import Notifications from "./Notifications";
 
 type MenuItem = {
   key: string;
@@ -101,12 +102,24 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
   const renderSettingsPanel = () => (
     <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Settings</h3>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <FaMusic className="w-5 h-5 text-pink-500" />
-          <span className="font-medium">Background Music</span>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <FaMusic className="w-5 h-5 text-pink-500" />
+            <span className="font-medium">Background Music</span>
+          </div>
+          <AudioPlayer />
         </div>
-        <AudioPlayer />
+        
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-2 mb-4">
+            <FaBell className="w-5 h-5 text-pink-500" />
+            <span className="font-medium">Notifications</span>
+          </div>
+          <div className="pl-2">
+            <Notifications />
+          </div>
+        </div>
       </div>
       
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -140,25 +153,6 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
                   <option value="medium">Medium</option>
                   <option value="fast">Fast</option>
                 </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Notifications Section */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Notifications</h4>
-            <div className="space-y-4 pl-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700 dark:text-gray-300">Enable Notifications</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
-                    checked={settings.notifications}
-                    onChange={(e) => handleSettingChange('notifications', e.target.checked)}
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
               </div>
             </div>
           </div>
