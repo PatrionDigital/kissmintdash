@@ -1,5 +1,4 @@
 import { Button } from "../DemoComponents";
-import { FarcasterArchIcon } from "../icons/FarcasterArchIcon";
 import { sdk } from "@farcaster/frame-sdk";
 
 interface ShareFrameButtonProps {
@@ -50,7 +49,7 @@ export const ShareFrameButton = ({
       disabled={disabled}
       className={`text-white ${className} flex items-center justify-center gap-2`}
     >
-      <FarcasterArchIcon className="text-white" />
+      <i className="fc fc-square-farcaster text-lg"></i>
       <span>Share on Farcaster</span>
     </Button>
   );
