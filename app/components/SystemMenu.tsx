@@ -78,24 +78,24 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
   // FAQ data
   const faqs = [
     {
-      id: 'what-is-kissmint',
-      question: 'What is KISS MINT?',
-      answer: 'KISS MINT is a fun and interactive platform where you can collect and trade digital assets, participate in games, and connect with other collectors.'
+      id: 'what-is-kissmint-dash',
+      question: 'What is Kiss MINT Dash?',
+      answer: "In a world where taps determine destiny, only the fastest fingers survive. KISSMINT DASH brings the adrenaline rush of the Running Man to your fingertips with a sweet twist! Compete daily for the highest score, build your $GLICO empire, and claim your spot on the leaderboard. Remember - in this game, you're either tapping or you're history! Fresh, fast, and dangerously addictive."
     },
     {
       id: 'how-to-play',
-      question: 'How do I start playing?',
-      answer: 'To get started, connect your wallet, browse the available collections, and start collecting! Each collection has its own unique mechanics and rewards.'
+      question: 'How do I start Playing?',
+      answer: "Press 'Start Game' and wait for the count down time to start. You have 25 seconds to tap the green button as many times as you can. Place on the Leaderboard and you could win prizes of $GLICO tokens."
     },
     {
       id: 'what-is-glico',
-      question: 'What is GLICO?',
-      answer: 'GLICO is our in-platform currency that you can use to purchase items, participate in special events, and unlock exclusive content.'
+      question: 'What is $GLICO?',
+      answer: "$GLICO is the ticker for Kiss MINT, a token created on [Mint.Club](https://mint.club/token/base/GLICO) and a child-token of Mint.Club's $MT token.\nYou can use $GLICO to buy extra Game Passes to play Kiss MINT Dash."
     },
     {
       id: 'troubleshooting',
-      question: 'I\'m having technical issues. What should I do?',
-      answer: 'Try refreshing your browser first. If the issue persists, please contact our support team with details about the problem you\'re experiencing.'
+      question: "I'm having technical issues..",
+      answer: "Try refreshing the app by clicking the elipsis menu (...) in the top right corner, and selecting \"Refresh\" in the menu."
     }
   ];
 
@@ -275,16 +275,16 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Contact Us</h4>
           <div className="space-y-3">
             <a
-              href="mailto:support@kissmint.xyz"
+              href="mailto:psd@patrion.xyz"
               className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              support@kissmint.xyz
+              Email: psd@patrion.xyz
             </a>
             <a
-              href="https://twitter.com/kissmint"
+              href="https://twitter.com/patriondigital"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
@@ -292,44 +292,12 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
               </svg>
-              @kissmint
+              @patriondigital
             </a>
           </div>
         </div>
 
-        {/* Documentation Links */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Documentation</h4>
-          <div className="grid grid-cols-1 gap-2">
-            <a
-              href="#"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Getting Started Guide
-            </a>
-            <a
-              href="#"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              FAQ & Troubleshooting
-            </a>
-            <a
-              href="#"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              API Documentation
-            </a>
-          </div>
-        </div>
+
       </div>
     </div>
   );
