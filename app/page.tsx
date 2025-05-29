@@ -110,14 +110,13 @@ function MainContent() {
               />
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-full border-2 border-pink-500" style={{ width: '5.1rem', height: '5.1rem', marginTop: '-0.8rem', marginRight: '0.5rem' }}>
-            <div className="absolute inset-0 flex items-center justify-center bg-white">
+          <div className="rounded-full border-2 border-pink-500 bg-white p-1" style={{ width: '5.1rem', height: '5.1rem', marginTop: '-0.8rem', marginRight: '0.5rem' }}>
+            <div className="relative h-full w-full">
               <Image 
                 src="/logo.png" 
                 alt="Site Logo" 
-                width={81}
-                height={81}
-                className="h-full w-full object-cover"
+                fill
+                className="object-contain p-2"
                 priority
               />
             </div>
