@@ -3,9 +3,11 @@ import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import AudioInitializer from "./components/AudioInitializer";
 import { UserProfileProvider } from "../src/context/UserContext";
 import VhsStaticBackground from "./components/VhsStaticBackground";
 import { Toaster } from "sonner";
+import AudioPlayer from "./components/AudioPlayer";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -57,10 +59,15 @@ export default function RootLayout({
         <VhsStaticBackground />
         <UserProfileProvider>
           <Providers>
+            <AudioInitializer />
             {children}
             <Toaster position="bottom-center" />
           </Providers>
         </UserProfileProvider>
+        {/* Global Audio Player Controls */}
+        <div className="fixed bottom-4 right-4 z-50">
+          <AudioPlayer showVolumeControl={false} />
+        </div>
       </body>
     </html>
   );
