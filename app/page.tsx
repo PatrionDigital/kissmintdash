@@ -112,8 +112,8 @@ function MainContent() {
           </div>
           {/* App Logo */}
           <div
-            className="relative rounded-full border-2 border-pink-500 overflow-hidden"
-            style={{ width: '5.1rem', height: '5.1rem', marginRight: '0.5rem' }}
+            className="absolute rounded-full border-2 border-pink-500 overflow-hidden"
+            style={{ width: '5.1rem', height: '5.1rem', right: '-0.4rem', bottom: '0.5rem' }}
           >
             <div className="absolute inset-0 flex items-center justify-center p-px"> {/* Minimal padding (1px) */}
               <Image
