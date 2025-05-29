@@ -2,11 +2,12 @@
 import React, { useState } from "react";
 import { Card, Button, Icon } from "./DemoComponents";
 import { useMiniKit, useViewProfile } from "@coinbase/onchainkit/minikit";
-import { FaUserNinja, FaHome, FaMusic, FaCog, FaUser, FaQuestionCircle, FaTimes, FaChevronLeft, FaMoon, FaSun, FaBell } from "react-icons/fa";
+import { FaUserNinja, FaHome, FaMusic, FaCog, FaUser, FaQuestionCircle, FaTimes, FaChevronLeft, FaMoon, FaSun, FaBell, FaPlusCircle } from "react-icons/fa";
 import { IoSpeedometer } from "react-icons/io5";
 import { BiSupport } from "react-icons/bi";
 import AudioPlayer from "./AudioPlayer";
 import Notifications from "./Notifications";
+import AddMiniApp from "./AddMiniApp";
 
 type MenuItem = {
   key: string;
@@ -122,41 +123,18 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
         </div>
       </div>
       
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-        
-        
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center space-x-2 mb-4">
+          <FaPlusCircle className="w-5 h-5 text-pink-500" />
+          <span className="font-medium">Farcaster Integration</span>
+        </div>
+        <div className="pl-2 mb-6">
+          <AddMiniApp />
+        </div>
+      </div>
+      
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="space-y-6">
-          {/* Display Section */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Display</h4>
-            <div className="space-y-4 pl-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700 dark:text-gray-300">Theme</span>
-                <select 
-                  value={settings.theme}
-                  onChange={(e) => handleSettingChange('theme', e.target.value)}
-                  className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="system">System</option>
-                </select>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700 dark:text-gray-300">Animation Speed</span>
-                <select 
-                  value={settings.animationSpeed}
-                  onChange={(e) => handleSettingChange('animationSpeed', e.target.value)}
-                  className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                >
-                  <option value="slow">Slow</option>
-                  <option value="medium">Medium</option>
-                  <option value="fast">Fast</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-2">
             <button
