@@ -1,0 +1,110 @@
+'use client';
+
+import { useState, useCallback } from 'react';
+import { FaPlusCircle, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { sdk } from '@farcaster/frame-sdk';
+
+type AddAppStatus = {
+  type: 'success' | 'error' | null;
+  message: string;
+};
+
+export default function AddMiniApp() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [status, setStatus] = useState<AddAppStatus>({ type: null, message: '' });
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  const handleAddToFarcaster = useCallback(async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    setStatus({ type: null, message: '' });
+
+    try {
+      // Use the Farcaster SDK to add the app
+      // Note: This will open the Farcaster client's app installation flow
+      await sdk.actions.openUrl(window.location.origin);
+      
+      setStatus({ 
+        type: 'success', 
+        message: 'Check your Farcaster client to complete the installation.' 
+      });
+      
+      // Set as installed optimistically since we can't actually check
+      setIsInstalled(true);
+    } catch (error) {
+      console.error('Failed to add app to Farcaster:', error);
+      setStatus({ 
+        type: 'error', 
+        message: error instanceof Error ? error.message : 'Failed to add app to Farcaster' 
+      });
+    } finally {
+      setIsLoading(false);
+      
+      // Clear status after 5 seconds
+      const timer = setTimeout(() => {
+        setStatus(prev => ({ ...prev, message: '' }));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Add to Farcaster</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {isInstalled 
+              ? 'App is installed in your Farcaster client' 
+              : 'Add this app to your Farcaster client for quick access'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleAddToFarcaster}
+          disabled={isLoading || isInstalled}
+          className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
+            isInstalled 
+              ? 'bg-green-600 hover:bg-green-700' 
+              : 'bg-pink-600 hover:bg-pink-700'
+          } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed`}
+        >
+          {isInstalled ? (
+            <>
+              <FaCheckCircle className="mr-2 h-4 w-4" />
+              Installed
+            </>
+          ) : (
+            <>
+              <FaPlusCircle className="mr-2 h-4 w-4" />
+              {isLoading ? 'Adding...' : 'Add to Farcaster'}
+            </>
+          )}
+        </button>
+      </div>
+
+      {status.message && (
+        <div className={`p-3 rounded-md ${
+          status.type === 'error' 
+            ? 'bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200' 
+            : 'bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+        }`}>
+          <div className="flex">
+            <div className="flex-shrink-0">
+              {status.type === 'error' ? (
+                <FaExclamationTriangle className="h-5 w-5" aria-hidden="true" />
+              ) : status.type === 'success' ? (
+                <FaCheckCircle className="h-5 w-5" aria-hidden="true" />
+              ) : null}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm">{status.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

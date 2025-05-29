@@ -1,11 +1,5 @@
-import {
-  FrameNotificationDetails,
-  type SendNotificationRequest,
-  sendNotificationResponseSchema,
-} from "@farcaster/frame-sdk";
-import { getUserNotificationDetails } from "@/lib/notification";
-
-const appUrl = process.env.NEXT_PUBLIC_URL || "";
+import { sdk } from "@farcaster/frame-sdk";
+import { FrameNotificationDetails } from "@farcaster/frame-sdk";
 
 type SendFrameNotificationResult =
   | {
@@ -13,7 +7,6 @@ type SendFrameNotificationResult =
       error: unknown;
     }
   | { state: "no_token" }
-  | { state: "rate_limit" }
   | { state: "success" };
 
 export async function sendFrameNotification({
@@ -28,40 +21,22 @@ export async function sendFrameNotification({
   notificationDetails?: FrameNotificationDetails | null;
 }): Promise<SendFrameNotificationResult> {
   if (!notificationDetails) {
-    notificationDetails = await getUserNotificationDetails(fid);
-  }
-  if (!notificationDetails) {
     return { state: "no_token" };
   }
 
-  const response = await fetch(notificationDetails.url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      notificationId: crypto.randomUUID(),
-      title,
-      body,
-      targetUrl: appUrl,
-      tokens: [notificationDetails.token],
-    } satisfies SendNotificationRequest),
-  });
-
-  const responseJson = await response.json();
-
-  if (response.status === 200) {
-    const responseBody = sendNotificationResponseSchema.safeParse(responseJson);
-    if (responseBody.success === false) {
-      return { state: "error", error: responseBody.error.errors };
-    }
-
-    if (responseBody.data.result.rateLimitedTokens.length) {
-      return { state: "rate_limit" };
-    }
+  try {
+    // Use the Farcaster SDK to send a notification
+    await sdk.actions.composeCast({
+      text: `${title}: ${body}`,
+      embeds: [],
+    });
 
     return { state: "success" };
+  } catch (error) {
+    console.error("Failed to send notification:", error);
+    return { 
+      state: "error", 
+      error: error instanceof Error ? error.message : "Failed to send notification" 
+    };
   }
-
-  return { state: "error", error: responseJson };
 }

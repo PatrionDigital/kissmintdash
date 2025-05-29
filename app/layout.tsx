@@ -3,9 +3,11 @@ import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import AudioInitializer from "./components/AudioInitializer";
 import { UserProfileProvider } from "../src/context/UserContext";
 import VhsStaticBackground from "./components/VhsStaticBackground";
 import { Toaster } from "sonner";
+import AudioPlayer from "./components/AudioPlayer";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -50,16 +52,22 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
+        <link rel="stylesheet" href="/farcaster/style.css" />
       </head>
       <body className="bg-background">
         {/* VHS Static Canvas Background */}
         <VhsStaticBackground />
         <UserProfileProvider>
           <Providers>
+            <AudioInitializer />
             {children}
             <Toaster position="bottom-center" />
           </Providers>
         </UserProfileProvider>
+        {/* Global Audio Player Controls */}
+        <div className="fixed bottom-4 right-4 z-50">
+          <AudioPlayer showVolumeControl={false} />
+        </div>
       </body>
     </html>
   );
