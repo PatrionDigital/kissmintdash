@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaVolumeUp, FaVolumeMute, FaPlay, FaPause } from 'react-icons/fa'; 
+import { FaVolumeUp, FaVolumeMute } from 'react-icons/fa'; 
+
+// Define a type for window with our globalAudio property
+interface WindowWithGlobalAudio extends Window {
+  globalAudio?: HTMLAudioElement;
+}
 
 interface AudioPlayerProps {
   showVolumeControl?: boolean;
@@ -22,9 +27,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) =
   const [isPlaying, setIsPlaying] = useState(getInitialIsPlayingState);
   const [volume, setVolume] = useState(0.5); // Default volume, will be synced from localStorage or globalAudio
 
-  const handleAudioError = useCallback((error: any) => {
+  const handleAudioError = useCallback((error: unknown) => {
     console.warn('AudioPlayer: Error with audio operation:', error);
-    if (error.name === 'NotAllowedError') {
+    if (typeof error === 'object' && error !== null && 'name' in error && error.name === 'NotAllowedError') {
       setIsPlaying(false);
       localStorage.setItem('audioIsPlaying', 'false'); 
     }
@@ -33,7 +38,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) =
   useEffect(() => {
     if (typeof window === 'undefined' || !('localStorage' in window)) return;
 
-    const globalAudio = (window as any).globalAudio as HTMLAudioElement | undefined;
+    const globalAudio = (window as WindowWithGlobalAudio).globalAudio;
     if (!globalAudio) {
       return; 
     }
@@ -84,6 +89,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) =
         globalAudio.removeEventListener('volumechange', handleVolumeChangeEvent);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 
   useEffect(() => {
@@ -94,7 +100,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) =
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('localStorage' in window)) return;
-    const globalAudio = (window as any).globalAudio as HTMLAudioElement | undefined;
+    const globalAudio = (window as WindowWithGlobalAudio).globalAudio;
     if (globalAudio) {
       globalAudio.volume = volume;
       localStorage.setItem('audioVolume', String(volume));
@@ -107,7 +113,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) =
   };
 
   const togglePlayPause = () => {
-    const globalAudio = (window as any).globalAudio as HTMLAudioElement | undefined;
+    const globalAudio = (window as WindowWithGlobalAudio).globalAudio;
     if (!globalAudio) return;
 
     const newIsPlaying = !isPlaying;
@@ -119,7 +125,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) =
     setIsPlaying(newIsPlaying); 
   };
   
-  if (typeof window === 'undefined' || !(window as any).globalAudio) {
+  if (typeof window === 'undefined' || !(window as WindowWithGlobalAudio).globalAudio) {
     return null; 
   }
 
