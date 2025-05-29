@@ -28,6 +28,9 @@ import { Features } from "./components/DemoComponents";
 import { useViewProfile } from '@coinbase/onchainkit/minikit';
 import Leaderboard from "./components/Leaderboard";
 import { WelcomeScreen } from "./components/game/WelcomeScreen";
+import SystemMenu from "./components/SystemMenu";
+import { IoIosSettings } from "react-icons/io";
+import { RiTrophyFill } from "react-icons/ri";
 
 function MainContent() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -75,39 +78,37 @@ function MainContent() {
     return null;
   }, [context, frameAdded, handleAddFrame]);
 
-  const viewProfile = useViewProfile();
 
-  const handleViewProfile = () => {
-    viewProfile();
-  };
 
   return (
     <div className="relative min-h-screen">
       <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       <div className="w-full max-w-md mx-auto px-4 py-3">
         <header className="flex items-center justify-between mb-3 bg-transparent z-[9999] relative h-24">
-          <div className="flex-1 flex items-center justify-end gap-2 pr-2">
-            <Button
-              variant="primary"
-              size="lg"
-              icon={<Icon name="user" size="md" />}
-              onClick={handleViewProfile}
-              aria-label="Profile"
-            />
-            <Button
-              variant="primary"
-              size="lg"
-              icon={<Icon name="trophy" size="md" />}
-              onClick={() => setActiveTab("leaderboard")}
-              aria-label="Leaderboard"
-            />
-            <Button
-              variant="primary"
-              size="lg"
-              icon={<Icon name="star" size="md" />}
-              onClick={() => setActiveTab("features")}
-              aria-label="Features"
-            />
+          <div className="flex-1 flex items-center justify-between gap-2 pr-2">
+            <div className="flex gap-2">
+              <Button
+                variant="primary"
+                size="lg"
+                icon={<IoIosSettings size={24} />}
+                onClick={() => setActiveTab("system")}
+                aria-label="System Menu"
+              />
+              <Button
+                variant="primary"
+                size="lg"
+                icon={<RiTrophyFill size={24} />}
+                onClick={() => setActiveTab("leaderboard")}
+                aria-label="Leaderboard"
+              />
+              <Button
+                variant="primary"
+                size="lg"
+                icon={<Icon name="star" size="md" />}
+                onClick={() => setActiveTab("features")}
+                aria-label="Features"
+              />
+            </div>
           </div>
           <div className="relative overflow-hidden rounded-full border-2 border-pink-500" style={{ width: '5.1rem', height: '5.1rem', marginTop: '-0.8rem', marginRight: '0.5rem' }}>
             <div className="absolute inset-0 flex items-center justify-center bg-white">
@@ -127,6 +128,7 @@ function MainContent() {
           {activeTab === "home" && <Home />}
           {activeTab === "features" && <Features setActiveTab={setActiveTab} />}
           {activeTab === "leaderboard" && <Leaderboard setActiveTab={setActiveTab} />}
+          {activeTab === "system" && <SystemMenu setActiveTab={setActiveTab} />}
         </main>
 
         <footer className="mt-2 pt-4 flex flex-col items-center gap-2">

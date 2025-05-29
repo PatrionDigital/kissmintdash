@@ -47,6 +47,13 @@
 - Create user context/provider for profile, attempts, streaks, and balances.
 - UI: Profile modal or screen.
 
+- [ ] **3.2. Profile Button in System Menu**
+  - Move Profile button from header to System menu
+  - Maintain existing `useViewProfile` functionality from MiniKit
+  - Ensure consistent styling with other menu items
+  - Verify mobile responsiveness
+  - Update any related tests or snapshots
+
 ---
 
 ## 4. Game Core Mechanics
