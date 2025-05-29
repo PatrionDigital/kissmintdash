@@ -1,13 +1,25 @@
 "use client";
 import React, { useState } from "react";
-import { Card, Button, Icon } from "./DemoComponents";
+import dynamic from 'next/dynamic';
+import { Card, Button } from "./DemoComponents";
 import { useMiniKit, useViewProfile } from "@coinbase/onchainkit/minikit";
-import { FaUserNinja, FaHome, FaMusic, FaCog, FaUser, FaQuestionCircle, FaTimes, FaChevronLeft, FaMoon, FaSun, FaBell, FaPlusCircle } from "react-icons/fa";
+import { FaUserNinja, FaHome, FaMusic, FaBell, FaPlusCircle } from "react-icons/fa";
+import Image from 'next/image';
 import { IoSpeedometer } from "react-icons/io5";
 import { BiSupport } from "react-icons/bi";
-import AudioPlayer from "./AudioPlayer";
-import Notifications from "./Notifications";
+// import AudioPlayer from "./AudioPlayer"; // Replaced with dynamic import
+// import Notifications from "./Notifications"; // Replaced with dynamic import
 import AddMiniApp from "./AddMiniApp";
+
+const DynamicNotifications = dynamic(() => import('./Notifications'), { 
+  ssr: false, 
+  loading: () => <p className="text-sm text-gray-500 dark:text-gray-400">Loading notification settings...</p> 
+});
+
+const DynamicAudioPlayer = dynamic(() => import('./AudioPlayer'), { 
+  ssr: false, 
+  loading: () => <p className="text-sm text-gray-500 dark:text-gray-400">Loading audio player...</p> 
+});
 
 type MenuItem = {
   key: string;
@@ -27,13 +39,6 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
   const farcasterUsername = context?.user?.username;
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
-  const [settings, setSettings] = useState({
-    soundEffects: true,
-    music: true,
-    notifications: true,
-    theme: 'system',
-    animationSpeed: 'medium',
-  });
 
   // Menu items
   const menuItems: MenuItem[] = [
@@ -57,19 +62,6 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
     },
   ];
 
-  // Settings handlers
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  const saveSettings = () => {
-    console.log('Saving settings:', settings);
-    setActivePanel(null);
-  };
-
   // FAQ handlers
   const toggleFaq = (id: string) => {
     setExpandedFaq(expandedFaq === id ? null : id);
@@ -80,7 +72,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
     {
       id: 'what-is-kissmint-dash',
       question: 'What is Kiss MINT Dash?',
-      answer: "In a world where taps determine destiny, only the fastest fingers survive. KISSMINT DASH brings the adrenaline rush of the Running Man to your fingertips with a sweet twist! Compete daily for the highest score, build your $GLICO empire, and claim your spot on the leaderboard. Remember - in this game, you're either tapping or you're history! Fresh, fast, and dangerously addictive."
+      answer: "In a world where taps determine destiny, only the fastest fingers survive. KISSMINT DASH brings the adrenaline rush of the Running Man to your fingertips with a sweet twist! Compete daily for the highest score, build your $GLICO empire, and claim your spot on the leaderboard. Remember - in this game, you&apos;re either tapping or you&apos;re history! Fresh, fast, and dangerously addictive."
     },
     {
       id: 'how-to-play',
@@ -90,7 +82,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
     {
       id: 'what-is-glico',
       question: 'What is $GLICO?',
-      answer: "$GLICO is the ticker for Kiss MINT, a token created on [Mint.Club](https://mint.club/token/base/GLICO) and a child-token of Mint.Club's $MT token.\nYou can use $GLICO to buy extra Game Passes to play Kiss MINT Dash."
+      answer: "$GLICO is the ticker for Kiss MINT, a token created on [Mint.Club](https://mint.club/token/base/GLICO) and a child-token of Mint.Club&apos;s $MT token.\nYou can use $GLICO to buy extra Game Passes to play Kiss MINT Dash."
     },
     {
       id: 'troubleshooting',
@@ -109,7 +101,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
             <FaMusic className="w-5 h-5 text-pink-500" />
             <span className="font-medium">Background Music</span>
           </div>
-          <AudioPlayer />
+          <DynamicAudioPlayer />
         </div>
         
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -118,7 +110,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
             <span className="font-medium">Notifications</span>
           </div>
           <div className="pl-2">
-            <Notifications />
+            <DynamicNotifications />
           </div>
         </div>
       </div>
@@ -146,7 +138,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
             </button>
             <button
               type="button"
-              onClick={saveSettings}
+              onClick={() => setActivePanel(null)}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Save Changes
@@ -172,11 +164,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
           {/* Profile Info */}
           <div className="flex flex-col items-center">
             {pfpUrl ? (
-              <img 
-                src={pfpUrl} 
-                alt={displayName}
-                className="w-16 h-16 rounded-full mb-3 border-2 border-gray-200 dark:border-gray-600"
-              />
+              <Image src={pfpUrl} alt={displayName} width={64} height={64} className="rounded-full border-2 border-pink-500 object-cover" />
             ) : (
               <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-600 mb-3 flex items-center justify-center">
                 <span className="text-2xl text-gray-700 dark:text-gray-200">
@@ -235,7 +223,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Need help?</h4>
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            We're here to help! Browse our FAQs or contact our support team for assistance.
+            We&apos;re here to help! Browse our FAQs or contact our support team for assistance.
           </p>
         </div>
 

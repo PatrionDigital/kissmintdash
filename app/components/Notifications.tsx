@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { FaBell, FaBellSlash, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { sdk } from '@farcaster/frame-sdk';
 
 type NotificationStatus = {
@@ -11,7 +10,6 @@ type NotificationStatus = {
 };
 
 export default function Notifications() {
-  const { context } = useMiniKit();
   const [isEnabled, setIsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<NotificationStatus>({ type: null, message: '' });

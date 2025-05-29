@@ -87,7 +87,6 @@ export async function POST(request: Request) {
       if (event.notificationDetails) {
         await setUserNotificationDetails(fid, event.notificationDetails);
         await sendFrameNotification({
-          fid,
           title: `Welcome to ${appName}`,
           body: `Thank you for adding ${appName}`,
         });
@@ -105,7 +104,6 @@ export async function POST(request: Request) {
       console.log("notifications_enabled", event.notificationDetails);
       await setUserNotificationDetails(fid, event.notificationDetails);
       await sendFrameNotification({
-        fid,
         title: `Welcome to ${appName}`,
         body: `Thank you for enabling notifications for ${appName}`,
       });

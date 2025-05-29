@@ -7,25 +7,11 @@ import {
 } from "@coinbase/onchainkit/minikit";
 import "./theme.css";
 import Image from "next/image";
-import {
-  Name,
-  Identity,
-  Address,
-  Avatar,
-  EthBalance,
-} from "@coinbase/onchainkit/identity";
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Button } from "./components/DemoComponents";
 import { Icon } from "./components/DemoComponents";
 import { Home } from "./components/DemoComponents";
 import { Features } from "./components/DemoComponents";
-import { useViewProfile } from '@coinbase/onchainkit/minikit';
 import Leaderboard from "./components/Leaderboard";
 import { WelcomeScreen } from "./components/game/WelcomeScreen";
 import SystemMenu from "./components/SystemMenu";

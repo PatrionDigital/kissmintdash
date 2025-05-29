@@ -16,13 +16,14 @@ const AudioInitializer: React.FC = () => {
       window.globalAudio.loop = true;
       window.globalAudio.preload = 'auto';
       window.globalAudio.volume = 0.5; // Default volume
+      window.globalAudio.muted = false; // Mute is pause, so audio element is never 'muted'
       
       // Get saved preferences for playing state
       // Default to playing if no preference is stored or if it's not explicitly 'false'
-      const savedPlaying = localStorage.getItem('audioPlaying') !== 'false';
+      const savedIsPlaying = localStorage.getItem('audioIsPlaying') !== 'false';
       
       // Attempt to play if not explicitly paused by user preference
-      if (savedPlaying) {
+      if (savedIsPlaying) {
         const playPromise = window.globalAudio.play();
         
         // Handle autoplay restrictions by browsers
@@ -31,7 +32,7 @@ const AudioInitializer: React.FC = () => {
             console.warn('Audio autoplay was prevented:', error);
             // If autoplay is blocked, update localStorage to reflect that audio is not playing
             if (error.name === 'NotAllowedError') {
-              localStorage.setItem('audioPlaying', 'false');
+              localStorage.setItem('audioIsPlaying', 'false');
               // Optionally, update any UI state here if needed, though AudioPlayer will also read this
             }
           });

@@ -3,11 +3,18 @@ import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import AudioInitializer from "./components/AudioInitializer";
+import dynamic from 'next/dynamic';
+// import AudioInitializer from "./components/AudioInitializer"; // Replaced with dynamic import
 import { UserProfileProvider } from "../src/context/UserContext";
 import VhsStaticBackground from "./components/VhsStaticBackground";
 import { Toaster } from "sonner";
-import AudioPlayer from "./components/AudioPlayer";
+// import AudioPlayer from "./components/AudioPlayer"; // Replaced with dynamic import
+
+const DynamicAudioInitializer = dynamic(() => import('./components/AudioInitializer'), { 
+  ssr: false,
+  // No loading UI for initializer as it's non-visual
+});
+
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -52,22 +59,18 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        <link rel="stylesheet" href="/farcaster/style.css" />
       </head>
       <body className="bg-background">
         {/* VHS Static Canvas Background */}
         <VhsStaticBackground />
         <UserProfileProvider>
           <Providers>
-            <AudioInitializer />
+            <DynamicAudioInitializer />
             {children}
             <Toaster position="bottom-center" />
           </Providers>
         </UserProfileProvider>
-        {/* Global Audio Player Controls */}
-        <div className="fixed bottom-4 right-4 z-50">
-          <AudioPlayer showVolumeControl={false} />
-        </div>
+        {/* Global Audio Player Controls Removed */}
       </body>
     </html>
   );

@@ -10,12 +10,10 @@ type SendFrameNotificationResult =
   | { state: "success" };
 
 export async function sendFrameNotification({
-  fid,
   title,
   body,
   notificationDetails,
 }: {
-  fid: number;
   title: string;
   body: string;
   notificationDetails?: FrameNotificationDetails | null;

@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { FaPlusCircle, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { sdk } from '@farcaster/frame-sdk';
 
 type AddAppStatus = {

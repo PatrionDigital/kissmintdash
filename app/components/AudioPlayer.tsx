@@ -1,143 +1,150 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { FaVolumeUp, FaVolumeMute } from "react-icons/fa";
+import React, { useState, useEffect, useCallback } from 'react';
+import { FaVolumeUp, FaVolumeMute, FaPlay, FaPause } from 'react-icons/fa'; 
 
 interface AudioPlayerProps {
   showVolumeControl?: boolean;
 }
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) => {
-  const [isPlaying, setIsPlaying] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('audioPlaying') !== 'false';
+// Helper function to get initial state from localStorage, only runs on client
+const getInitialIsPlayingState = () => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const storedIsPlaying = window.localStorage.getItem('audioIsPlaying');
+    if (storedIsPlaying !== null) {
+      return storedIsPlaying === 'true';
     }
-    return true; // Default if localStorage not available
-  });
-
-  const [volume, setVolume] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedVolume = localStorage.getItem('audioVolume');
-      return savedVolume ? parseFloat(savedVolume) : 0.5; // Default volume 0.5
-    }
-    return 0.5;
-  });
-
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Effect for initialization and syncing with globalAudio instance
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.globalAudio) {
-      audioRef.current = window.globalAudio;
-
-      // Sync isPlaying state with globalAudio and localStorage
-      const audioIsActuallyPlaying = !audioRef.current.paused;
-      const storedPreferenceAllowsPlay = localStorage.getItem('audioPlaying') !== 'false';
-
-      if (storedPreferenceAllowsPlay && !audioIsActuallyPlaying) {
-        // Autoplay was likely blocked, AudioInitializer handles localStorage update.
-        setIsPlaying(false);
-      } else {
-        setIsPlaying(storedPreferenceAllowsPlay);
-        // Ensure globalAudio reflects this if necessary
-        if (storedPreferenceAllowsPlay && audioRef.current.paused) {
-            audioRef.current.play().catch(e => console.warn("Initial play attempt in AudioPlayer failed", e));
-        } else if (!storedPreferenceAllowsPlay && !audioRef.current.paused) {
-            audioRef.current.pause();
-        }
-      }
-      
-      // Sync volume state with globalAudio and localStorage
-      const savedVolumeStr = localStorage.getItem('audioVolume');
-      const initialVolume = savedVolumeStr ? parseFloat(savedVolumeStr) : 0.5;
-      setVolume(initialVolume); 
-      audioRef.current.volume = initialVolume;
-
-      // Event listeners for external changes to globalAudio
-      const handleGlobalAudioPlayPause = () => {
-        if (window.globalAudio) setIsPlaying(!window.globalAudio.paused);
-      };
-      const handleGlobalAudioVolumeChange = () => {
-        if (window.globalAudio) setVolume(window.globalAudio.volume);
-      };
-
-      window.globalAudio.addEventListener('play', handleGlobalAudioPlayPause);
-      window.globalAudio.addEventListener('pause', handleGlobalAudioPlayPause);
-      window.globalAudio.addEventListener('volumechange', handleGlobalAudioVolumeChange);
-
-      return () => {
-        if (window.globalAudio) {
-          window.globalAudio.removeEventListener('play', handleGlobalAudioPlayPause);
-          window.globalAudio.removeEventListener('pause', handleGlobalAudioPlayPause);
-          window.globalAudio.removeEventListener('volumechange', handleGlobalAudioVolumeChange);
-        }
-      };
-    }
-  }, []); // Runs once on mount
-
-  // Effect to control audio playback when isPlaying state changes (user interaction or external)
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(error => {
-          console.warn('Error attempting to play audio via UI:', error);
-          if (error.name === 'NotAllowedError') {
-            setIsPlaying(false); // Update UI
-            localStorage.setItem('audioPlaying', 'false'); // Persist that playback is not allowed
-          }
-        });
-      } else {
-        audioRef.current.pause();
-      }
-      // Note: localStorage for 'audioPlaying' is updated in toggleAudio for direct user actions
-      // and here if play() promise is rejected by NotAllowedError.
-    }
-  }, [isPlaying]); // Re-run if isPlaying changes
-
-  // Handler for the play/pause button
-  const toggleAudio = () => {
-    const newIsPlaying = !isPlaying;
-    setIsPlaying(newIsPlaying);
-    localStorage.setItem('audioPlaying', newIsPlaying.toString()); // Persist user's explicit action
-  };
-
-  // Handler for volume slider change
-  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(event.target.value);
-    setVolume(newVolume); 
-
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume; 
-    }
-    localStorage.setItem('audioVolume', newVolume.toString());
-  };
-
-  if (typeof window !== 'undefined' && !window.globalAudio) {
-    console.log('[AudioPlayer] window.globalAudio is NOT defined. Rendering null.');
-    return null; // Don't render if global audio is not ready
   }
-  console.log('[AudioPlayer] window.globalAudio IS defined. Proceeding to render controls:', window.globalAudio);
+  return true; // Default to playing if localStorage is not set or not available (SSR)
+};
+
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) => {
+  const [isPlaying, setIsPlaying] = useState(getInitialIsPlayingState);
+  const [volume, setVolume] = useState(0.5); // Default volume, will be synced from localStorage or globalAudio
+
+  const handleAudioError = useCallback((error: any) => {
+    console.warn('AudioPlayer: Error with audio operation:', error);
+    if (error.name === 'NotAllowedError') {
+      setIsPlaying(false);
+      localStorage.setItem('audioIsPlaying', 'false'); 
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('localStorage' in window)) return;
+
+    const globalAudio = (window as any).globalAudio as HTMLAudioElement | undefined;
+    if (!globalAudio) {
+      return; 
+    }
+
+    globalAudio.muted = false; // Ensure audio element itself is not muted
+
+    // 'isPlaying' state is already initialized from localStorage via useState(getInitialIsPlayingState).
+    // Now, ensure globalAudio's actual play/pause state matches 'isPlaying'.
+    // This handles cases where AudioInitializer might have faced autoplay restrictions
+    // after localStorage was read by useState.
+    if (isPlaying && globalAudio.paused) {
+      // React state says playing, but audio is paused (e.g., autoplay blocked for AudioInitializer)
+      // Attempt to play. If it fails, handleAudioError will set isPlaying to false.
+      globalAudio.play().catch(handleAudioError);
+    } else if (!isPlaying && !globalAudio.paused) {
+      // React state says not playing, but audio is playing. Pause it.
+      globalAudio.pause();
+    }
+    // If isPlaying and !globalAudio.paused (playing) OR !isPlaying and globalAudio.paused (paused) -> states are in sync.
+
+    const storedVolume = localStorage.getItem('audioVolume');
+    if (storedVolume !== null) {
+      const vol = parseFloat(storedVolume);
+      setVolume(vol);
+      if (globalAudio.volume !== vol) globalAudio.volume = vol;
+    } else {
+      const actualVolume = globalAudio.volume;
+      setVolume(actualVolume);
+      localStorage.setItem('audioVolume', String(actualVolume));
+    }
+
+    const handlePlayEvent = () => setIsPlaying(true);
+    const handlePauseEvent = () => setIsPlaying(false);
+    const handleVolumeChangeEvent = () => {
+      if (globalAudio) {
+        setVolume(globalAudio.volume);
+      }
+    };
+
+    globalAudio.addEventListener('play', handlePlayEvent);
+    globalAudio.addEventListener('pause', handlePauseEvent);
+    globalAudio.addEventListener('volumechange', handleVolumeChangeEvent);
+
+    return () => {
+      if (globalAudio) {
+        globalAudio.removeEventListener('play', handlePlayEvent);
+        globalAudio.removeEventListener('pause', handlePauseEvent);
+        globalAudio.removeEventListener('volumechange', handleVolumeChangeEvent);
+      }
+    };
+  }, []); 
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'localStorage' in window) {
+      localStorage.setItem('audioIsPlaying', String(isPlaying));
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('localStorage' in window)) return;
+    const globalAudio = (window as any).globalAudio as HTMLAudioElement | undefined;
+    if (globalAudio) {
+      globalAudio.volume = volume;
+      localStorage.setItem('audioVolume', String(volume));
+    }
+  }, [volume]);
+
+  const handleVolumeSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(event.target.value);
+    setVolume(newVolume);
+  };
+
+  const togglePlayPause = () => {
+    const globalAudio = (window as any).globalAudio as HTMLAudioElement | undefined;
+    if (!globalAudio) return;
+
+    const newIsPlaying = !isPlaying;
+    if (newIsPlaying) {
+      globalAudio.play().catch(handleAudioError);
+    } else {
+      globalAudio.pause();
+    }
+    setIsPlaying(newIsPlaying); 
+  };
+  
+  if (typeof window === 'undefined' || !(window as any).globalAudio) {
+    return null; 
+  }
 
   return (
-    <div className="flex items-center space-x-3 bg-black/40 backdrop-blur-lg p-3 rounded-full shadow-xl">
-      <button
-        onClick={toggleAudio}
-        className="flex items-center justify-center w-8 h-8 bg-transparent text-white hover:text-pink-400 transition-colors duration-200"
-        aria-label={isPlaying ? "Pause background music" : "Play background music"}
-      >
-        {isPlaying ? <FaVolumeUp size={22} /> : <FaVolumeMute size={22} />}
-      </button>
+    <div className="flex items-center space-x-3 p-2 bg-gray-800 bg-opacity-50 backdrop-blur-md rounded-lg shadow-lg">
       {showVolumeControl && (
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={volume}
-          onChange={handleVolumeChange}
-          className="w-24 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-pink-500"
-          aria-label="Volume"
-        />
+        <>
+          <button
+            onClick={togglePlayPause}
+            className="p-2 rounded-full text-white hover:bg-gray-700 hover:text-pink-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            aria-label={isPlaying ? 'Mute (Pause Audio)' : 'Unmute (Play Audio)'}
+          >
+            {isPlaying ? <FaVolumeUp size={18} /> : <FaVolumeMute size={18} />}
+          </button>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={volume}
+            onChange={handleVolumeSliderChange}
+            className="w-20 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+            aria-label="Volume"
+          />
+        </>
       )}
     </div>
   );
