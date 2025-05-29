@@ -84,7 +84,7 @@ function MainContent() {
     <div className="relative min-h-screen">
       <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       <div className="w-full max-w-md mx-auto px-4 py-3">
-        <header className="flex items-center justify-between mb-3 bg-transparent z-[9999] relative h-24">
+        <header className="flex items-end justify-between mb-3 bg-transparent z-[9999] relative h-24">
           <div className="flex-1 flex items-center justify-between gap-2 pr-2">
             <div className="flex gap-2">
               <Button
@@ -110,13 +110,18 @@ function MainContent() {
               />
             </div>
           </div>
-          <div className="rounded-full border-2 border-pink-500 bg-white p-1" style={{ width: '5.1rem', height: '5.1rem', marginTop: '-0.8rem', marginRight: '0.5rem' }}>
-            <div className="relative h-full w-full">
-              <Image 
-                src="/logo.png" 
-                alt="Site Logo" 
-                fill
-                className="object-contain p-2"
+          {/* App Logo */}
+          <div
+            className="relative rounded-full border-2 border-pink-500 overflow-hidden"
+            style={{ width: '5.1rem', height: '5.1rem', marginRight: '0.5rem' }}
+          >
+            <div className="absolute inset-0 flex items-center justify-center p-px"> {/* Minimal padding (1px) */}
+              <Image
+                src="/logo.png"
+                alt="Site Logo"
+                width={80} // Intrinsic width for aspect ratio
+                height={80} // Intrinsic height for aspect ratio
+                className="max-w-full max-h-full object-contain" // Ensure image fits within the padded area
                 priority
               />
             </div>
