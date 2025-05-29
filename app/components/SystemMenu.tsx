@@ -2,11 +2,14 @@
 import React, { useState } from "react";
 import { Card, Button, Icon } from "./DemoComponents";
 import { useMiniKit, useViewProfile } from "@coinbase/onchainkit/minikit";
+import { FaUserNinja } from "react-icons/fa";
+import { IoSpeedometer } from "react-icons/io5";
+import { BiSupport } from "react-icons/bi";
 
 type MenuItem = {
   key: string;
   label: string;
-  icon: 'user' | 'heart' | 'star' | 'check' | 'plus' | 'arrow-right' | 'gamepad' | 'trophy' | 'shopping-cart' | 'x-circle';
+  icon: React.ReactNode;
   onClick: () => void;
 };
 
@@ -14,33 +17,13 @@ export type SystemMenuProps = {
   setActiveTab: (tab: string) => void;
 };
 
-export const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
+const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
+  // State and hooks
   const viewProfile = useViewProfile();
   const { context } = useMiniKit();
   const farcasterUsername = context?.user?.username;
   const [activePanel, setActivePanel] = useState<string | null>(null);
-
-  const menuItems: MenuItem[] = [
-    {
-      key: "profile",
-      label: "Profile",
-      icon: "user",
-      onClick: () => viewProfile(),
-    },
-    {
-      key: "settings",
-      label: "Settings",
-      icon: "star",
-      onClick: () => setActivePanel(activePanel === 'settings' ? null : 'settings'),
-    },
-    {
-      key: "help",
-      label: "Help & Support",
-      icon: "check",
-      onClick: () => setActivePanel(activePanel === 'help' ? null : 'help'),
-    },
-  ];
-
+  const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
   const [settings, setSettings] = useState({
     soundEffects: true,
     music: true,
@@ -49,6 +32,29 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
     animationSpeed: 'medium',
   });
 
+  // Menu items
+  const menuItems: MenuItem[] = [
+    {
+      key: "profile",
+      label: "Profile",
+      icon: <FaUserNinja className="w-5 h-5" />,
+      onClick: () => setActivePanel(activePanel === 'profile' ? null : 'profile'),
+    },
+    {
+      key: "settings",
+      label: "Settings",
+      icon: <IoSpeedometer className="w-5 h-5" />,
+      onClick: () => setActivePanel(activePanel === 'settings' ? null : 'settings'),
+    },
+    {
+      key: "help",
+      label: "Help & Support",
+      icon: <BiSupport className="w-5 h-5" />,
+      onClick: () => setActivePanel(activePanel === 'help' ? null : 'help'),
+    },
+  ];
+
+  // Settings handlers
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -57,18 +63,16 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
   };
 
   const saveSettings = () => {
-    // In a real app, you would save these settings to a database or local storage
     console.log('Saving settings:', settings);
-    // Close the settings panel after saving
     setActivePanel(null);
   };
 
-  const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
-  
+  // FAQ handlers
   const toggleFaq = (id: string) => {
     setExpandedFaq(expandedFaq === id ? null : id);
   };
-  
+
+  // FAQ data
   const faqs = [
     {
       id: 'what-is-kissmint',
@@ -92,6 +96,7 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
     }
   ];
 
+  // Render functions
   const renderSettingsPanel = () => (
     <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Settings</h3>
@@ -198,6 +203,75 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
       </div>
     </div>
   );
+
+  const renderProfilePanel = () => {
+    const user = context?.user;
+    const displayName = user?.displayName || 'Anonymous User';
+    const username = user?.username;
+    const pfpUrl = user?.pfpUrl;
+    const fid = user?.fid;
+
+    return (
+      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Your Profile</h3>
+        
+        <div className="space-y-6">
+          {/* Profile Info */}
+          <div className="flex flex-col items-center">
+            {pfpUrl ? (
+              <img 
+                src={pfpUrl} 
+                alt={displayName}
+                className="w-16 h-16 rounded-full mb-3 border-2 border-gray-200 dark:border-gray-600"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-600 mb-3 flex items-center justify-center">
+                <span className="text-2xl text-gray-700 dark:text-gray-200">
+                  {displayName[0]?.toUpperCase() || '?'}
+                </span>
+              </div>
+            )}
+            
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+              {displayName}
+            </h4>
+            {username && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                @{username}
+              </p>
+            )}
+          </div>
+
+          {/* Farcaster Button */}
+          <div className="pt-2">
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full justify-center"
+              icon={
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M10.5 2c-4.694 0-8.5 3.806-8.5 8.5 0 3.73 2.4 6.9 5.7 8.1.4.1.5-.2.5-.4v-1.4c-2.3.5-2.8-1-2.8-1-.3-.9-.8-1.1-.8-1.1-.7-.5 0-.5 0-.5.7 0 1.1.7 1.1.7.6 1.1 1.6.8 2.1.6.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.7-2.2-.1-.2-.3-1 .1-2.1 0 0 .6-.2 1.8.7.5-.1 1.1-.2 1.6-.2s1.1.1 1.6.2c1.2-.9 1.8-.7 1.8-.7.4 1.1.2 1.9.1 2.1.4.6.7 1.3.7 2.2 0 3.1-1.9 3.7-3.7 3.9.3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4 3.3-1.2 5.7-4.4 5.7-8.1 0-4.7-3.8-8.5-8.5-8.5z" />
+                </svg>
+              }
+              onClick={viewProfile}
+            >
+              Open Farcaster Profile
+            </Button>
+          </div>
+
+          {/* Additional Info */}
+          <div className="space-y-3 text-sm">
+            {fid && (
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Farcaster ID:</span>
+                <span className="font-mono">#{fid}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderHelpSupportPanel = () => (
     <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -323,30 +397,26 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
                 variant={activePanel === item.key ? 'primary' : 'secondary'}
                 size="lg"
                 className="w-full justify-start"
-                icon={<Icon name={item.icon} size="md" />}
+                icon={item.icon}
                 onClick={item.onClick}
               >
                 {item.label}
               </Button>
+              {activePanel === item.key && item.key === 'profile' && renderProfilePanel()}
               {activePanel === item.key && item.key === 'settings' && renderSettingsPanel()}
               {activePanel === item.key && item.key === 'help' && renderHelpSupportPanel()}
             </React.Fragment>
           ))}
-        </div>
-        
-        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-start">
-          <Button 
-            variant="outline" 
-            onClick={() => setActiveTab("home")}
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-              </svg>
-            }
-            aria-label="Back to Home"
-            className="p-2"
-          />
+          
+          <Button
+            variant="ghost"
+            size="lg"
+            className="w-full justify-start text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 mt-4"
+            icon="x-circle"
+            onClick={() => setActiveTab('home')}
+          >
+            Back to Home
+          </Button>
         </div>
       </Card>
     </div>
