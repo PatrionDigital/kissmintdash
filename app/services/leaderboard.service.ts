@@ -4,14 +4,17 @@ import { Client as TursoClient, ResultSet } from '@libsql/client';
 
 // Define a type for leaderboard entries
 export interface LeaderboardEntry {
-  userId: string; // KissMint user ID or wallet address if no specific user ID
+  userId: string; // Farcaster ID (FID) of the user
   score: number;
   rank?: number; // Optional, can be added when retrieving ranked list
   // Potentially add other relevant fields like displayName if available
 }
 
 // Define a type for archived leaderboard entries (includes prize)
-export interface ArchivedLeaderboardEntry extends LeaderboardEntry {
+export interface ArchivedLeaderboardEntry {
+  userId: string; // Farcaster ID (FID) of the user
+  score: number;
+  rank: number; // Rank is non-optional for archived entries
   periodIdentifier: string;
   boardType: 'daily' | 'weekly';
   prizeAmount: number;
@@ -64,17 +67,71 @@ export class LeaderboardService {
    * @param gameId - Identifier for the game played (for potential future use/filtering).
    * @param gameSessionData - Additional data from the game session (for validation/anti-cheat).
    */
+  /**
+   * Validates a score submission.
+   * Placeholder for now. Future implementation will include anti-cheat checks.
+   * @param _userId - The user's identifier.
+   * @param _score - The score achieved.
+   * @param _gameId - Identifier for the game played.
+   * @param _gameSessionData - Additional data from the game session.
+   * @returns True if the score is valid, false otherwise.
+   */
+  private async validateScore(
+    _userId: string,
+    _score: number,
+    _gameId: string,
+    _gameSessionData: any
+  ): Promise<boolean> {
+    // TODO: Implement actual anti-cheat and validation logic.
+    // For example, check against expected score ranges, game session integrity, user behavior patterns, etc.
+    // For now, all scores are considered valid.
+    console.log('Score validation (placeholder): Score is considered valid.');
+    return true;
+  }
+
+  /**
+   * Logs a score submission to Turso for auditing and analysis.
+   */
+  private async logScoreSubmissionToTurso(
+    userId: string,
+    score: number,
+    gameId: string,
+    gameSessionData: any,
+    isValid: boolean,
+    validationNotes?: string
+  ): Promise<void> {
+    try {
+      const gameSessionDataString = gameSessionData ? JSON.stringify(gameSessionData) : null;
+      await this.turso.execute({
+        sql: 'INSERT INTO score_submission_log (user_id, score, game_id, game_session_data, is_valid, validation_notes, submitted_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
+        args: [userId, score, gameId, gameSessionDataString, isValid, validationNotes ?? null],
+      });
+      console.log(`Score submission logged to Turso for user ${userId}, game ${gameId}`);
+    } catch (error) {
+      console.error('Error logging score submission to Turso:', error);
+      // Decide if this error should be propagated or just logged
+      // For now, we'll log and not re-throw to avoid failing the whole submission if logging fails
+    }
+  }
+
   async submitScore(
     userId: string,
     score: number,
-    gameId: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-    gameSessionData: any // eslint-disable-line @typescript-eslint/no-unused-vars
+    gameId: string,
+    gameSessionData: any
   ): Promise<void> {
     if (score < 0) {
+      // Log invalid submission attempt before throwing
+      await this.logScoreSubmissionToTurso(userId, score, gameId, gameSessionData, false, 'Score cannot be negative.');
       throw new Error('Score cannot be negative.');
     }
-    // TODO: Implement score validation logic (e.g., anti-cheat checks using gameSessionData)
-    // For now, we assume the score is valid.
+
+    const isValid = await this.validateScore(userId, score, gameId, gameSessionData);
+    if (!isValid) {
+      // Log invalid submission attempt
+      await this.logScoreSubmissionToTurso(userId, score, gameId, gameSessionData, false, 'Failed validation checks.');
+      throw new Error('Invalid score submission after validation.');
+    }
 
     const { daily: dailyPeriod, weekly: weeklyPeriod } = this.getCurrentPeriodIdentifiers();
     const dailyKey = REDIS_KEYS.dailyLeaderboard(dailyPeriod);
@@ -96,9 +153,10 @@ export class LeaderboardService {
       await this.redis.expire(dailyKey, dailyExpiry);
       await this.redis.expire(weeklyKey, weeklyExpiry);
 
-      console.log(`Score ${score} submitted for user ${userId} to daily (${dailyPeriod}) and weekly (${weeklyPeriod}) leaderboards.`);
-      // TODO: Log submission to a separate Turso table for audit/raw data if required by the plan.
-      // The current plan focuses on archiving aggregated leaderboards.
+      console.log(`Score ${score} for user ${userId} submitted to daily (${dailyKey}) and weekly (${weeklyKey}) leaderboards.`);
+
+      // Log the successful submission to Turso
+      await this.logScoreSubmissionToTurso(userId, score, gameId, gameSessionData, true);
     } catch (error) {
       console.error('Error submitting score to Redis:', error);
       throw new Error('Failed to submit score.');

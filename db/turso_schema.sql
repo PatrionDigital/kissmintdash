@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS leaderboard_archives (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   period_identifier TEXT NOT NULL, -- e.g., '2023-10-26' for daily, '2023-W43' for weekly
   board_type TEXT NOT NULL CHECK(board_type IN ('daily', 'weekly')),
-  user_id TEXT NOT NULL,           -- KissMint user ID
+  user_id TEXT NOT NULL,           -- Farcaster ID (FID) of the user
   rank INTEGER NOT NULL,
   score INTEGER NOT NULL,
   prize_amount REAL NOT NULL,      -- Amount of $GLICO won
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS distribution_summary_log (
 CREATE TABLE IF NOT EXISTS prize_distribution_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   distribution_summary_id INTEGER NOT NULL, -- Foreign key to distribution_summary_log
-  user_id TEXT NOT NULL,                    -- The internal user ID
+  user_id TEXT NOT NULL,                    -- Farcaster ID (FID) of the user
   wallet_address TEXT NOT NULL,             -- The wallet address that received the prize
   rank INTEGER NOT NULL,
   score INTEGER NOT NULL,
@@ -67,3 +67,20 @@ CREATE INDEX IF NOT EXISTS idx_prize_distribution_log_user_id ON prize_distribut
 CREATE INDEX IF NOT EXISTS idx_prize_distribution_log_wallet_address ON prize_distribution_log(wallet_address);
 CREATE INDEX IF NOT EXISTS idx_prize_distribution_log_status ON prize_distribution_log(status);
 CREATE INDEX IF NOT EXISTS idx_prize_distribution_log_tx_hash ON prize_distribution_log(tx_hash);
+
+-- Table to log individual score submissions for auditing and analysis
+CREATE TABLE IF NOT EXISTS score_submission_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,           -- Farcaster ID (FID) of the user
+  score INTEGER NOT NULL,
+  game_id TEXT NOT NULL,
+  game_session_data TEXT,          -- JSON string for game session details
+  is_valid BOOLEAN DEFAULT TRUE,   -- Placeholder, can be updated by advanced validation
+  validation_notes TEXT,           -- Placeholder for notes from validation
+  submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for score_submission_log
+CREATE INDEX IF NOT EXISTS idx_score_submission_log_user_id ON score_submission_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_score_submission_log_game_id ON score_submission_log(game_id);
+CREATE INDEX IF NOT EXISTS idx_score_submission_log_submitted_at ON score_submission_log(submitted_at);
