@@ -70,7 +70,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ showVolumeControl = true }) =
       localStorage.setItem('audioVolume', String(actualVolume));
     }
 
-    const handlePlayEvent = () => setIsPlaying(true);
+    const handlePlayEvent: () => void = () => setIsPlaying(true);
     const handlePauseEvent = () => setIsPlaying(false);
     const handleVolumeChangeEvent = () => {
       if (globalAudio) {
