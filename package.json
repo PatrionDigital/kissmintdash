@@ -10,6 +10,7 @@
   },
   "scripts": {
     "test": "jest",
+    "test:cron": "tsx scripts/test-cron-endpoint.ts",
     "lint": "next lint",
     "format": "prettier --write .",
     "dev": "next dev",
@@ -57,6 +58,7 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.3.4",
+    "tsx": "^4.19.4",
     "typescript": "^5"
   }
 }

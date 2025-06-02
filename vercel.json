@@ -1,0 +1,23 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/prize-distribution?periodType=daily",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/prize-distribution?periodType=weekly",
+      "schedule": "0 0 * * 0"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/cron/(.*)",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer ${process.env.CRON_SECRET}"
+        }
+      ]
+    }
+  ]
+}
