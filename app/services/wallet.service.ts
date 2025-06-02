@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 interface PrizePayout {
   userAddress: string; // Resolved wallet address
-  prizeAmount: number; // Amount of $GLICO to send (assumed to be in smallest unit)
+  prizeAmount: string; // Amount of $GLICO to send (smallest unit, as string)
 }
 
 // Coinbase API Structures (simplified)
@@ -103,9 +103,8 @@ export class WalletService {
       type: 'EVM_CONTRACT_INVOCATION',
       contractAddress: this.glicoTokenAddress,
       method: 'transfer', // Standard ERC20 transfer method
-      // Ensure prizeAmount is in the token's smallest unit (e.g., wei for ETH-like tokens)
-      // If $GLICO has D decimals, prizeAmount = displayAmount * (10^D)
-      args: [payout.userAddress, payout.prizeAmount.toString()], 
+      // prizeAmount is already a string representing the smallest unit
+      args: [payout.userAddress, payout.prizeAmount], 
       value: '0', // Not sending ETH with the contract call
     }));
 

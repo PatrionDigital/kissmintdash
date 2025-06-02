@@ -1,6 +1,6 @@
 // app/services/leaderboard.service.ts
 import { Redis } from '@upstash/redis';
-import { Client as TursoClient, ResultSet } from '@libsql/client';
+import { Client as TursoClient } from '@libsql/client';
 
 // Define a type for leaderboard entries
 export interface LeaderboardEntry {
@@ -80,7 +80,7 @@ export class LeaderboardService {
     _userId: string,
     _score: number,
     _gameId: string,
-    _gameSessionData: any
+    _gameSessionData: Record<string, unknown>
   ): Promise<boolean> {
     // TODO: Implement actual anti-cheat and validation logic.
     // For example, check against expected score ranges, game session integrity, user behavior patterns, etc.
@@ -96,7 +96,7 @@ export class LeaderboardService {
     userId: string,
     score: number,
     gameId: string,
-    gameSessionData: any,
+    gameSessionData: Record<string, unknown>,
     isValid: boolean,
     validationNotes?: string
   ): Promise<void> {
@@ -118,7 +118,7 @@ export class LeaderboardService {
     userId: string,
     score: number,
     gameId: string,
-    gameSessionData: any
+    gameSessionData: Record<string, unknown>
   ): Promise<void> {
     if (score < 0) {
       // Log invalid submission attempt before throwing

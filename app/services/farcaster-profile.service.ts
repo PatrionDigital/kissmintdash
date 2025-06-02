@@ -1,4 +1,4 @@
-import { LRUCache } from 'lru-cache';
+import QuickLRU from 'quick-lru';
 
 // Define the structure of the relevant part of the Neynar API response
 interface NeynarUserResponse {
@@ -16,7 +16,7 @@ interface NeynarUserResponse {
 
 export class FarcasterProfileService {
   private apiKey: string;
-  private cache: LRUCache<string, string | null>;
+  private cache: QuickLRU<string, string | null>;
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.NEYNAR_API_KEY || '';
@@ -26,10 +26,7 @@ export class FarcasterProfileService {
 
     // Cache to store FID to address mappings to reduce API calls
     // Cache up to 500 FIDs for 1 hour
-    this.cache = new LRUCache<string, string | null>({
-      max: 500,
-      ttl: 1000 * 60 * 60, // 1 hour
-    });
+    this.cache = new QuickLRU({ maxSize: 500 });
   }
 
   async getWalletAddressForFid(fid: string): Promise<string | null> {
