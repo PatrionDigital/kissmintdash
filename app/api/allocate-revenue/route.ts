@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrizePoolManager } from '@/app/services'; // Assuming services are correctly exported via barrel file and path alias is set
+import { PrizePoolManager } from '@/app/services';
+import { Redis } from '@upstash/redis/cloudflare';
+import { createClient as createTursoClient, Client as TursoClient } from '@libsql/client';
 
 // Define revenue split percentages based on the project plan
 const REVENUE_SPLIT = {
@@ -9,47 +11,75 @@ const REVENUE_SPLIT = {
 };
 
 export async function POST(request: Request) {
+  console.log('[POST /api/allocate-revenue] Received request.');
+
+  // Log environment variables for Redis (BE VERY CAREFUL with logging tokens in production)
+  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.UPSTASH_REDIS_REST_URL: ${process.env.UPSTASH_REDIS_REST_URL}`);
+  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.UPSTASH_REDIS_REST_TOKEN is ${process.env.UPSTASH_REDIS_REST_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
+  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.TURSO_DATABASE_URL is ${process.env.TURSO_DATABASE_URL ? 'SET' : 'NOT SET or empty'}`);
+  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.TURSO_AUTH_TOKEN is ${process.env.TURSO_AUTH_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
+
   try {
     const body = await request.json();
     const { purchaseId, totalRevenue } = body;
 
     // Validate input
     if (!purchaseId || typeof purchaseId !== 'string' || purchaseId.trim() === '') {
+      console.error('[POST /api/allocate-revenue] Missing or invalid purchaseId');
       return NextResponse.json({ message: 'Missing or invalid purchaseId' }, { status: 400 });
     }
     if (totalRevenue === undefined || typeof totalRevenue !== 'number' || totalRevenue <= 0) {
+      console.error('[POST /api/allocate-revenue] Missing or invalid totalRevenue');
       return NextResponse.json({ message: 'Missing or invalid totalRevenue' }, { status: 400 });
     }
+    console.log(`[POST /api/allocate-revenue] Processing purchaseId: ${purchaseId}, totalRevenue: ${totalRevenue}`);
 
     // Calculate contributions
     const dailyContribution = parseFloat((totalRevenue * REVENUE_SPLIT.dailyPoolPercent).toFixed(2));
     const weeklyContribution = parseFloat((totalRevenue * REVENUE_SPLIT.weeklyPoolPercent).toFixed(2));
     const treasuryShare = parseFloat((totalRevenue * REVENUE_SPLIT.treasuryPercent).toFixed(2));
 
-    // Instantiate PrizePoolManager
-    // IMPORTANT: Ensure that environment variables (UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, 
-    // TURSO_DATABASE_URL, TURSO_AUTH_TOKEN) are correctly set up and accessible 
-    // in your Vercel deployment environment for this serverless function.
-    const prizePoolManager = new PrizePoolManager();
+    // Instantiate Redis client
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      console.error('[POST /api/allocate-revenue] CRITICAL: Upstash Redis URL or Token is not configured in environment variables.');
+      throw new Error('Server configuration error: Redis connection details missing.');
+    }
+    const redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+
+    // Instantiate Turso client
+    if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+      console.error('[POST /api/allocate-revenue] CRITICAL: Turso Database URL or Auth Token is not configured in environment variables.');
+      throw new Error('Server configuration error: Turso connection details missing.');
+    }
+    const turso: TursoClient = createTursoClient({
+        url: process.env.TURSO_DATABASE_URL,
+        authToken: process.env.TURSO_AUTH_TOKEN,
+    });
+
+    // Instantiate PrizePoolManager with the clients
+    const prizePoolManager = new PrizePoolManager(redis, turso);
+    console.log('[POST /api/allocate-revenue] PrizePoolManager instantiated.');
 
     await prizePoolManager.addGamePassRevenueToPools(
       purchaseId,
-      totalRevenue, // Log the original total revenue
+      totalRevenue,
       dailyContribution,
       weeklyContribution,
       treasuryShare
     );
+    console.log(`[POST /api/allocate-revenue] Revenue allocation successful for purchaseId: ${purchaseId}`);
 
     return NextResponse.json({ message: 'Revenue allocated successfully' }, { status: 200 });
 
   } catch (error) {
-    console.error('Error in /api/allocate-revenue:', error);
-    // Avoid exposing raw error details to the client in production
+    console.error('[POST /api/allocate-revenue] Error processing request:', error);
     let errorMessage = 'An unexpected error occurred while allocating revenue.';
-    if (error instanceof Error && process.env.NODE_ENV === 'development') {
-      // Provide more detail in development
-      errorMessage = `Failed to allocate revenue: ${error.message}`;
+    if (error instanceof Error) {
+        errorMessage = `Failed to allocate revenue: ${error.message}`;
     }
-    return NextResponse.json({ message: errorMessage }, { status: 500 });
+    return NextResponse.json({ message: errorMessage, error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

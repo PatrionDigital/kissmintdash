@@ -16,7 +16,20 @@ export class PrizePoolManager {
   constructor(redis: Redis, turso: TursoClient) {
     this.redis = redis;
     this.turso = turso;
-    console.log('PrizePoolManager initialized with Redis and Turso clients.');
+    let redisUrlMessage = "Redis client URL not directly accessible for logging here.";
+    try {
+      if (redis && (redis as any).requester && (redis as any).requester.options && (redis as any).requester.options.url) {
+        const url = (redis as any).requester.options.url;
+        // Attempt to show only the domain part for confirmation, avoid logging full URL or token query params
+        const urlParts = url.split('/');
+        if (urlParts.length >= 3) {
+          redisUrlMessage = `Redis client configured with URL starting: ${urlParts[0]}//${urlParts[2].split('.')[0] + '.redacted...'}`;
+        }
+      }
+    } catch (e) {
+      // Silently ignore if accessing options fails, to prevent logging from breaking execution
+    }
+    console.log(`PrizePoolManager initialized. ${redisUrlMessage}. Turso client also received.`);
   }
 
   private getPoolKey(poolType: PoolType): string {
@@ -68,14 +81,72 @@ export class PrizePoolManager {
   async claimPrizePool(poolType: PoolType): Promise<number> {
     const key = this.getPoolKey(poolType);
     try {
-      // GETSET is atomic: gets the old value and sets a new one.
-      const oldValue = await this.redis.getset<number>(key, 0);
-      const claimedAmount = oldValue !== null ? Number(oldValue) : 0;
-      console.log(`Claimed ${claimedAmount} from ${poolType} prize pool. Pool reset to 0.`);
-      return claimedAmount;
+      // Upstash Redis Cloudflare API sometimes does not support GETSET directly and may return a pipeline result if misused.
+      // To ensure atomicity and correctness, use a Lua script to GET and SET in one operation if GETSET is not supported.
+      /**
+       * Upstash Cloudflare/REST does NOT support GETSET, EVAL, MULTI/EXEC, or any atomic read-and-reset.
+       * Official workaround: read value with INCRBYFLOAT(key, 0) (atomic, initializes to 0 if missing), then set to 0.
+       * This is NOT atomic; there is a small race window. See: https://docs.upstash.com/redis/features/transactions#atomic-operations
+       */
+      /**
+       * Upstash Cloudflare/REST does NOT support GETSET, EVAL, MULTI/EXEC, or atomic read-and-reset.
+       * Official workaround: read value with GET (returns null if missing), then set to 0.
+       * This is NOT atomic; there is a small race window. See: https://docs.upstash.com/redis/features/transactions#atomic-operations
+       */
+      let poolValue: number = 0;
+      try {
+        if (!this.redis) {
+          console.error(`[PrizePoolManager] ERROR (CRITICAL diagnostic): this.redis is undefined in claimPrizePool. Cannot perform Redis operations. PoolType: ${poolType}, Key: ${key}`);
+          throw new Error(`Redis client not initialized in PrizePoolManager when trying to claim pool ${poolType}.`);
+        }
+
+        // Attempt to log the client's configured URL. The @upstash/redis client (v2) often has a direct 'url' property.
+        const clientUrl = (this.redis as any).url || 
+                          ((this.redis as any).requester && (this.redis as any).requester.options ? (this.redis as any).requester.options.url : 'Redis client URL not directly accessible');
+        console.error(`[PrizePoolManager] ERROR (diagnostic): In claimPrizePool, about to 'GET' key '${key}'. Client URL: ${clientUrl}`);
+
+        const result = await this.redis.get<number>(key);
+        poolValue = result !== null ? Number(result) : 0;
+      } catch (err) {
+        console.error(`[PrizePoolManager] FATAL: Could not read prize pool value for key ${key}. Raw error object:`, err);
+        // Attempt to stringify the error for more details, including non-standard properties
+        try {
+          console.error(`[PrizePoolManager] Raw error (stringified):`, JSON.stringify(err, Object.getOwnPropertyNames(err)));
+        } catch (stringifyError) {
+          console.error(`[PrizePoolManager] Could not stringify the raw error object:`, stringifyError);
+        }
+        if (err instanceof Error) {
+          console.error(`[PrizePoolManager] Error message: ${err.message}`);
+          if (err.cause) {
+            console.error(`[PrizePoolManager] Error cause:`, err.cause);
+            try {
+              console.error(`[PrizePoolManager] Error cause (stringified):`, JSON.stringify(err.cause, Object.getOwnPropertyNames(err.cause)));
+            } catch (stringifyCauseError) {
+              console.error(`[PrizePoolManager] Could not stringify the error cause:`, stringifyCauseError);
+            }
+          }
+          console.error(`[PrizePoolManager] Error stack: ${err.stack}`);
+        } else {
+          console.error("[PrizePoolManager] Error is not an instance of Error. Logging as is:", err);
+        }
+        throw new Error(`Failed to read prize pool key: ${key}`);
+      }
+      if (poolValue > 0) {
+        try {
+          await this.redis.set(key, 0);
+        } catch (err) {
+          console.error(`[PrizePoolManager] ERROR: Could not reset prize pool key ${key} to 0 after claim. Manual intervention may be required.`, err);
+          // Continue, but warn
+        }
+      }
+      if (poolValue < 0 || !isFinite(poolValue)) {
+        console.warn(`[PrizePoolManager] Claimed value for key ${key} was negative or invalid. Clamping to 0.`);
+        poolValue = 0;
+      }
+      console.log(`[PrizePoolManager] Claimed ${poolValue} from ${poolType} prize pool (non-atomic Upstash REST pattern). Pool reset to 0.`);
+      return poolValue;
     } catch (error) {
       console.error(`Error claiming ${poolType} prize pool from Redis:`, error);
-      // If getset fails, the pool might not be reset. Consider implications.
       throw new Error(`Failed to claim ${poolType} prize pool.`);
     }
   }

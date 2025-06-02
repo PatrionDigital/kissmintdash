@@ -8,6 +8,10 @@ import { createClient as createTursoClient } from '@libsql/client';
 import type { Client as TursoClient } from '@libsql/client';
 import { Redis } from '@upstash/redis';
 
+// Log environment variables for Redis BEFORE client instantiation using console.error
+console.error(`[CRON /api/prize-distribution] ERROR (diagnostic): Initializing Redis Client. process.env.UPSTASH_REDIS_REST_URL: ${process.env.UPSTASH_REDIS_REST_URL}`);
+console.error(`[CRON /api/prize-distribution] ERROR (diagnostic): Initializing Redis Client. process.env.UPSTASH_REDIS_REST_TOKEN is ${process.env.UPSTASH_REDIS_REST_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
+
 // Initialize Redis and Turso clients
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -65,10 +69,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Prize distribution failed:', error);
+    const envVars = {
+      UPSTASH_REDIS_REST_URL_IS_SET: !!process.env.UPSTASH_REDIS_REST_URL,
+      UPSTASH_REDIS_REST_URL_VALUE: process.env.UPSTASH_REDIS_REST_URL || "NOT SET",
+      UPSTASH_REDIS_REST_TOKEN_IS_SET: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+    };
     return NextResponse.json(
-      { 
-        error: 'Prize distribution failed', 
-        details: error instanceof Error ? error.message : String(error) 
+      {
+        success: false,
+        error: 'Prize distribution failed',
+        details: error instanceof Error ? error.message : String(error),
+        environmentDiagnostics: envVars
       },
       { status: 500 }
     );
