@@ -32,7 +32,7 @@ class MockWalletService {
 }
 
 class MockFarcasterProfileService {
-  async resolveWalletAddress(fid: string) {
+  async getWalletAddressForFid(fid: string) {
     // Map FIDs to wallet addresses
     const map: Record<string, string> = {
       fid1: '0xAAA',
@@ -58,15 +58,16 @@ describe('PrizeDistributionService', () => {
     prizePoolManager = new MockPrizePoolManager();
     walletService = new MockWalletService();
     farcasterProfileService = new MockFarcasterProfileService();
+    // Provide a Jest mock for the Turso client
+    const mockTursoClient = { execute: jest.fn(), batch: jest.fn() };
     // @ts-ignore
     service = new PrizeDistributionService(
       leaderboardService,
       prizePoolManager,
       walletService,
-      farcasterProfileService
+      farcasterProfileService,
+      mockTursoClient
     );
-    // Mock Turso client if needed
-    service.turso = { execute: jest.fn(), batch: jest.fn() };
   });
 
   it('distributes prizes to resolved wallet addresses', async () => {
@@ -81,7 +82,7 @@ describe('PrizeDistributionService', () => {
 
   it('skips users with missing wallet addresses', async () => {
     // Simulate fid2 has no wallet
-    farcasterProfileService.resolveWalletAddress = async (fid: string) => (fid === 'fid2' ? null : '0xAAA');
+    farcasterProfileService.getWalletAddressForFid = async (fid: string) => (fid === 'fid2' ? null : '0xAAA');
     await service.settlePrizesForPeriod('daily', '2025-06-02');
     // Only 2 distributed
     expect(walletService.distributed.length).toBe(2);
