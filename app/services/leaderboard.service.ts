@@ -10,6 +10,8 @@ export interface LeaderboardEntry {
   // Potentially add other relevant fields like displayName if available
 }
 
+
+
 // Define a type for archived leaderboard entries (includes prize)
 export interface ArchivedLeaderboardEntry {
   userId: string; // Farcaster ID (FID) of the user
@@ -82,6 +84,7 @@ export class LeaderboardService {
     _gameId: string,
     _gameSessionData: Record<string, unknown>
   ): Promise<boolean> {
+    void _userId; void _score; void _gameId; void _gameSessionData;
     // TODO: Implement actual anti-cheat and validation logic.
     // For example, check against expected score ranges, game session integrity, user behavior patterns, etc.
     // For now, all scores are considered valid.
