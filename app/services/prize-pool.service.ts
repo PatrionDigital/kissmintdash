@@ -13,24 +13,9 @@ export class PrizePoolManager {
   private redis: Redis;
   private turso: TursoClient;
 
-  constructor() {
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-      throw new Error('Upstash Redis environment variables are not set.');
-    }
-    this.redis = Redis.fromEnv();
-
-    const tursoUrl = process.env.TURSO_DATABASE_URL;
-    const tursoAuthToken = process.env.TURSO_AUTH_TOKEN;
-
-    if (!tursoUrl) {
-      throw new Error('TURSO_DATABASE_URL environment variable is not set.');
-    }
-
-    this.turso = createClient({
-      url: tursoUrl,
-      authToken: tursoAuthToken,
-    });
-
+  constructor(redis: Redis, turso: TursoClient) {
+    this.redis = redis;
+    this.turso = turso;
     console.log('PrizePoolManager initialized with Redis and Turso clients.');
   }
 
