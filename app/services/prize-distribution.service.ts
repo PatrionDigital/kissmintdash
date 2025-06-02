@@ -32,22 +32,25 @@ export class PrizeDistributionService {
     leaderboardService: LeaderboardService,
     prizePoolManager: PrizePoolManager,
     walletService: WalletService,
-    farcasterProfileService: FarcasterProfileService // Placeholder for actual service injection
+    farcasterProfileService: FarcasterProfileService,
+    tursoClient?: TursoClient // <-- optional for test injection
   ) {
     this.leaderboardService = leaderboardService;
     this.prizePoolManager = prizePoolManager;
-    this.walletService = walletService; // Assign the passed instance
-    this.farcasterProfileService = farcasterProfileService; // Placeholder
-
-    if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
-      throw new Error('Turso database URL or auth token is not defined in environment variables.');
+    this.walletService = walletService;
+    this.farcasterProfileService = farcasterProfileService;
+    if (tursoClient) {
+      this.turso = tursoClient;
+    } else {
+      if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+        throw new Error('Turso database URL or auth token is not defined in environment variables.');
+      }
+      this.turso = createTursoClient({
+        url: process.env.TURSO_DATABASE_URL,
+        authToken: process.env.TURSO_AUTH_TOKEN,
+      });
+      console.log('PrizeDistributionService initialized with Turso client.');
     }
-    this.turso = createTursoClient({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
-
-    console.log('PrizeDistributionService initialized with Turso client.');
   }
 
   // --- Public methods to be called by Cron Jobs ---
@@ -67,6 +70,13 @@ export class PrizeDistributionService {
     const periodIdentifier = this.getWeeklyPeriodIdentifier(dateInLastWeek);
     console.log(`[PrizeDistributionService] Initiating weekly prize settlement for period: ${periodIdentifier}`);
     await this._settlePrizes('weekly', periodIdentifier);
+  }
+
+  /**
+   * Public method for testing and automation: settle prizes for any period and type.
+   */
+  public async settlePrizesForPeriod(poolType: 'daily' | 'weekly', periodIdentifier: string): Promise<void> {
+    return this._settlePrizes(poolType, periodIdentifier);
   }
 
   // --- Private core settlement logic ---

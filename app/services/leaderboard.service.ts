@@ -31,6 +31,44 @@ const REDIS_KEYS = {
 };
 
 export class LeaderboardService {
+  /**
+   * Snapshots the current leaderboard from Redis, archives it to Turso with JST timestamp, and resets the leaderboard in Redis.
+   * Used for automated archival and reset at the end of a leaderboard period.
+   */
+  public async snapshotAndResetLeaderboard(
+    boardType: 'daily' | 'weekly',
+    periodIdentifier: string
+  ): Promise<void> {
+    const redisKey = boardType === 'daily'
+      ? REDIS_KEYS.dailyLeaderboard(periodIdentifier)
+      : REDIS_KEYS.weeklyLeaderboard(periodIdentifier);
+    const entries = await this.redis.zrange(redisKey, 0, -1, { withScores: true, rev: true });
+    if (!entries || entries.length === 0) {
+      console.warn(`[LeaderboardService] No entries found for ${redisKey}, skipping snapshot.`);
+      return;
+    }
+    // JST timestamp
+    const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+    const archivedAt = nowJST.toISOString();
+    const archiveRows = entries.map((entry: any, idx: number) => ({
+      period_identifier: periodIdentifier,
+      board_type: boardType,
+      user_id: entry.member,
+      rank: idx + 1,
+      score: Number(entry.score),
+      prize_amount: null,
+      archived_at: archivedAt
+    }));
+    const statements = archiveRows.map(row => ({
+      sql: 'INSERT INTO leaderboard_archives (period_identifier, board_type, user_id, rank, score, prize_amount, archived_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      args: [row.period_identifier, row.board_type, row.user_id, row.rank, row.score, row.prize_amount, row.archived_at]
+    }));
+    await this.turso.batch(statements);
+    console.log(`[LeaderboardService] Archived ${archiveRows.length} entries for ${redisKey} to Turso.`);
+    await this.redis.del(redisKey);
+    console.log(`[LeaderboardService] Reset leaderboard for ${redisKey}.`);
+  }
+
   private redis: Redis;
   private turso: TursoClient;
 
