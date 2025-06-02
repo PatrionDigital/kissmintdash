@@ -9,7 +9,8 @@
     ]
   },
   "scripts": {
-    "test": "vitest",
+    "test": "jest",
+    "test:cron": "tsx scripts/test-cron-endpoint.ts",
     "lint": "next lint",
     "format": "prettier --write .",
     "dev": "next dev",
@@ -20,28 +21,37 @@
     "@coinbase/onchainkit": "latest",
     "@farcaster/frame-sdk": "^0.0.51",
     "@fingerprintjs/fingerprintjs": "^4.6.2",
+    "@libsql/client": "^0.15.7",
     "@number-flow/react": "^0.5.9",
+    "@reown/walletkit": "^1.2.5",
     "@tanstack/react-query": "^5",
     "@upstash/redis": "^1.34.4",
+    "@walletconnect/core": "^2.21.0",
+    "@walletconnect/utils": "^2.21.0",
+    "axios": "^1.9.0",
     "canvas": "^3.1.0",
     "mint.club-v2-sdk": "^1.0.27",
     "next": "^14.2.15",
+    "quick-lru": "^7.0.1",
     "react": "^18",
     "react-7-segment-display": "github:nachovigilante/react-7-segment-display",
     "react-dom": "^18",
     "react-icons": "^5.5.0",
     "sonner": "^2.0.3",
     "viem": "^2.27.2",
-    "wagmi": "^2.14.11"
+    "wagmi": "^2.14.11",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/axios": "^0.9.36",
+    "@types/jest": "^29.5.14",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@vitejs/plugin-react": "^4.4.1",
+    "@types/yargs": "^17.0.33",
     "eslint": "^8",
     "eslint-config-next": "14.2.15",
     "eslint-config-prettier": "^10.1.5",
@@ -54,7 +64,10 @@
     "postcss": "^8",
     "prettier": "^3.5.3",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5",
-    "vitest": "^3.1.4"
+    "ts-jest": "^29.3.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "undici": "^7.10.0"
   }
 }

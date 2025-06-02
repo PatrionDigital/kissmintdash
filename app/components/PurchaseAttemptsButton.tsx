@@ -24,9 +24,9 @@ import {
 
 // Dynamic pricing model
 const GAME_PASS_PRICING = [
-  { passes: 1, price: 0.5 },  // 0.5 GLICO for 1 pass
-  { passes: 3, price: 1.2 },  // 1.2 GLICO for 3 passes (20% discount)
-  { passes: 10, price: 3.5 }, // 3.5 GLICO for 10 passes (30% discount)
+  { passes: 1, price: 5 },   // 5 GLICO for 1 pass
+  { passes: 3, price: 12 },  // 12 GLICO for 3 passes - 20 % discount
+  { passes: 10, price: 45 }, // 45 GLICO for 10 passes - 1 Free Pass
 ];
 
 export const PurchaseAttemptsButton = () => {
@@ -52,7 +52,7 @@ export const PurchaseAttemptsButton = () => {
   }, [isConnected, address, selectedPackage.price]);
 
   // Handle transaction success
-  const handleSuccess = useCallback(async () => {
+  const handleSuccess = useCallback(async (response: { transactionReceipts?: { transactionHash: string }[] }) => {
     updateProfile({
       bonusAttempts: profile.bonusAttempts + selectedPackage.passes,
     });
@@ -61,6 +61,35 @@ export const PurchaseAttemptsButton = () => {
       title: "Bonus Attempts Purchased!",
       body: `You've successfully purchased ${selectedPackage.passes} Game Pass${selectedPackage.passes > 1 ? 'es' : ''} for ${selectedPackage.price} GLICO!`,
     });
+
+    // Allocate revenue
+    if (response?.transactionReceipts && response.transactionReceipts.length > 0) {
+      const transactionHash = response.transactionReceipts[0].transactionHash;
+      try {
+        const apiResponse = await fetch('/api/allocate-revenue', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            purchaseId: transactionHash,
+            totalRevenue: selectedPackage.price,
+          }),
+        });
+
+        if (!apiResponse.ok) {
+          const errorData = await apiResponse.json();
+          console.error('Error allocating revenue:', errorData.message);
+          // Optionally send a user notification about allocation error
+        } else {
+          console.log('Revenue allocation successful');
+        }
+      } catch (error) {
+        console.error('Failed to call revenue allocation API:', error);
+      }
+    } else {
+      console.warn('Transaction hash not found in success response, cannot allocate revenue.');
+    }
   }, [profile, selectedPackage, sendNotification, updateProfile]);
 
   // Handle transaction error
