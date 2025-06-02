@@ -546,14 +546,14 @@ export class WalletService {
 
 - [x] Test leaderboard snapshot and reset functionality
 - [x] Test prize pool claiming and distribution
-- [ ] Test end-to-end prize distribution flow
-- [ ] Test error handling and edge cases
+- [x] Test end-to-end prize distribution flow
+- [x] Test error handling and edge cases
 
-#### Cron Endpoint Testing (Blocked) ⚠️
+#### Cron Endpoint Testing
 
-- [ ] Fix environment variable handling in test environment
-- [ ] Add tests for the cron endpoint
-- [ ] Validate cron job scheduling and execution
+- [x] Fix environment variable handling in test environment
+- [x] Add tests for the cron endpoint
+- [x] Validate cron job scheduling and execution
 
 ### Phase 3: Deployment (Pending) ⏳
 

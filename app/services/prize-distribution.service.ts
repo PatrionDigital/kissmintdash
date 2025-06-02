@@ -82,8 +82,8 @@ export class PrizeDistributionService {
   // --- Private core settlement logic ---
 
   private async _settlePrizes(poolType: 'daily' | 'weekly', periodIdentifier: string): Promise<void> {
-    let distributionSummaryId: string | undefined;
-    // periodIdentifier is now passed as an argument, no need to recalculate here
+    const distributionSummaryId = await this.logInitialDistributionAttempt(poolType, periodIdentifier);
+    console.log(`[PrizeDistributionService] Distribution summary record created: ${distributionSummaryId}`);
 
     console.log(`[PrizeDistributionService] Starting ${poolType} settlement for ${periodIdentifier}.`);
 
@@ -93,9 +93,7 @@ export class PrizeDistributionService {
     const totalClaimedPool = await this.prizePoolManager.claimPrizePool(poolType);
     console.log(`[PrizeDistributionService] Claimed ${totalClaimedPool} $GLICO from ${poolType} pool.`);
 
-    // 2. Log initial attempt to Turso, now including totalClaimedPool
-    distributionSummaryId = await this.logInitialDistributionAttempt(poolType, periodIdentifier, totalClaimedPool);
-    console.log(`[PrizeDistributionService] Distribution summary record created: ${distributionSummaryId}`);
+    // 2. Initial distribution attempt already logged with status 'PENDING' and totalClaimedPool.
 
     // 3. Fetch winners from LeaderboardService
     const winners: LeaderboardEntry[] = await this.leaderboardService.getActiveLeaderboard(poolType, PRIZE_DISTRIBUTION_PERCENTAGES.length);

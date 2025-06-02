@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis/cloudflare';
-import { createClient, Client as TursoClient, InStatement } from '@libsql/client';
+import { Client as TursoClient, InStatement } from '@libsql/client';
 
 // Define Redis keys for prize pools
 const REDIS_PRIZE_POOL_KEYS = {
@@ -18,15 +18,16 @@ export class PrizePoolManager {
     this.turso = turso;
     let redisUrlMessage = "Redis client URL not directly accessible for logging here.";
     try {
-      if (redis && (redis as any).requester && (redis as any).requester.options && (redis as any).requester.options.url) {
-        const url = (redis as any).requester.options.url;
+      const requester = (redis as { requester?: { options?: { url?: string } } }).requester;
+      const url = requester?.options?.url;
+      if (url) {
         // Attempt to show only the domain part for confirmation, avoid logging full URL or token query params
         const urlParts = url.split('/');
         if (urlParts.length >= 3) {
           redisUrlMessage = `Redis client configured with URL starting: ${urlParts[0]}//${urlParts[2].split('.')[0] + '.redacted...'}`;
         }
       }
-    } catch (e) {
+    } catch {
       // Silently ignore if accessing options fails, to prevent logging from breaking execution
     }
     console.log(`PrizePoolManager initialized. ${redisUrlMessage}. Turso client also received.`);
@@ -101,8 +102,14 @@ export class PrizePoolManager {
         }
 
         // Attempt to log the client's configured URL. The @upstash/redis client (v2) often has a direct 'url' property.
-        const clientUrl = (this.redis as any).url || 
-                          ((this.redis as any).requester && (this.redis as any).requester.options ? (this.redis as any).requester.options.url : 'Redis client URL not directly accessible');
+        let clientUrl: string | undefined = undefined;
+        if ('url' in this.redis && typeof (this.redis as { url?: unknown }).url === 'string') {
+          clientUrl = (this.redis as { url?: string }).url;
+        } else if ('requester' in this.redis && this.redis.requester && typeof this.redis.requester === 'object' && 'options' in this.redis.requester && this.redis.requester.options && typeof this.redis.requester.options === 'object' && 'url' in this.redis.requester.options && typeof this.redis.requester.options.url === 'string') {
+          clientUrl = this.redis.requester.options.url;
+        } else {
+          clientUrl = 'Redis client URL not directly accessible';
+        }
         console.error(`[PrizePoolManager] ERROR (diagnostic): In claimPrizePool, about to 'GET' key '${key}'. Client URL: ${clientUrl}`);
 
         const result = await this.redis.get<number>(key);
