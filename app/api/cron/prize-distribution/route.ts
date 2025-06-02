@@ -9,8 +9,8 @@ import type { Client as TursoClient } from '@libsql/client';
 import { Redis } from '@upstash/redis';
 
 // Log environment variables for Redis BEFORE client instantiation using console.error
-console.error(`[CRON /api/prize-distribution] ERROR (diagnostic): Initializing Redis Client. process.env.REDIS_URL: ${process.env.REDIS_URL}`);
-console.error(`[CRON /api/prize-distribution] ERROR (diagnostic): Initializing Redis Client. process.env.REDIS_TOKEN is ${process.env.REDIS_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
+console.info(`[CRON /api/prize-distribution] INFO (diagnostic): Initializing Redis Client. process.env.REDIS_URL: ${process.env.REDIS_URL}`);
+console.info(`[CRON /api/prize-distribution] INFO (diagnostic): Initializing Redis Client. process.env.REDIS_TOKEN is ${process.env.REDIS_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
 
 // Initialize Redis and Turso clients
 const redis = new Redis({
