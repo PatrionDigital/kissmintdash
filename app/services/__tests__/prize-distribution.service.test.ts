@@ -1,12 +1,19 @@
 import { PrizeDistributionService } from '../prize-distribution.service';
+// Add this import
 import { LeaderboardService } from '../leaderboard.service';
 import { PrizePoolManager } from '../prize-pool.service';
 import { WalletService } from '../wallet.service';
 import { FarcasterProfileService } from '../farcaster-profile.service';
-
+import { Client as TursoClient } from '@libsql/client';
+import { Redis } from '@upstash/redis';
 // Mocks
 class MockLeaderboardService {
-  async getActiveLeaderboard(boardType: 'daily' | 'weekly', topN = 100) {
+  // Add required properties and methods to match LeaderboardService
+  redis = {} as unknown as Redis;
+  turso = {} as unknown as TursoClient;
+  async getActiveLeaderboard(boardType: 'daily' | 'weekly', topN = 100): Promise<{ userId: string; score: number; rank: number }[]> {
+    void boardType;
+    void topN;
     // Simulate a leaderboard with 3 winners
     return [
       { userId: 'fid1', score: 100, rank: 1 },
@@ -14,18 +21,58 @@ class MockLeaderboardService {
       { userId: 'fid3', score: 60, rank: 3 },
     ];
   }
-}
-
-class MockPrizePoolManager {
-  async claimPrizePool(poolType: 'daily' | 'weekly') {
-    // Simulate a fixed pool
-    return 3000; // In smallest unit
+  async snapshotAndResetLeaderboard(boardType: 'daily' | 'weekly', periodIdentifier: string): Promise<void> {
+    void boardType;
+    void periodIdentifier;
+    // No-op mock
+  }
+  getCurrentPeriodIdentifiers(): { daily: string; weekly: string } {
+    return { daily: 'mock-daily', weekly: 'mock-weekly' };
+  }
+  async validateScore(): Promise<boolean> {
+    return true;
+  }
+  async logScoreSubmissionToTurso(): Promise<void> {
+    // No-op mock
+  }
+  async submitScore(): Promise<void> {
+    // No-op mock
+  }
+  async archiveLeaderboard(): Promise<void> {
+    // No-op mock
   }
 }
 
+class MockPrizePoolManager {
+  redis = {} as unknown as Redis;
+  turso = {} as unknown as TursoClient;
+  
+  async claimPrizePool(poolType: 'daily' | 'weekly'): Promise<number> {
+    void poolType;
+    return 3000; // In smallest unit
+  }
+
+  // Add other required methods with minimal implementations
+  getPoolKey(poolType: 'daily' | 'weekly'): string {
+    return `prize_pool:${poolType}`;
+  }
+
+  async addToPrizePool(amount: number, poolType: 'daily' | 'weekly'): Promise<void> {
+    void amount;
+    void poolType;
+  }
+
+  async getCurrentPrizePool(poolType: 'daily' | 'weekly'): Promise<number> {
+    void poolType;
+    return 3000;
+  }
+
+  async logPrizePoolContribution(): Promise<void> {}
+}
+
 class MockWalletService {
-  distributed: any[] = [];
-  async distributePrizes(prizePayouts: any[]) {
+  distributed: unknown[] = [];
+  async distributePrizes(prizePayouts: Record<string, unknown>[]): Promise<string> {
     this.distributed.push(...prizePayouts);
     return 'mock_tx_hash';
   }
@@ -58,14 +105,18 @@ describe('PrizeDistributionService', () => {
     prizePoolManager = new MockPrizePoolManager();
     walletService = new MockWalletService();
     farcasterProfileService = new MockFarcasterProfileService();
-    // Provide a Jest mock for the Turso client
-    const mockTursoClient = { execute: jest.fn(), batch: jest.fn() };
-    // @ts-ignore
+    
+    // Mock Turso client with proper typing and mock implementations
+    const mockTursoClient = {
+      execute: jest.fn().mockResolvedValue({ rows: [] }),
+      batch: jest.fn().mockResolvedValue([])
+    } as unknown as TursoClient;
+
     service = new PrizeDistributionService(
-      leaderboardService,
-      prizePoolManager,
-      walletService,
-      farcasterProfileService,
+      leaderboardService as unknown as LeaderboardService,
+      prizePoolManager as unknown as PrizePoolManager,
+      walletService as unknown as WalletService,
+      farcasterProfileService as unknown as FarcasterProfileService,
       mockTursoClient
     );
   });
@@ -74,10 +125,11 @@ describe('PrizeDistributionService', () => {
     // Simulate a daily distribution
     await service.settlePrizesForPeriod('daily', '2025-06-02');
     // Check that distributePrizes was called with correct payouts
-    expect(walletService.distributed.length).toBe(3);
-    expect(walletService.distributed[0].userAddress).toBe('0xAAA');
-    expect(walletService.distributed[1].userAddress).toBe('0xBBB');
-    expect(walletService.distributed[2].userAddress).toBe('0xCCC');
+    const typedDistributed = walletService.distributed as Array<{ userAddress: string }>;
+    expect(typedDistributed.length).toBe(3);
+    expect(typedDistributed[0].userAddress).toBe('0xAAA');
+    expect(typedDistributed[1].userAddress).toBe('0xBBB');
+    expect(typedDistributed[2].userAddress).toBe('0xCCC');
   });
 
   it('skips users with missing wallet addresses', async () => {

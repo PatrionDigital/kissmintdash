@@ -50,13 +50,14 @@ export class LeaderboardService {
     // JST timestamp
     const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
     const archivedAt = nowJST.toISOString();
-    const archiveRows = entries.map((entry: any, idx: number) => ({
+    const typedEntries = entries as { member: string; score: number }[];
+    const archiveRows = typedEntries.map((entry, idx) => ({
       period_identifier: periodIdentifier,
       board_type: boardType,
       user_id: entry.member,
       rank: idx + 1,
       score: Number(entry.score),
-      prize_amount: null,
+      prize_amount: null as number | null,
       archived_at: archivedAt
     }));
     const statements = archiveRows.map(row => ({

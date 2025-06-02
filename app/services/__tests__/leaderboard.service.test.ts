@@ -1,4 +1,4 @@
-import { LeaderboardService, LeaderboardEntry } from '../leaderboard.service';
+import { LeaderboardService } from '../leaderboard.service';
 
 // Copy of REDIS_KEYS from service
 const REDIS_KEYS = {
@@ -41,8 +41,8 @@ class MockRedis {
 }
 
 class MockTurso {
-  public archived: any[] = [];
-  async batch(statements: any[]) {
+  public archived: unknown[] = [];
+  async batch(statements: Record<string, unknown>[]) {
     this.archived.push(...statements);
     return { success: true };
   }
@@ -56,7 +56,7 @@ describe('LeaderboardService', () => {
   beforeEach(() => {
     redis = new MockRedis();
     turso = new MockTurso();
-    // @ts-ignore
+    // @ts-expect-error - Necessary to bypass TypeScript type checking, as the LeaderboardService constructor expects a real Redis client, but we're using a mock for testing purposes.
     service = new LeaderboardService(redis, turso);
   });
 
@@ -67,7 +67,8 @@ describe('LeaderboardService', () => {
     await redis.zadd(key, 200, 'user2');
     await redis.zadd(key, 150, 'user3');
     const entries = await redis.zrange(key, 0, -1, { withScores: true, rev: true });
-    expect(entries).toEqual([
+    const typedEntries = entries as { member: string; score: number }[];
+    expect(typedEntries).toEqual([
       { member: 'user2', score: 200 },
       { member: 'user3', score: 150 },
       { member: 'user1', score: 100 },
@@ -82,8 +83,11 @@ describe('LeaderboardService', () => {
     await redis.zadd(key, 25, 'userC');
     await service.snapshotAndResetLeaderboard('daily', period);
     // Check Turso archive
-    expect(turso.archived.length).toBe(3);
-    expect(turso.archived[0].args[2]).toBe('userB'); // Highest score
+    const archivedRows = turso.archived as Array<{ user_id: string }>;
+    expect(archivedRows.length).toBe(3);
+    expect(archivedRows[0].user_id).toBe('userB'); // Highest score
+    expect(archivedRows[1].user_id).toBe('userA');
+    expect(archivedRows[2].user_id).toBe('userC');
     // Check Redis cleared
     const after = await redis.zrange(key, 0, -1, { withScores: true, rev: true });
     expect(after).toEqual([]);
