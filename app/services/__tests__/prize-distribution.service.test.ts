@@ -90,8 +90,8 @@ class MockFarcasterProfileService {
   }
 }
 
-process.env.TURSO_DATABASE_URL = 'mock';
-process.env.TURSO_AUTH_TOKEN = 'mock';
+process.env.NEXT_PUBLIC_TURSO_URL = 'mock';
+process.env.NEXT_PUBLIC_TURSO_API_SECRET = 'mock';
 
 describe('PrizeDistributionService', () => {
   let leaderboardService: MockLeaderboardService;

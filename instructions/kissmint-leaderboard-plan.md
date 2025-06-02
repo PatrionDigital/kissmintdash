@@ -453,9 +453,9 @@ export class WalletService {
     // 1. Construct calls for the batch transaction
     // Each call would be an ERC20 transfer of $GLICO
     // Example using ethers.js Interface for encoding (actual call to Smart Wallet will differ)
-    const glicoTokenAddress = process.env.GLICO_TOKEN_ADDRESS; // Ensure this is configured
+    const glicoTokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS; // Ensure this is configured
     if (!glicoTokenAddress) {
-        return { status: 'FAILED', error: 'GLICO_TOKEN_ADDRESS not configured.'};
+        return { status: 'FAILED', error: 'NEXT_PUBLIC_TOKEN_ADDRESS not configured.'};
     }
     const erc20Interface = new ethers.utils.Interface([
       "function transfer(address to, uint256 amount)"
@@ -492,7 +492,7 @@ export class WalletService {
   //     "function disperseToken(address token, address[] recipients, uint256[] amounts)"
   //   ]);
   //   const callData = disperserInterface.encodeFunctionData("disperseToken", [
-  //     process.env.GLICO_TOKEN_ADDRESS,
+  //     process.env.NEXT_PUBLIC_TOKEN_ADDRESS,
   //     recipients,
   //     amounts
   //   ]);

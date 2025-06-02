@@ -42,12 +42,12 @@ export class PrizeDistributionService {
     if (tursoClient) {
       this.turso = tursoClient;
     } else {
-      if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
-        throw new Error('Turso database URL or auth token is not defined in environment variables.');
+      if (!process.env.NEXT_PUBLIC_TURSO_URL || !process.env.NEXT_PUBLIC_TURSO_API_SECRET) {
+        throw new Error('Turso URL or API secret is not defined in environment variables.');
       }
       this.turso = createTursoClient({
-        url: process.env.TURSO_DATABASE_URL,
-        authToken: process.env.TURSO_AUTH_TOKEN,
+        url: process.env.NEXT_PUBLIC_TURSO_URL,
+        authToken: process.env.NEXT_PUBLIC_TURSO_API_SECRET,
       });
       console.log('PrizeDistributionService initialized with Turso client.');
     }

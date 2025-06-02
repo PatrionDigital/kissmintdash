@@ -143,11 +143,11 @@ if (mode === 'local') {
   console.log('[Script] In REAL mode, using real endpoints and secrets from .env');
   console.log('[Script] The target Next.js server is expected to have these variables (or mappings):');
   const realModeExpectedVars = {
-    UPSTASH_REDIS_REST_URL: effectiveEnv.REDIS_URL,
-    UPSTASH_REDIS_REST_TOKEN: effectiveEnv.REDIS_TOKEN,
-    TURSO_DATABASE_URL: effectiveEnv.NEXT_PUBLIC_TURSO_URL,
-    TURSO_AUTH_TOKEN: effectiveEnv.NEXT_PUBLIC_TURSO_API_SECRET,
-    GLICO_TOKEN_ADDRESS: effectiveEnv.NEXT_PUBLIC_TOKEN_ADDRESS,
+    REDIS_URL: effectiveEnv.REDIS_URL,
+    REDIS_TOKEN: effectiveEnv.REDIS_TOKEN,
+    NEXT_PUBLIC_TURSO_URL: effectiveEnv.NEXT_PUBLIC_TURSO_URL,
+    NEXT_PUBLIC_TURSO_API_SECRET: effectiveEnv.NEXT_PUBLIC_TURSO_API_SECRET,
+    NEXT_PUBLIC_TOKEN_ADDRESS: effectiveEnv.NEXT_PUBLIC_TOKEN_ADDRESS,
     CRON_SECRET: effectiveEnv.CRON_SECRET,
     NEYNAR_API_KEY: effectiveEnv.NEYNAR_API_KEY,
     NODE_ENV: 'production',

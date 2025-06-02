@@ -1,5 +1,4 @@
 // WalletService: Manages secure $GLICO token transfers via the Base Smart Wallet for prize payouts.
-import crypto from 'crypto';
 
 interface PrizePayout {
   userAddress: string; // Resolved wallet address
@@ -34,22 +33,20 @@ interface BroadcastTransactionResponse {
 
 export class WalletService {
   private apiKey: string;
-  private apiSecret: string;
-  private smartWalletAccountId: string;
-  private glicoTokenAddress: string;
+
+  private tokenAddress: string;
   private baseNetworkId: string;
   private coinbaseApiBaseUrl: string;
 
   constructor() {
-    this.apiKey = process.env.COINBASE_API_KEY || '';
-    this.apiSecret = process.env.COINBASE_API_SECRET || '';
-    this.smartWalletAccountId = process.env.COINBASE_SMART_WALLET_ACCOUNT_ID || '';
-    this.glicoTokenAddress = process.env.GLICO_TOKEN_ADDRESS || '';
+    this.apiKey = process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || '';
+
+    this.tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || '';
     this.baseNetworkId = process.env.BASE_NETWORK_ID || 'base-mainnet'; // Default to Base Mainnet
     this.coinbaseApiBaseUrl = process.env.COINBASE_API_BASE_URL || 'https://api.developer.coinbase.com';
 
-    if (!this.apiKey || !this.apiSecret || !this.smartWalletAccountId || !this.glicoTokenAddress) {
-      throw new Error('Coinbase API credentials, Smart Wallet Account ID, or GLICO token address are not fully configured in environment variables.');
+    if (!this.apiKey || !this.tokenAddress) {
+      throw new Error('OnchainKit API key or NEXT_PUBLIC_TOKEN_ADDRESS are not fully configured in environment variables.');
     }
     console.log('[WalletService] Initialized with necessary configurations.');
   }
@@ -59,20 +56,14 @@ export class WalletService {
     path: string,
     body?: object
   ): Promise<T> {
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const bodyString = body ? JSON.stringify(body) : '';
-    const message = timestamp + method.toUpperCase() + path + bodyString;
-    const signature = crypto.createHmac('sha256', this.apiSecret).update(message).digest('hex');
-
+    // NOTE: If Coinbase API requires authentication, add it here. Otherwise, use only the API key if needed.
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'CB-ACCESS-KEY': this.apiKey,
-      'CB-ACCESS-SIGN': signature,
-      'CB-ACCESS-TIMESTAMP': timestamp,
     };
 
     const url = `${this.coinbaseApiBaseUrl}${path}`;
-    console.log(`[WalletService] Making API ${method} request to ${url}`);
+    const bodyString = body ? JSON.stringify(body) : '';
 
     try {
       const response = await fetch(url, {
@@ -101,7 +92,7 @@ export class WalletService {
 
     const actions: EvmContractInvocationAction[] = prizePayouts.map(payout => ({
       type: 'EVM_CONTRACT_INVOCATION',
-      contractAddress: this.glicoTokenAddress,
+      contractAddress: this.tokenAddress,
       method: 'transfer', // Standard ERC20 transfer method
       // prizeAmount is already a string representing the smallest unit
       args: [payout.userAddress, payout.prizeAmount], 
@@ -109,7 +100,7 @@ export class WalletService {
     }));
 
     const buildRequest: BuildTransactionRequest = {
-      accountId: this.smartWalletAccountId,
+      accountId: '', // TODO: Supply the correct Smart Wallet accountId here if required by the API
       networkId: this.baseNetworkId,
       actions: actions,
       // feeLevel: 'MEDIUM', // Optional: Or rely on Smart Wallet paymaster if configured

@@ -14,10 +14,10 @@ export async function POST(request: Request) {
   console.log('[POST /api/allocate-revenue] Received request.');
 
   // Log environment variables for Redis (BE VERY CAREFUL with logging tokens in production)
-  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.UPSTASH_REDIS_REST_URL: ${process.env.UPSTASH_REDIS_REST_URL}`);
-  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.UPSTASH_REDIS_REST_TOKEN is ${process.env.UPSTASH_REDIS_REST_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
-  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.TURSO_DATABASE_URL is ${process.env.TURSO_DATABASE_URL ? 'SET' : 'NOT SET or empty'}`);
-  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.TURSO_AUTH_TOKEN is ${process.env.TURSO_AUTH_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
+  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.REDIS_URL: ${process.env.REDIS_URL}`);
+  console.log(`[POST /api/allocate-revenue] DEBUG: process.env.REDIS_TOKEN is ${process.env.REDIS_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
+  
+  
 
   try {
     const body = await request.json();
@@ -40,23 +40,23 @@ export async function POST(request: Request) {
     const treasuryShare = parseFloat((totalRevenue * REVENUE_SPLIT.treasuryPercent).toFixed(2));
 
     // Instantiate Redis client
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    if (!process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
       console.error('[POST /api/allocate-revenue] CRITICAL: Upstash Redis URL or Token is not configured in environment variables.');
       throw new Error('Server configuration error: Redis connection details missing.');
     }
     const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      url: process.env.REDIS_URL,
+      token: process.env.REDIS_TOKEN,
     });
 
     // Instantiate Turso client
-    if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+    if (!process.env.NEXT_PUBLIC_TURSO_URL || !process.env.NEXT_PUBLIC_TURSO_API_SECRET) {
       console.error('[POST /api/allocate-revenue] CRITICAL: Turso Database URL or Auth Token is not configured in environment variables.');
       throw new Error('Server configuration error: Turso connection details missing.');
     }
     const turso: TursoClient = createTursoClient({
-        url: process.env.TURSO_DATABASE_URL,
-        authToken: process.env.TURSO_AUTH_TOKEN,
+        url: process.env.NEXT_PUBLIC_TURSO_URL,
+        authToken: process.env.NEXT_PUBLIC_TURSO_API_SECRET,
     });
 
     // Instantiate PrizePoolManager with the clients

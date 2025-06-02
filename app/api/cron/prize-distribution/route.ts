@@ -9,18 +9,18 @@ import type { Client as TursoClient } from '@libsql/client';
 import { Redis } from '@upstash/redis';
 
 // Log environment variables for Redis BEFORE client instantiation using console.error
-console.error(`[CRON /api/prize-distribution] ERROR (diagnostic): Initializing Redis Client. process.env.UPSTASH_REDIS_REST_URL: ${process.env.UPSTASH_REDIS_REST_URL}`);
-console.error(`[CRON /api/prize-distribution] ERROR (diagnostic): Initializing Redis Client. process.env.UPSTASH_REDIS_REST_TOKEN is ${process.env.UPSTASH_REDIS_REST_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
+console.error(`[CRON /api/prize-distribution] ERROR (diagnostic): Initializing Redis Client. process.env.REDIS_URL: ${process.env.REDIS_URL}`);
+console.error(`[CRON /api/prize-distribution] ERROR (diagnostic): Initializing Redis Client. process.env.REDIS_TOKEN is ${process.env.REDIS_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
 
 // Initialize Redis and Turso clients
 const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  url: process.env.REDIS_URL!,
+  token: process.env.REDIS_TOKEN!,
 });
 
 const turso: TursoClient = createTursoClient({
-  url: process.env.TURSO_DATABASE_URL!,
-  authToken: process.env.TURSO_AUTH_TOKEN!,
+  url: process.env.NEXT_PUBLIC_TURSO_URL!,
+  authToken: process.env.NEXT_PUBLIC_TURSO_API_SECRET!,
 });
 
 // Initialize services with required dependencies
@@ -70,9 +70,9 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Prize distribution failed:', error);
     const envVars = {
-      UPSTASH_REDIS_REST_URL_IS_SET: !!process.env.UPSTASH_REDIS_REST_URL,
-      UPSTASH_REDIS_REST_URL_VALUE: process.env.UPSTASH_REDIS_REST_URL || "NOT SET",
-      UPSTASH_REDIS_REST_TOKEN_IS_SET: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+      REDIS_URL_IS_SET: !!process.env.REDIS_URL,
+      REDIS_URL_VALUE: process.env.REDIS_URL || "NOT SET",
+      REDIS_TOKEN_IS_SET: !!process.env.REDIS_TOKEN,
     };
     return NextResponse.json(
       {
