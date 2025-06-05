@@ -1,10 +1,105 @@
-# Coinbase CDP Wallet API v2 Setup Guide for KissMint Hot Wallet
+# Coinbase CDP Wallet API v2 Implementation Status
 
 ## Overview
 
-The Coinbase Developer Platform (CDP) Wallet API v2 provides programmatic wallet management with enterprise-grade security through **Smart Accounts** (ERC-4337 Account Abstraction). For KissMint, this will enable automated leaderboard payments and $GLICO token transactions with advanced gas sponsorship capabilities.
+This document outlines the current implementation status of the Coinbase CDP Wallet API v2 integration for KissMint's prize distribution system. The implementation provides programmatic wallet management with enterprise-grade security through **Smart Accounts** (ERC-4337 Account Abstraction).
 
-**Key Benefits for KissMint:**
+## Implementation Status
+
+### ✅ Core Wallet Service Implemented
+
+- [x] Wallet initialization with environment-based configuration
+- [x] Support for both testnet (Base Sepolia) and mainnet (Base Mainnet)
+- [x] Smart Account wallet creation and management
+- [x] Token transfer functionality for $GLICO payouts
+- [x] Comprehensive test suite with mocked dependencies
+
+
+### ✅ Key Features
+
+- Automatic wallet initialization with environment variables
+- Support for persistent wallet IDs to avoid creating new wallets
+- Batch prize distribution to multiple winners
+- Transaction status tracking and error handling
+- Production/development environment detection
+
+## Current Implementation Details
+
+The wallet service is implemented in `app/services/wallet.service.ts` with the following key components:
+
+### 1. Configuration
+
+- Environment variable based configuration
+- Support for both testnet and mainnet
+- Secure credential management
+
+### 2. Core Functionality
+
+- Smart Account wallet creation/loading
+- Token transfers with proper error handling
+- Transaction status tracking
+
+### 3. Testing
+
+- Comprehensive test suite in `tests/unit/services/wallet.service.test.ts`
+- Mocked Coinbase SDK for reliable testing
+- Test coverage for success and error cases
+
+## Usage Example
+
+```typescript
+import { walletService } from '~/services/wallet.service';
+
+// Distribute prizes to winners
+const prizePayouts = [
+  { userAddress: '0x123...', prizeAmount: '1000000000000000000' }, // 1.0 $GLICO
+  { userAddress: '0x456...', prizeAmount: '2000000000000000000' }  // 2.0 $GLICO
+];
+
+const results = await walletService.distributePrizes(prizePayouts);
+console.log('Prize distribution results:', results);
+```
+
+## Testing
+
+Run the test suite with:
+
+```bash
+npm test wallet.service.test.ts
+```
+
+## Next Steps
+
+### Deployment
+
+- Set up production environment variables
+- Verify wallet funding and token balance
+- Test end-to-end prize distribution
+
+### Monitoring
+
+- Add transaction monitoring and alerts
+- Implement retry logic for failed transactions
+- Add more detailed logging
+
+### Enhancements
+
+- Add support for gas sponsorship
+- Implement batch transaction optimization
+- Add more comprehensive error recovery
+
+---
+
+## Original Guide (For Reference)
+
+The following sections contain the original setup guide for reference. Note that some details may be outdated.
+
+## Original Overview
+
+The Coinbase Developer Platform (CDP) Wallet API v2 provides programmatic wallet management with enterprise-grade security through **Smart Accounts** (ERC-4337 Account Abstraction). For KissMint, this enables automated leaderboard payments and $GLICO token transactions with advanced gas sponsorship capabilities.
+
+### Key Benefits for KissMint
+
 - **Smart Account wallets** with ERC-4337 Account Abstraction support
 - Hot wallet creation and management via API (no private key exposure)
 - **Advanced gas sponsorship** - pay gas with ERC-20 tokens or sponsor user transactions

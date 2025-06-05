@@ -1,4 +1,5 @@
 // Mock implementation for createTransfer
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const mockCreateTransfer = jest.fn().mockImplementation((_params: { to: string; amount: string; assetId: string }) => ({
   wait: jest.fn().mockResolvedValue({}),
   getTransactionHash: jest.fn().mockResolvedValue(`0x${Math.random().toString(16).substring(2, 66)}`)
