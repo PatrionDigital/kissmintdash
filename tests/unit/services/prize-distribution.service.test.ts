@@ -1,9 +1,9 @@
-import { PrizeDistributionService } from '../prize-distribution.service';
+import { PrizeDistributionService } from '../../../app/services/prize-distribution.service';
 // Add this import
-import { LeaderboardService } from '../leaderboard.service';
-import { PrizePoolManager } from '../prize-pool.service';
-import { WalletService } from '../wallet.service';
-import { FarcasterProfileService } from '../farcaster-profile.service';
+import { LeaderboardService } from '../../../app/services/leaderboard.service';
+import { PrizePoolManager } from '../../../app/services/prize-pool.service';
+import { WalletService } from '../../../app/services/wallet.service';
+import { FarcasterProfileService } from '../../../app/services/farcaster-profile.service';
 import { Client as TursoClient } from '@libsql/client';
 import { Redis } from '@upstash/redis';
 // Mocks
@@ -72,9 +72,14 @@ class MockPrizePoolManager {
 
 class MockWalletService {
   distributed: unknown[] = [];
-  async distributePrizes(prizePayouts: Record<string, unknown>[]): Promise<string> {
+  async distributePrizes(prizePayouts: Array<{userAddress: string, prizeAmount: string}>): Promise<Array<{status: string, userAddress: string, amount: string, txHash?: string}>> {
     this.distributed.push(...prizePayouts);
-    return 'mock_tx_hash';
+    return prizePayouts.map(payout => ({
+      status: 'success',
+      userAddress: payout.userAddress,
+      amount: payout.prizeAmount,
+      txHash: '0x' + Math.random().toString(16).substring(2, 66)
+    }));
   }
 }
 
