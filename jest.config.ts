@@ -1,13 +1,13 @@
-import type { Config } from '@jest/types';
+import type { Config } from "@jest/types";
 
 const config: Config.InitialOptions = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testMatch: ['**/*.test.ts'],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  testMatch: ["**/*.test.ts"],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
+    "^@/(.*)$": "<rootDir>/$1",
   },
-  setupFiles: ['dotenv/config'],
+  setupFiles: ["dotenv/config"],
   testTimeout: 30000, // 30 seconds timeout for async tests
 };
 
