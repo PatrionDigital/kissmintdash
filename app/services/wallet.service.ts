@@ -1,5 +1,6 @@
 import { Coinbase, Wallet } from '@coinbase/coinbase-sdk';
 import { TransferResult, PrizePayout, TransactionStatus } from '../types/wallet.types';
+import { getWalletConfig } from '../config/wallet.config';
 
 // Network configuration
 const NETWORKS = {
@@ -7,33 +8,17 @@ const NETWORKS = {
   TESTNET: 'base-sepolia'
 } as const;
 
-export interface WalletServiceConfig {
-  isProduction?: boolean;
-  tokenAddress: string;
-  coinbaseApiKey?: string;
-  coinbasePrivateKey?: string;
-  coinbaseWalletId?: string;
-}
-
 export class WalletService {
   private tokenAddress: string;
   private wallet: Wallet | null = null;
   private isInitialized = false;
-  private config: WalletServiceConfig;
+  private config: ReturnType<typeof getWalletConfig>;
+  private networkId: string;
 
-  constructor(config?: Partial<WalletServiceConfig>) {
-    // Use provided config or fall back to environment variables
-    this.config = {
-      isProduction: config?.isProduction ?? process.env.NODE_ENV === 'production',
-      tokenAddress: config?.tokenAddress ?? process.env.NEXT_PUBLIC_TOKEN_ADDRESS ?? '',
-      coinbaseApiKey: config?.coinbaseApiKey ?? process.env.COINBASE_API_KEY,
-      coinbasePrivateKey: config?.coinbasePrivateKey ?? process.env.COINBASE_PRIVATE_KEY,
-      coinbaseWalletId: config?.coinbaseWalletId ?? process.env.COINBASE_WALLET_ID
-    };
-
-    if (!this.config.tokenAddress) {
-      throw new Error('Token address is required. Set NEXT_PUBLIC_TOKEN_ADDRESS or provide in config.');
-    }
+  constructor() {
+    // Load configuration
+    this.config = getWalletConfig();
+    this.networkId = this.config.isProduction ? NETWORKS.PRODUCTION : NETWORKS.TESTNET;
     this.tokenAddress = this.config.tokenAddress;
   }
 
@@ -66,15 +51,14 @@ export class WalletService {
         useServerSigner: true
       });
 
-      // Create or load wallet
-      const networkId = this.config.isProduction ? NETWORKS.PRODUCTION : NETWORKS.TESTNET;
-
       // Try to load existing wallet if we have an ID
       if (this.config.coinbaseWalletId) {
+        console.log(`[WalletService] Loading existing wallet with ID: ${this.config.coinbaseWalletId}`);
         this.wallet = await Wallet.fetch(this.config.coinbaseWalletId);
       } else {
         // Create new wallet if no ID is provided
-        this.wallet = await Wallet.create({ networkId });
+        console.log('[WalletService] Creating new wallet...');
+        this.wallet = await Wallet.create({ networkId: this.networkId });
         console.log('[WalletService] Created new wallet. Save this ID for future use:', this.wallet.getId());
       }
 
@@ -85,7 +69,7 @@ export class WalletService {
       console.log('[WalletService] Initialized with wallet:', {
         id: this.wallet.getId(),
         address: walletAddress,
-        network: networkId,
+        network: this.networkId,
         isSmartAccount: true
       });
 

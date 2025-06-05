@@ -44,6 +44,10 @@ const RUN_TESTS = process.env.RUN_INTEGRATION_TESTS === 'true';
       { userAddress: testRecipient, prizeAmount: testAmount }
     ]);
     
+    if (!results || results.length === 0) {
+      throw new Error('No results returned from distributePrizes');
+    }
+    
     console.log('Transfer result:', results[0]);
     
     expect(results[0].status).toBe('success');

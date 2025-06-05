@@ -18,7 +18,11 @@
     "format": "prettier --write .",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "wallet:balance": "tsx scripts/wallet-balance.ts",
+    "wallet:transfer": "tsx scripts/wallet-transfer.ts",
+    "wallet:info": "tsx scripts/wallet-info.ts",
+    "wallet:fund": "tsx scripts/fund-testnet-wallet.ts"
   },
   "dependencies": {
     "@coinbase/coinbase-sdk": "^0.24.0",
