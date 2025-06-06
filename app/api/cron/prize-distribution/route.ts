@@ -46,15 +46,19 @@ function validateApiKey(request: Request): boolean {
 
 export async function GET(request: Request) {
   // Secure the endpoint with API key
+  console.log('[CRON API /api/cron/prize-distribution] Received request.');
   if (!validateApiKey(request)) {
+    console.warn('[CRON API /api/cron/prize-distribution] Unauthorized access attempt.');
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
   const periodType = searchParams.get('periodType');
-  const periodIdentifier = searchParams.get('periodIdentifier');
+
+  console.log(`[CRON API /api/cron/prize-distribution] Requested periodType: ${periodType}`);
 
   if (!periodType || !['daily', 'weekly'].includes(periodType)) {
+    console.error(`[CRON API /api/cron/prize-distribution] Invalid periodType: ${periodType}`);
     return NextResponse.json(
       { error: 'Invalid periodType. Must be "daily" or "weekly"' },
       { status: 400 }
@@ -62,13 +66,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    await prizeDistributionService.settlePrizesForPeriod(
-      periodType as 'daily' | 'weekly', 
-      periodIdentifier || new Date().toISOString().split('T')[0]
-    );
-    return NextResponse.json({ success: true });
+    if (periodType === 'daily') {
+      console.log('[CRON API /api/cron/prize-distribution] Initiating daily prize settlement...');
+      await prizeDistributionService.settleDailyPrizes();
+      console.log('[CRON API /api/cron/prize-distribution] Daily prize settlement process completed successfully.');
+    } else if (periodType === 'weekly') {
+      console.log('[CRON API /api/cron/prize-distribution] Initiating weekly prize settlement...');
+      await prizeDistributionService.settleWeeklyPrizes();
+      console.log('[CRON API /api/cron/prize-distribution] Weekly prize settlement process completed successfully.');
+    }
+    return NextResponse.json({ success: true, message: `${periodType} settlement process initiated successfully.` });
   } catch (error) {
-    console.error('Prize distribution failed:', error);
+    console.error(`[CRON API /api/cron/prize-distribution] ${periodType} prize distribution failed:`, error);
     const envVars = {
       REDIS_URL_IS_SET: !!process.env.REDIS_URL,
       REDIS_URL_VALUE: process.env.REDIS_URL || "NOT SET",
@@ -77,7 +86,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Prize distribution failed',
+        error: `${periodType} prize distribution failed`,
         details: error instanceof Error ? error.message : String(error),
         environmentDiagnostics: envVars
       },

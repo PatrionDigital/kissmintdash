@@ -7,7 +7,8 @@ import { PrizePoolManager } from './prize-pool.service';
 import { WalletService } from './wallet.service';
 import { FarcasterProfileService } from './farcaster-profile.service';
 
-import { Client as TursoClient, createClient as createTursoClient, Value } from '@libsql/client';
+import { createClient as createTursoClient, Client as TursoClient, InValue } from '@libsql/client';
+import { getISOWeek, getISOWeekYear } from 'date-fns';
 import { randomUUID } from 'crypto';
 
 const PRIZE_DISTRIBUTION_PERCENTAGES = [
@@ -211,15 +212,10 @@ export class PrizeDistributionService {
   }
 
   private getWeeklyPeriodIdentifier(date: Date): string {
-    // Basic week number calculation. For ISO 8601 week dates, a library like date-fns is recommended.
-    // This is a simplified version and might not align perfectly with ISO weeks across year boundaries.
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-    const weekNumber = Math.ceil(dayOfYear / 7);
-    return `${date.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
-    // Example using date-fns (if installed):
-    // import { getISOWeek, getISOWeekYear } from 'date-fns';
-    // return `${getISOWeekYear(date)}-W${getISOWeek(date).toString().padStart(2, '0')}`;
+    // Using date-fns for robust ISO 8601 week date calculation.
+    const isoWeekYear = getISOWeekYear(date);
+    const isoWeek = getISOWeek(date);
+    return `${isoWeekYear}-W${isoWeek.toString().padStart(2, '0')}`;
   }
 
   // --- Turso Logging Helper Methods ---
@@ -259,7 +255,7 @@ export class PrizeDistributionService {
   ): Promise<void> {
     const now = new Date().toISOString();
     let sql = `UPDATE ${DISTRIBUTION_SUMMARY_LOG_TABLE} SET status = ?, completed_at = ?`;
-    const args: Value[] = [status, now];
+    const args: InValue[] = [status, now];
 
     if (details.txHash !== undefined) { sql += ', transaction_hash = ?'; args.push(details.txHash); }
     if (details.totalDistributed !== undefined) { sql += ', total_distributed_amount = ?'; args.push(details.totalDistributed); }
