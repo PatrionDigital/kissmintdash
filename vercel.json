@@ -6,7 +6,7 @@
   },
   "functions": {
     "app/api/frame-image/route.ts": {
-      "runtime": "nodejs18.x",
+      "runtime": "nodejs18.x@1.0.0",
       "memory": 1024,
       "maxDuration": 10,
       "includeFiles": "public/fonts/**/*"
