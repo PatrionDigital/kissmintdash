@@ -165,36 +165,72 @@ export class PrizeDistributionService {
     }
 
     // 5. Execute payouts via WalletService
-    let txHash: string | undefined;
+    let payoutResults;
     let payoutError: string | undefined;
     // totalDistributedAmountBigInt was calculated in the loop above, summing actual payouts
 
     try {
       // prizePayouts now contains prizeAmount as string in smallest unit
-      txHash = await this.walletService.distributePrizes(prizePayouts); 
-      if (txHash) {
-        console.log(`[PrizeDistributionService] WalletService.distributePrizes successful. Tx Hash: ${txHash}. Total distributed (smallest unit): ${totalDistributedAmountBigInt.toString()}`);
-      } else {
-        // This case implies distributePrizes can return undefined/null on failure without throwing
-        payoutError = 'WalletService.distributePrizes returned no txHash.';
+      payoutResults = await this.walletService.distributePrizes(prizePayouts);
+      
+      if (!payoutResults || payoutResults.length === 0) {
+        // This case implies distributePrizes can return undefined/null/empty on failure without throwing
+        payoutError = 'WalletService.distributePrizes returned no results.';
         console.error(`[PrizeDistributionService] ${payoutError}`);
+        if (distributionSummaryId) {
+          await this.logFailedDistribution(distributionSummaryId, payoutError, totalClaimedPool);
+        }
+        throw new Error(payoutError);
+      }
+
+      // Process results and check for any failures
+      const failedPayouts = payoutResults.filter(r => r.status !== 'success');
+      const successfulPayouts = payoutResults.filter(r => r.status === 'success');
+      
+      console.log(`[PrizeDistributionService] WalletService.distributePrizes completed. ` +
+        `Success: ${successfulPayouts.length}/${payoutResults.length}, ` +
+        `Failed: ${failedPayouts.length}/${payoutResults.length}`);
+      
+      // Log each result
+      for (const result of payoutResults) {
+        if (result.status === 'success') {
+          console.log(`[PrizeDistributionService] Successfully sent prize to ${result.to}. Tx: ${result.transactionHash}`);
+        } else {
+          console.error(`[PrizeDistributionService] Failed to send prize to ${result.to}: ${result.error || 'Unknown error'}`);
+        }
+      }
+      
+      // If we have a distributionSummaryId, log the successful distribution
+      if (distributionSummaryId && successfulPayouts.length > 0) {
+        // Join all successful transaction hashes for logging
+        const txHashes = successfulPayouts.map(r => r.transactionHash).filter(Boolean).join(',');
+        await this.logSuccessfulDistribution(
+          distributionSummaryId, 
+          txHashes, 
+          totalDistributedAmountBigInt.toString(), 
+          totalClaimedPool, 
+          prizePayouts
+        );
+      }
+      
+      // If there were any failures, throw an error
+      if (failedPayouts.length > 0) {
+        const errorDetails = failedPayouts.map(f => 
+          `Failed to send to ${f.to}: ${f.error || 'Unknown error'}`
+        ).join('; ');
+        throw new Error(`Failed to process some payouts: ${errorDetails}`);
       }
     } catch (error) {
-      console.error('[PrizeDistributionService] Error calling WalletService.distributePrizes:', error);
-      payoutError = error instanceof Error ? error.message : 'Unknown error from WalletService';
-      // txHash remains undefined
+      console.error('[PrizeDistributionService] Error in prize distribution:', error);
+      payoutError = error instanceof Error ? error.message : 'Unknown error during prize distribution';
+      if (distributionSummaryId) {
+        await this.logFailedDistribution(distributionSummaryId, payoutError, totalClaimedPool);
+      }
+      throw error; // Re-throw to be handled by the caller
     }
 
     // 6. Log detailed results to Turso (prize_distribution_log and update distribution_summary_log)
-    if (distributionSummaryId) {
-      if (txHash) { // If txHash is defined, it was successful
-        // For logging, pass totalDistributedAmountBigInt.toString() or the display value as appropriate
-        await this.logSuccessfulDistribution(distributionSummaryId, txHash, totalDistributedAmountBigInt.toString(), totalClaimedPool, prizePayouts);
-      } else {
-        await this.logFailedDistribution(distributionSummaryId, payoutError || 'WalletService payout failed', totalClaimedPool);
-        throw new Error(payoutError || 'WalletService payout failed');
-      }
-    } else {
+    if (!distributionSummaryId) {
       console.error('[PrizeDistributionService] CRITICAL: distributionSummaryId is undefined. Cannot log final status.');
       throw new Error('distributionSummaryId is undefined. Cannot log final status.');
     }
