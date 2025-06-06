@@ -2,6 +2,7 @@ import "./theme.css";
 import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "../public/farcaster/style.css"; // Import Farcaster icon styles
 import { Providers } from "./providers";
 import dynamic from 'next/dynamic';
 // import AudioInitializer from "./components/AudioInitializer"; // Replaced with dynamic import

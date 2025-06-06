@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { FaPlusCircle, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import { sdk } from '@farcaster/frame-sdk';
+import { FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { useAddFrame, useMiniKit } from '@coinbase/onchainkit/minikit';
 
 type AddAppStatus = {
   type: 'success' | 'error' | null;
@@ -10,12 +10,22 @@ type AddAppStatus = {
 };
 
 export default function AddMiniApp() {
+  const addFrame = useAddFrame();
+  const { isFrameReady } = useMiniKit();
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<AddAppStatus>({ type: null, message: '' });
   const [isInstalled, setIsInstalled] = useState(false);
 
   const handleAddToFarcaster = useCallback(async () => {
-    if (isLoading) return;
+    if (isLoading || !isFrameReady) {
+      console.warn('AddMiniApp: Attempted to add frame but isLoading or !isFrameReady.');
+      setStatus({
+        type: 'error',
+        message: !isFrameReady ? 'Farcaster MiniKit not ready. Please try again shortly.' : 'Previous operation in progress.'
+      });
+      setIsLoading(false); // Ensure loading is reset if it was true
+      return;
+    }
     
     setIsLoading(true);
     setStatus({ type: null, message: '' });
@@ -23,11 +33,14 @@ export default function AddMiniApp() {
     try {
       // Use the Farcaster SDK to add the app
       // Note: This will open the Farcaster client's app installation flow
-      await sdk.actions.openUrl(window.location.origin);
+      const result = await addFrame();
+      if (!result || !result.url) { // Check if result or result.url is undefined/null
+        throw new Error('Failed to initiate add app process or no URL returned.');
+      }
       
       setStatus({ 
         type: 'success', 
-        message: 'Check your Farcaster client to complete the installation.' 
+        message: 'Follow the prompts in your Farcaster client to add the app.' 
       });
       
       // Set as installed optimistically since we can't actually check
@@ -47,7 +60,7 @@ export default function AddMiniApp() {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [isLoading]);
+  }, [isLoading, addFrame, isFrameReady]);
 
   return (
     <div className="space-y-4">
@@ -57,13 +70,13 @@ export default function AddMiniApp() {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {isInstalled 
               ? 'App is installed in your Farcaster client' 
-              : 'Add this app to your Farcaster client for quick access'}
+              : 'Add this app for quick access'}
           </p>
         </div>
         <button
           type="button"
           onClick={handleAddToFarcaster}
-          disabled={isLoading || isInstalled}
+          disabled={isLoading || isInstalled || !isFrameReady}
           className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
             isInstalled 
               ? 'bg-green-600 hover:bg-green-700' 
@@ -77,8 +90,8 @@ export default function AddMiniApp() {
             </>
           ) : (
             <>
-              <FaPlusCircle className="mr-2 h-4 w-4" />
-              {isLoading ? 'Adding...' : 'Add to Farcaster'}
+              <i className="fc fc-square-farcaster mr-2 text-lg"></i>
+              {isLoading ? 'Adding...' : 'Add MiniApp'}
             </>
           )}
         </button>
