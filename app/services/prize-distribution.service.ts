@@ -218,66 +218,38 @@ export class PrizeDistributionService {
     }
 
     // 5. Execute payouts via WalletService
-    const walletServicePayouts: PrizePayout[] = prizePayouts.map(p => ({
-      userAddress: p.userAddress,
-      prizeAmount: p.prizeAmount, // This is already in smallest unit string
-    }));
+    let txHash: string | undefined;
+    let payoutError: string | undefined;
+    // totalDistributedAmountBigInt was calculated in the loop above, summing actual payouts
 
-    let distributionResults: PrizeDistributionResult[] = [];
     try {
-      distributionResults = await this.walletService.distributePrizes(walletServicePayouts);
+      // prizePayouts now contains prizeAmount as string in smallest unit
+      txHash = await this.walletService.distributePrizes(prizePayouts); 
+      if (txHash) {
+        console.log(`[PrizeDistributionService] WalletService.distributePrizes successful. Tx Hash: ${txHash}. Total distributed (smallest unit): ${totalDistributedAmountBigInt.toString()}`);
+      } else {
+        // This case implies distributePrizes can return undefined/null on failure without throwing
+        payoutError = 'WalletService.distributePrizes returned no txHash.';
+        console.error(`[PrizeDistributionService] ${payoutError}`);
+      }
     } catch (error) {
-      console.error('[PrizeDistributionService] Critical error calling WalletService.distributePrizes:', error);
-      // Log all as failed if the service call itself fails catastrophically
-      const failedResults: PrizeDistributionResult[] = prizePayouts.map(p => ({
-        userAddress: p.userAddress,
-        status: 'FAILED',
-        error: error instanceof Error ? error.message : 'WalletService call failed',
-        transactionHash: undefined, // Changed from null to undefined
-      }));
-      await this._logAllIndividualPayoutAttempts(distributionSummaryId, prizePayouts.map(p => ({...p, prizeAmountGlicoSmallestUnit: p.prizeAmount})), failedResults);
-      await this.logFailedDistribution(distributionSummaryId, `WalletService.distributePrizes call failed: ${error instanceof Error ? error.message : 'Unknown error'}`, totalClaimedPool);
-      throw error; // Re-throw critical error
+      console.error('[PrizeDistributionService] Error calling WalletService.distributePrizes:', error);
+      payoutError = error instanceof Error ? error.message : 'Unknown error from WalletService';
+      // txHash remains undefined
     }
 
-    // 6. Log detailed results to Turso
-    await this._logAllIndividualPayoutAttempts(distributionSummaryId, prizePayouts.map(p => ({...p, prizeAmountGlicoSmallestUnit: p.prizeAmount})), distributionResults);
-
-    const successfulPayoutsResults = distributionResults.filter(r => r.status === 'SUCCESS');
-    const totalDistributedSmallestUnitFromSuccess = successfulPayoutsResults.reduce((sum, result) => {
-      const originalTx = prizePayouts.find(tx => tx.userAddress === result.userAddress);
-      return sum + BigInt(originalTx?.prizeAmount || '0');
-    }, BigInt(0));
-
-    if (distributionResults.length > 0 && successfulPayoutsResults.length === distributionResults.length) {
-      console.log(`[PrizeDistributionService] All ${distributionResults.length} prizes distributed successfully.`);
-      await this.logOverallSuccess(
-        distributionSummaryId,
-        totalDistributedSmallestUnitFromSuccess.toString(),
-        totalClaimedPool,
-        successfulPayoutsResults.length
-      );
-    } else if (distributionResults.length > 0) { // Some or all failed
-      const numFailed = distributionResults.length - successfulPayoutsResults.length;
-      const errorMessage = `${numFailed} out of ${distributionResults.length} prize payouts failed. ${successfulPayoutsResults.length} succeeded. See individual logs.`;
-      console.error(`[PrizeDistributionService] ${errorMessage}`);
-      await this.updateDistributionStatus(distributionSummaryId, 'FAILED', {
-          totalDistributed: Number(formatUnits(totalDistributedSmallestUnitFromSuccess, 18)),
-          numWinners: successfulPayoutsResults.length,
-          errorMessage: errorMessage,
-          totalPoolClaimed: totalClaimedPool,
-      });
-    } else if (walletServicePayouts.length > 0 && distributionResults.length === 0) {
-      console.warn('[PrizeDistributionService] WalletService returned no distribution results, though payouts were provided.');
-      await this.logFailedDistribution(distributionSummaryId, 'WalletService returned no results for the provided payouts.', totalClaimedPool);
+    // 6. Log detailed results to Turso (prize_distribution_log and update distribution_summary_log)
+    if (distributionSummaryId) {
+      if (txHash) { // If txHash is defined, it was successful
+        // For logging, pass totalDistributedAmountBigInt.toString() or the display value as appropriate
+        await this.logSuccessfulDistribution(distributionSummaryId, txHash, totalDistributedAmountBigInt.toString(), totalClaimedPool, prizePayouts);
+      } else {
+        await this.logFailedDistribution(distributionSummaryId, payoutError || 'WalletService payout failed', totalClaimedPool);
+        throw new Error(payoutError || 'WalletService payout failed');
+      }
     } else {
-      // This means walletServicePayouts was empty, so nothing was sent to WalletService.
-      // This should be caught by earlier checks (e.g., no resolved winners).
-      console.log('[PrizeDistributionService] No payouts were attempted as the list of transactions to process was empty.');
-      await this.updateDistributionStatus(distributionSummaryId, 'SKIPPED', {
-        errorMessage: 'No transactions were processed by WalletService because the input list was empty.',
-        totalPoolClaimed: totalClaimedPool
-      });
+      console.error('[PrizeDistributionService] CRITICAL: distributionSummaryId is undefined. Cannot log final status.');
+      throw new Error('distributionSummaryId is undefined. Cannot log final status.');
     }
 
     console.log(`[PrizeDistributionService] Distribution process for ${poolType} - ${periodIdentifier} completed.`);
