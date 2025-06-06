@@ -4,8 +4,9 @@
 
 import { LeaderboardService, LeaderboardEntry } from './leaderboard.service';
 import { PrizePoolManager } from './prize-pool.service';
-import { WalletService } from './wallet.service';
+import { WalletService, PrizeDistributionResult, PrizePayout } from './wallet.service';
 import { FarcasterProfileService } from './farcaster-profile.service';
+import { formatUnits } from 'viem';
 
 import { createClient as createTursoClient, Client as TursoClient, InValue } from '@libsql/client';
 import { getISOWeek, getISOWeekYear } from 'date-fns';
@@ -81,6 +82,57 @@ export class PrizeDistributionService {
   }
 
   // --- Private core settlement logic ---
+
+  private async _logAllIndividualPayoutAttempts(
+    summaryId: string,
+    originalTxs: Array<{ userId: string; userAddress: string; rank: number; score: number; prizeAmountGlicoSmallestUnit: string }>,
+    results: PrizeDistributionResult[]
+  ): Promise<void> {
+    const statements = [];
+    for (const result of results) {
+      const originalTx = originalTxs.find(tx => tx.userAddress === result.userAddress);
+      if (!originalTx) {
+        console.warn(`[PrizeDistributionService] Could not find original transaction details for payout result:`, result);
+        continue;
+      }
+
+      let prizeAmountForLog: number | null = null;
+      try {
+        // Convert smallest unit string to a decimal string, then to number for REAL column
+        prizeAmountForLog = Number(formatUnits(BigInt(originalTx.prizeAmountGlicoSmallestUnit), 18));
+      } catch (conversionError) {
+        console.error(`[PrizeDistributionService] Error converting prize amount for logging: ${originalTx.prizeAmountGlicoSmallestUnit}`, conversionError);
+        // Decide how to handle, e.g., log as 0 or null, or skip this log entry
+      }
+
+      statements.push({
+        sql: `INSERT INTO ${PRIZE_DISTRIBUTION_LOG_TABLE} 
+                (summary_id, user_id, wallet_address, rank, score, prize_amount, tx_hash, status, error_message, distributed_at, logged_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        args: [
+          summaryId,
+          originalTx.userId,
+          originalTx.userAddress,
+          originalTx.rank,
+          originalTx.score,
+          prizeAmountForLog, // Human-readable for REAL column
+          result.transactionHash || null,
+          result.status, // 'SUCCESS' or 'FAILED'
+          result.error || null,
+          result.status === 'SUCCESS' ? new Date().toISOString() : null, // distributed_at
+        ],
+      });
+    }
+
+    if (statements.length > 0) {
+      try {
+        await this.turso.batch(statements, 'write');
+        console.log(`[PrizeDistributionService] Logged ${statements.length} individual payout attempts for summary ${summaryId}.`);
+      } catch (dbError) {
+        console.error(`[PrizeDistributionService] Turso error logging individual payout attempts for summary ${summaryId}:`, dbError);
+      }
+    }
+  }
 
   private async _settlePrizes(poolType: 'daily' | 'weekly', periodIdentifier: string): Promise<void> {
     const distributionSummaryId = await this.logInitialDistributionAttempt(poolType, periodIdentifier);
@@ -166,56 +218,84 @@ export class PrizeDistributionService {
     }
 
     // 5. Execute payouts via WalletService
-    let txHash: string | undefined;
-    let payoutError: string | undefined;
-    // totalDistributedAmountBigInt was calculated in the loop above, summing actual payouts
+    const walletServicePayouts: PrizePayout[] = prizePayouts.map(p => ({
+      userAddress: p.userAddress,
+      prizeAmount: p.prizeAmount, // This is already in smallest unit string
+    }));
 
+    let distributionResults: PrizeDistributionResult[] = [];
     try {
-      // prizePayouts now contains prizeAmount as string in smallest unit
-      txHash = await this.walletService.distributePrizes(prizePayouts); 
-      if (txHash) {
-        console.log(`[PrizeDistributionService] WalletService.distributePrizes successful. Tx Hash: ${txHash}. Total distributed (smallest unit): ${totalDistributedAmountBigInt.toString()}`);
-      } else {
-        // This case implies distributePrizes can return undefined/null on failure without throwing
-        payoutError = 'WalletService.distributePrizes returned no txHash.';
-        console.error(`[PrizeDistributionService] ${payoutError}`);
-      }
+      distributionResults = await this.walletService.distributePrizes(walletServicePayouts);
     } catch (error) {
-      console.error('[PrizeDistributionService] Error calling WalletService.distributePrizes:', error);
-      payoutError = error instanceof Error ? error.message : 'Unknown error from WalletService';
-      // txHash remains undefined
+      console.error('[PrizeDistributionService] Critical error calling WalletService.distributePrizes:', error);
+      // Log all as failed if the service call itself fails catastrophically
+      const failedResults: PrizeDistributionResult[] = prizePayouts.map(p => ({
+        userAddress: p.userAddress,
+        status: 'FAILED',
+        error: error instanceof Error ? error.message : 'WalletService call failed',
+        transactionHash: undefined, // Changed from null to undefined
+      }));
+      await this._logAllIndividualPayoutAttempts(distributionSummaryId, prizePayouts.map(p => ({...p, prizeAmountGlicoSmallestUnit: p.prizeAmount})), failedResults);
+      await this.logFailedDistribution(distributionSummaryId, `WalletService.distributePrizes call failed: ${error instanceof Error ? error.message : 'Unknown error'}`, totalClaimedPool);
+      throw error; // Re-throw critical error
     }
 
-    // 6. Log detailed results to Turso (prize_distribution_log and update distribution_summary_log)
-    if (distributionSummaryId) {
-      if (txHash) { // If txHash is defined, it was successful
-        // For logging, pass totalDistributedAmountBigInt.toString() or the display value as appropriate
-        await this.logSuccessfulDistribution(distributionSummaryId, txHash, totalDistributedAmountBigInt.toString(), totalClaimedPool, prizePayouts);
-      } else {
-        await this.logFailedDistribution(distributionSummaryId, payoutError || 'WalletService payout failed', totalClaimedPool);
-        throw new Error(payoutError || 'WalletService payout failed');
-      }
+    // 6. Log detailed results to Turso
+    await this._logAllIndividualPayoutAttempts(distributionSummaryId, prizePayouts.map(p => ({...p, prizeAmountGlicoSmallestUnit: p.prizeAmount})), distributionResults);
+
+    const successfulPayoutsResults = distributionResults.filter(r => r.status === 'SUCCESS');
+    const totalDistributedSmallestUnitFromSuccess = successfulPayoutsResults.reduce((sum, result) => {
+      const originalTx = prizePayouts.find(tx => tx.userAddress === result.userAddress);
+      return sum + BigInt(originalTx?.prizeAmount || '0');
+    }, BigInt(0));
+
+    if (distributionResults.length > 0 && successfulPayoutsResults.length === distributionResults.length) {
+      console.log(`[PrizeDistributionService] All ${distributionResults.length} prizes distributed successfully.`);
+      await this.logOverallSuccess(
+        distributionSummaryId,
+        totalDistributedSmallestUnitFromSuccess.toString(),
+        totalClaimedPool,
+        successfulPayoutsResults.length
+      );
+    } else if (distributionResults.length > 0) { // Some or all failed
+      const numFailed = distributionResults.length - successfulPayoutsResults.length;
+      const errorMessage = `${numFailed} out of ${distributionResults.length} prize payouts failed. ${successfulPayoutsResults.length} succeeded. See individual logs.`;
+      console.error(`[PrizeDistributionService] ${errorMessage}`);
+      await this.updateDistributionStatus(distributionSummaryId, 'FAILED', {
+          totalDistributed: Number(formatUnits(totalDistributedSmallestUnitFromSuccess, 18)),
+          numWinners: successfulPayoutsResults.length,
+          errorMessage: errorMessage,
+          totalPoolClaimed: totalClaimedPool,
+      });
+    } else if (walletServicePayouts.length > 0 && distributionResults.length === 0) {
+      console.warn('[PrizeDistributionService] WalletService returned no distribution results, though payouts were provided.');
+      await this.logFailedDistribution(distributionSummaryId, 'WalletService returned no results for the provided payouts.', totalClaimedPool);
     } else {
-      console.error('[PrizeDistributionService] CRITICAL: distributionSummaryId is undefined. Cannot log final status.');
-      throw new Error('distributionSummaryId is undefined. Cannot log final status.');
+      // This means walletServicePayouts was empty, so nothing was sent to WalletService.
+      // This should be caught by earlier checks (e.g., no resolved winners).
+      console.log('[PrizeDistributionService] No payouts were attempted as the list of transactions to process was empty.');
+      await this.updateDistributionStatus(distributionSummaryId, 'SKIPPED', {
+        errorMessage: 'No transactions were processed by WalletService because the input list was empty.',
+        totalPoolClaimed: totalClaimedPool
+      });
     }
+
     console.log(`[PrizeDistributionService] Distribution process for ${poolType} - ${periodIdentifier} completed.`);
   }
 
   // --- Helper methods for date/period identifiers ---
 
-  private getDailyPeriodIdentifier(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
+  public getDailyPeriodIdentifier(date: Date): string {
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
-  private getWeeklyPeriodIdentifier(date: Date): string {
-    // Using date-fns for robust ISO 8601 week date calculation.
-    const isoWeekYear = getISOWeekYear(date);
-    const isoWeek = getISOWeek(date);
-    return `${isoWeekYear}-W${isoWeek.toString().padStart(2, '0')}`;
+  public getWeeklyPeriodIdentifier(date: Date): string {
+    const year = getISOWeekYear(date);
+    const week = getISOWeek(date).toString().padStart(2, '0');
+    return `${year}-W${week}`;
   }
 
   // --- Turso Logging Helper Methods ---
@@ -275,29 +355,6 @@ export class PrizeDistributionService {
     }
   }
 
-  private async logIndividualPayouts(
-    summaryId: string,
-    payouts: { userId: string; userAddress: string; rank: number; score: number; prizeAmount: string }[]
-  ): Promise<void> {
-    if (payouts.length === 0) return;
-    const now = new Date().toISOString();
-    const statements = payouts.map(payout => ({
-      sql: `INSERT INTO ${PRIZE_DISTRIBUTION_LOG_TABLE} 
-              (summary_id, user_id, wallet_address, rank, score, prize_amount, distributed_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?)`, 
-      args: [summaryId, payout.userId, payout.userAddress, payout.rank, payout.score, payout.prizeAmount, now],
-    }));
-
-    try {
-      await this.turso.batch(statements, 'write'); // Removed BatchResult type annotation
-      console.log(`[PrizeDistributionService] Logged ${statements.length} individual payouts for summary ${summaryId}.`);
-    } catch (dbError) {
-      console.error(`[PrizeDistributionService] Turso error logging individual payouts for summary ${summaryId}:`, dbError);
-      // This is a critical error as it might lead to inconsistent state or double payouts if retried without care.
-      // Consider how to handle this: mark summary as partially failed? Retry individual inserts?
-    }
-  }
-
   // --- Methods to be called from _settlePrizes ---
   // (These are wrappers around updateDistributionStatus and logIndividualPayouts)
 
@@ -309,25 +366,24 @@ export class PrizeDistributionService {
     await this.updateDistributionStatus(summaryId, 'FAILED', { errorMessage: errorDetails, totalPoolClaimed });
   }
 
-  private async logSuccessfulDistribution(
+  private async logOverallSuccess(
     summaryId: string,
-    txHash: string,
-    distributedAmountSmallestUnit: string, // This is a string representing a BigInt
+    totalDistributedSmallestUnit: string, // This is a string representing a BigInt
     claimedPool: number,
-    payouts: { userId: string; userAddress: string; rank: number; score: number; prizeAmount: string }[]
+    numSuccessfulPayouts: number
   ): Promise<void> {
-    // Convert smallest unit string to BigInt, then divide, then convert to Number for logging display amount
-    const displayTotalDistributed = Number(BigInt(distributedAmountSmallestUnit) / BigInt('1000000000000000000'));
+    let displayTotalDistributed = 0;
+    try {
+      displayTotalDistributed = Number(formatUnits(BigInt(totalDistributedSmallestUnit), 18));
+    } catch (e) {
+      console.error("[PrizeDistributionService] Error formatting total distributed amount for display:", e);
+      // displayTotalDistributed remains 0 or could be set to a specific error indicator if preferred
+    }
     await this.updateDistributionStatus(summaryId, 'SUCCESS', {
-      txHash,
+      // txHash: null, // No single transaction hash for the summary log
       totalDistributed: displayTotalDistributed, // Log the display amount
-      numWinners: payouts.length,
+      numWinners: numSuccessfulPayouts,
       totalPoolClaimed: claimedPool
-      // Note: The actual amount logged in `distribution_summary_log.total_distributed_amount` via `updateDistributionStatus`
-      // should ideally be the smallest unit (string or number) if precision is paramount for auditing.
-      // Or, add another field for `total_distributed_amount_display`.
-      // For now, logging display amount as per original intent.
     });
-    await this.logIndividualPayouts(summaryId, payouts);
   }
 }
