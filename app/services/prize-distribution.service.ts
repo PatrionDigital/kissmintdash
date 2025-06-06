@@ -326,8 +326,8 @@ export class PrizeDistributionService {
 
     if (details.txHash !== undefined) { sql += ', transaction_hash = ?'; args.push(details.txHash); }
     if (details.totalDistributed !== undefined) { sql += ', total_distributed_amount = ?'; args.push(details.totalDistributed); }
-    if (details.numWinners !== undefined) { sql += ', number_of_winners = ?'; args.push(details.numWinners); }
-    if (details.errorMessage !== undefined) { sql += ', error_message = ?'; args.push(details.errorMessage); }
+    if (details.numWinners !== undefined) { sql += ', num_winners = ?'; args.push(details.numWinners); }
+    if (details.errorMessage !== undefined) { sql += ', reason = ?'; args.push(details.errorMessage); }
     if (details.totalPoolClaimed !== undefined) { sql += ', total_prize_pool_claimed = ?'; args.push(details.totalPoolClaimed); }
 
     sql += ' WHERE id = ?';
