@@ -8,16 +8,5 @@
       "path": "/api/cron/prize-distribution?periodType=weekly",
       "schedule": "10 0 * * 1"
     }
-  ],
-  "headers": [
-    {
-      "source": "/api/cron/(.*)",
-      "headers": [
-        {
-          "key": "Authorization",
-          "value": "Bearer ${process.env.CRON_SECRET}"
-        }
-      ]
-    }
   ]
 }
