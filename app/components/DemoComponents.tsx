@@ -115,16 +115,23 @@ type FeaturesProps = {
 export function Features({ setActiveTab }: FeaturesProps) {
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card title="Kiss MINT Dash: Tap Runner '99">
+      <Card title="Kiss MINT Dash: Tap Runner &apos;99">
         <div className="space-y-4">
           <p className="text-[var(--app-foreground-muted)]">
-            <span className="text-accent font-medium">$GLICO</span> is the token for Kiss MINT Dash, a tap game where you test how many times you can tap in 25 seconds. You get 2 free tries daily, and can buy more with <span className="text-accent font-medium">$GLICO</span> to compete for leaderboard prizes.
+            <span className="text-accent font-medium">$GLICO</span> is the token for
+            Kiss MINT Dash, a tap game where you test how many times you can tap
+            in 25 seconds. You get 2 free tries daily, and can buy more with{" "}
+            <span className="text-accent font-medium">$GLICO</span> to compete for
+            leaderboard prizes.
           </p>
           <p className="text-[var(--app-foreground-muted)]">
-            <span className="text-accent font-medium">$GLICO</span> is listed on{' '}
-            <a 
-              href="https://mint.club/token/base/GLICO" 
-              target="_blank" 
+          Both leaderboards also feature a <span className="text-cyan-400 font-medium">dynamic prize pool</span>, supplemented by a portion of <span className="text-pink-300 font-medium">Game Pass purchases</span>.
+          </p>
+          <p className="text-[var(--app-foreground-muted)]">
+            <span className="text-accent font-medium">$GLICO</span> is listed on{" "}
+            <a
+              href="https://mint.club/token/base/GLICO"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-accent hover:underline"
             >
@@ -132,15 +139,15 @@ export function Features({ setActiveTab }: FeaturesProps) {
             </a>
           </p>
           <div className="flex justify-center items-center space-x-4 pt-2">
-            <a 
-              href="https://mint.club/token/base/GLICO" 
-              target="_blank" 
+            <a
+              href="https://mint.club/token/base/GLICO"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex-shrink-0"
             >
-              <Image 
-                src="/mint-logo.webp" 
-                alt="Mint.Club" 
+              <Image
+                src="/mint-logo.webp"
+                alt="Mint.Club"
                 width={80}
                 height={32}
                 className="h-8 w-auto"
@@ -149,9 +156,9 @@ export function Features({ setActiveTab }: FeaturesProps) {
             </a>
             <span className="text-2xl">🤝</span>
             <div className="flex-shrink-0 rounded-full overflow-hidden border-2 border-accent">
-              <Image 
-                src="/token.png" 
-                alt="GLICO Token" 
+              <Image
+                src="/token.png"
+                alt="GLICO Token"
                 width={32}
                 height={32}
                 className="h-8 w-8 object-cover"
@@ -161,29 +168,90 @@ export function Features({ setActiveTab }: FeaturesProps) {
           </div>
         </div>
       </Card>
+
       <Card title="How to Play">
         <ul className="space-y-3 mb-4">
           <li className="flex items-start">
-            <Icon name="check" className="text-accent mt-1 mr-2" />
+            <Icon name="check" className="text-accent mt-1 mr-2 flex-shrink-0" />
             <span className="text-[var(--app-foreground-muted)]">
-              Tap Fast. You have <span className="text-pink-300 font-medium">25 seconds</span> on the clock.
+              Tap Fast. You have{" "}
+              <span className="text-pink-300 font-medium">25 seconds</span> on the
+              clock.
             </span>
           </li>
           <li className="flex items-start">
-            <Icon name="check" className="text-accent mt-1 mr-2" />
+            <Icon name="check" className="text-accent mt-1 mr-2 flex-shrink-0" />
             <span className="text-[var(--app-foreground-muted)]">
-              You get <span className="text-cyber font-medium">2 free Game Passes</span> to <span className="text-cyan-400 font-medium">Bubble up your Score</span>.
+              You get <span className="text-cyber font-medium">2 free Game Passes</span>{" "}
+              to <span className="text-cyan-400 font-medium">Bubble up your Score</span>.
             </span>
           </li>
           <li className="flex items-start">
-            <Icon name="check" className="text-accent mt-1 mr-2" />
+            <Icon name="check" className="text-accent mt-1 mr-2 flex-shrink-0" />
             <span className="text-[var(--app-foreground-muted)]">
-              You can buy more <span className="text-cyber font-medium">Game Passes</span> with <span className="text-accent font-medium">$GLICO</span>.
+              You can buy more{" "}
+              <span className="text-cyber font-medium">Game Passes</span> with{" "}
+              <span className="text-accent font-medium">$GLICO</span> to improve your
+              score and climb the leaderboards.
             </span>
+          </li>
+          <li className="flex items-start">
+            <Icon name="trophy" className="text-accent mt-1 mr-2 flex-shrink-0" />
+            <div className="text-[var(--app-foreground-muted)]">
+              <span className="text-[var(--app-foreground)] font-semibold">
+                Leaderboard Prizes:
+              </span>
+              <ul className="space-y-2 mt-1">
+                <li className="flex items-start">
+                  <Icon name="star" className="text-yellow-400 mt-1 mr-2 flex-shrink-0" />
+                  <span>
+                    <strong className="text-cyan-400">Daily Leaderboard:</strong> Base prize of{" "}
+                    <strong className="text-accent font-medium">50 $GLICO</strong>.
+                  </span>
+                </li>
+                <li className="flex items-start">
+                  <Icon name="star" className="text-yellow-400 mt-1 mr-2 flex-shrink-0" />
+                  <span>
+                    <strong className="text-cyan-400">Weekly Leaderboard:</strong> Base prize of{" "}
+                    <strong className="text-accent font-medium">500 $GLICO</strong>.
+                  </span>
+                </li>
+                <li className="flex items-start">
+                  <Icon name="star" className="text-yellow-400 mt-1 mr-2 flex-shrink-0" />
+                  <span>
+                    The total prize pool <span className="text-pink-300 font-medium">(Base Prize + Dynamic Bonus)</span> for each
+                    is distributed among the <span className="text-cyan-400 font-medium">Top 5</span>:
+                  </span>
+                </li>
+              </ul>
+            </div>
           </li>
         </ul>
-        <Button 
-          variant="outline" 
+        {/* Prize Distribution Table */}
+        <div className="mt-2 overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm">
+                    <table className="min-w-full text-sm">
+                      <thead className="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                          <th scope="col" className="px-3 py-2 text-center font-semibold text-[var(--app-foreground)]">1st Place</th>
+                          <th scope="col" className="px-3 py-2 text-center font-semibold text-[var(--app-foreground)]">2nd Place</th>
+                          <th scope="col" className="px-3 py-2 text-center font-semibold text-[var(--app-foreground)]">3rd Place</th>
+                          <th scope="col" className="px-3 py-2 text-center font-semibold text-[var(--app-foreground)]">4th Place</th>
+                          <th scope="col" className="px-3 py-2 text-center font-semibold text-[var(--app-foreground)]">5th Place</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-300 dark:divide-gray-600 bg-[var(--app-background)]">
+                        <tr>
+                          <td className="whitespace-nowrap px-3 py-2 text-center text-[var(--app-foreground-muted)]"><strong>40%</strong></td>
+                          <td className="whitespace-nowrap px-3 py-2 text-center text-[var(--app-foreground-muted)]"><strong>24%</strong></td>
+                          <td className="whitespace-nowrap px-3 py-2 text-center text-[var(--app-foreground-muted)]"><strong>16%</strong></td>
+                          <td className="whitespace-nowrap px-3 py-2 text-center text-[var(--app-foreground-muted)]"><strong>12%</strong></td>
+                          <td className="whitespace-nowrap px-3 py-2 text-center text-[var(--app-foreground-muted)]"><strong>8%</strong></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+        <Button
+          variant="outline"
           onClick={() => setActiveTab("home")}
           icon={<FaHome className="w-4 h-4" />}
           aria-label="Back to Home"

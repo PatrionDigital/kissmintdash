@@ -107,15 +107,15 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ setActiveTab }) => {
             <>
               {/* Current Player's Rank (if not in Top 5) - Updated for prizeAmount */}
               {showCurrentPlayerSeparately && currentPlayerEntry && (
-                <div className="my-4 p-3 bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-md text-center shadow">
-                  <h4 className="text-md font-semibold text-blue-700 dark:text-blue-400 mb-1">Your Rank</h4>
+                <div className="my-4 p-3 bg-white text-black border border-gray-300 rounded-md text-center shadow">
+                  <h4 className="text-md font-semibold text-black mb-1">Your Rank</h4>
                   <table className="w-full text-center">
                     <tbody>
-                      <tr className="dark:text-gray-200">
+                      <tr> {/* Removed dark:text-gray-200 */}
                         <td className="py-2 px-2 font-bold">{currentPlayerEntry.rank}</td>
                         <td className="py-2 px-2">{currentPlayerEntry.name}</td>
                         <td className="py-2 px-2">{currentPlayerEntry.score}</td>
-                        <td className="py-2 px-2 text-green-600 dark:text-green-400">
+                        <td className="py-2 px-2"> {/* Removed text-green-600 dark:text-green-400 */}
                           {typeof currentPlayerEntry.prizeAmount === 'number' ? `${currentPlayerEntry.prizeAmount.toFixed(2)} $GLICO` : '-'}
                         </td>
                       </tr>
