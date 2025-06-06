@@ -78,7 +78,7 @@ export class WalletService {
    * @param prizePayouts Array of { userAddress, prizeAmount } (amount in smallest unit)
    * @returns Array of transfer results, or undefined on failure
    */
-  async distributePrizes(prizePayouts: PrizePayout[]): Promise<TransferResult[] | undefined> {
+  async distributePrizes(prizePayouts?: PrizePayout[] | null): Promise<TransferResult[] | undefined> {
     if (!Array.isArray(prizePayouts) || prizePayouts.length === 0) {
       console.log('[WalletService] No prize payouts to distribute.');
       return undefined;

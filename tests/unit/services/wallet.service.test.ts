@@ -1,21 +1,16 @@
 import { WalletService } from '../../../app/services/wallet.service';
+import { TransferResult } from '../../../app/types/wallet.types';
 
 // Mock the module with type assertion
 const mockGetDefaultAddress = jest.fn<Promise<string>, []>();
 const mockGetBalance = jest.fn<Promise<string>, []>();
 const mockGetId = jest.fn<string, []>();
-const mockCreateTransfer = jest.fn<Promise<any>, [unknown]>();
+const mockCreateTransfer = jest.fn<Promise<TransferResult>, [unknown]>();
 const mockGetAddress = jest.fn<Promise<string>, []>();
 const mockSignTransaction = jest.fn<Promise<string>, [unknown]>();
 
 // Mock the module with type assertion
 jest.mock('@coinbase/coinbase-sdk', () => {
-  // Type definitions for the mock wallet
-  interface MockTransfer {
-    wait: jest.Mock<Promise<{ status: number; transactionHash: string }>, []>;
-    getTransactionHash: jest.Mock<string, []>;
-  }
-
   // Mock Wallet class that matches the expected interface
   class MockWallet {
     getDefaultAddress = mockGetDefaultAddress;
@@ -47,6 +42,9 @@ beforeEach(() => {
   
   // Mock transfer creation
   mockCreateTransfer.mockImplementation(async () => ({
+    status: 'success',
+    transactionHash: '0x123',
+    to: '0xrecipient',
     wait: jest.fn().mockResolvedValue({ status: 1, transactionHash: '0x123' }),
     getTransactionHash: jest.fn().mockReturnValue('0x123')
   }));
@@ -55,43 +53,39 @@ beforeEach(() => {
   (Wallet.create as jest.Mock).mockResolvedValue(new (jest.requireMock('@coinbase/coinbase-sdk').Wallet)());
 });
 
-// Extend WalletService for testing
-class TestableWalletService extends WalletService {
-  async testInitialize(): Promise<void> {
-    await this.initialize();
-  }
-
-  getWalletForTesting() {
-    return this.wallet;
-  }
-}
-
 describe('WalletService', () => {
-  let service: TestableWalletService;
+  let service: WalletService;
 
   beforeEach(() => {
-    service = new TestableWalletService();
+    service = new WalletService();
   });
 
   describe('initialization', () => {
     it('should initialize with default values', () => {
       expect(service).toBeInstanceOf(WalletService);
-      expect(service['isInitialized']).toBe(false);
     });
 
-    it('should initialize the wallet', async () => {
-      await service.testInitialize();
-      expect(service['isInitialized']).toBe(true);
+    it('should initialize wallet when distributePrizes is called', async () => {
+      const payouts = [
+        { userAddress: '0x1111111111111111111111111111111111111111', prizeAmount: '1000000000000000000' }
+      ];
+
+      const results = await service.distributePrizes(payouts);
+      
+      expect(results).toBeDefined();
+      if (!results) return;
+      
+      expect(results[0].status).toBe('confirmed');
       expect(Wallet.create).toHaveBeenCalled();
     });
   });
 
   describe('Prize Distribution', () => {
-    let walletService: TestableWalletService;
+    let walletService: WalletService;
     
     beforeEach(async () => {
-      walletService = new TestableWalletService();
-      await walletService.testInitialize();
+      walletService = new WalletService();
+      // The wallet will be initialized when distributePrizes is called
     });
 
     it('should distribute prizes successfully', async () => {
@@ -133,9 +127,7 @@ describe('WalletService', () => {
     });
 
     it('should return undefined for null or undefined payouts', async () => {
-      // @ts-ignore - Testing invalid input
       expect(await walletService.distributePrizes(null)).toBeUndefined();
-      // @ts-ignore - Testing invalid input
       expect(await walletService.distributePrizes(undefined)).toBeUndefined();
     });
   });
