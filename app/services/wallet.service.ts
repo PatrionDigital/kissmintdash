@@ -1,4 +1,4 @@
-import { Coinbase, Wallet } from '@coinbase/coinbase-sdk';
+import { Wallet } from '@coinbase/coinbase-sdk';
 import { TransferResult, PrizePayout, TransactionStatus } from '../types/wallet.types';
 import { getWalletConfig } from '../config/wallet.config';
 
@@ -13,7 +13,7 @@ export class WalletService {
   private wallet: Wallet | null = null;
   private isInitialized = false;
   private config: ReturnType<typeof getWalletConfig>;
-  private networkId: string;
+  private networkId: string = 'base-sepolia'; // Default to testnet
 
   constructor() {
     // Load configuration
@@ -39,18 +39,11 @@ export class WalletService {
     if (this.isInitialized) return;
 
     try {
-      // Configure SDK with API credentials
-      if (!this.config.coinbaseApiKey || !this.config.coinbasePrivateKey) {
-        throw new Error('Coinbase API key and private key are required');
-      }
-
-      Coinbase.configure({
-        apiKeyName: this.config.coinbaseApiKey,
-        privateKey: this.config.coinbasePrivateKey,
-        // Enable server-signer for enhanced security
-        useServerSigner: true
-      });
-
+      console.log('[WalletService] Initializing Coinbase SDK v2');
+      
+      // In v2, we don't need to explicitly configure the SDK
+      // The wallet connection will be established when needed through the browser
+      
       // Try to load existing wallet if we have an ID
       if (this.config.coinbaseWalletId) {
         console.log(`[WalletService] Loading existing wallet with ID: ${this.config.coinbaseWalletId}`);
