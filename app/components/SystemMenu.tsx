@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import dynamic from 'next/dynamic';
 import { Card, Button } from "./DemoComponents";
 import { useMiniKit, useViewProfile } from "@coinbase/onchainkit/minikit";
-import { FaUserNinja, FaHome, FaMusic, FaBell, FaPlusCircle } from "react-icons/fa";
+import { FaUserNinja, FaHome, FaMusic, FaBell } from "react-icons/fa";
 import Image from 'next/image';
 import { IoSpeedometer } from "react-icons/io5";
 import { BiSupport } from "react-icons/bi";
@@ -117,33 +117,11 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
       
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-2 mb-4">
-          <FaPlusCircle className="w-5 h-5 text-pink-500" />
+          <i className="fc fc-square-farcaster text-lg text-pink-500"></i>
           <span className="font-medium">Farcaster Integration</span>
         </div>
         <div className="pl-2 mb-6">
           <AddMiniApp />
-        </div>
-      </div>
-      
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="space-y-6">
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setActivePanel(null)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => setActivePanel(null)}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Save Changes
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -194,7 +172,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
                   <i className="fc fc-square-farcaster text-lg"></i>
                 </span>
               }
-              onClick={viewProfile}
+              onClick={() => viewProfile()}
             >
               Open Farcaster Profile
             </Button>

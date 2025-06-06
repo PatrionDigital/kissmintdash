@@ -25,7 +25,7 @@
     "wallet:fund": "tsx scripts/fund-testnet-wallet.ts"
   },
   "dependencies": {
-    "@coinbase/coinbase-sdk": "^0.24.0",
+    "@coinbase/cdp-sdk": "^1.13.0",
     "@coinbase/onchainkit": "latest",
     "@farcaster/frame-sdk": "^0.0.51",
     "@fingerprintjs/fingerprintjs": "^4.6.2",
@@ -38,6 +38,7 @@
     "@walletconnect/utils": "^2.21.0",
     "axios": "^1.9.0",
     "canvas": "^3.1.0",
+    "date-fns": "^4.1.0",
     "mint.club-v2-sdk": "^1.0.27",
     "next": "^14.2.15",
     "quick-lru": "^7.0.1",
