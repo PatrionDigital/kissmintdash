@@ -1,4 +1,19 @@
 {
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "functions": {
+    "app/api/frame-image/route.ts": {
+      "runtime": "nodejs18.x",
+      "memory": 1024,
+      "maxDuration": 10,
+      "includeFiles": [
+        "public/fonts/**/*"
+      ]
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/prize-distribution?periodType=daily&secret=${CRON_SECRET}",
@@ -8,5 +23,10 @@
       "path": "/api/cron/prize-distribution?periodType=weekly&secret=${CRON_SECRET}",
       "schedule": "10 0 * * 1"
     }
+  ],
+  "routes": [
+    { "handle": ["filesystem"] },
+    { "src": "/api/frame-image/(.*)", "dest": "/api/frame-image/$1" },
+    { "src": "/(.*)", "dest": "/" }
   ]
 }
