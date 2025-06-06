@@ -27,7 +27,7 @@ yarn-error.log*
 
 # local env files
 .env*
-
+cdp_api_key.json
 # vercel
 .vercel
 
