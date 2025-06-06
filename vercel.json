@@ -9,9 +9,7 @@
       "runtime": "nodejs18.x",
       "memory": 1024,
       "maxDuration": 10,
-      "includeFiles": [
-        "public/fonts/**/*"
-      ]
+      "includeFiles": "public/fonts/**/*"
     }
   },
   "crons": [
