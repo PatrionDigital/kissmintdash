@@ -23,7 +23,6 @@
     }
   ],
   "routes": [
-    { "handle": ["filesystem"] },
     { "src": "/api/frame-image/(.*)", "dest": "/api/frame-image/$1" },
     { "src": "/(.*)", "dest": "/" }
   ]
