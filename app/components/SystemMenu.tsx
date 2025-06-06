@@ -172,7 +172,7 @@ const SystemMenu: React.FC<SystemMenuProps> = ({ setActiveTab }) => {
                   <i className="fc fc-square-farcaster text-lg"></i>
                 </span>
               }
-              onClick={viewProfile}
+              onClick={() => viewProfile()}
             >
               Open Farcaster Profile
             </Button>
