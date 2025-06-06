@@ -1,4 +1,5 @@
-import { WalletService, PrizePayout } from './wallet.service';
+import { WalletService } from './wallet.service';
+import { PrizePayout } from '../types/wallet.types';
 import fetch from 'node-fetch';
 import crypto from 'crypto';
 

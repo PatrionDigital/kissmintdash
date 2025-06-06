@@ -3,8 +3,10 @@
 // Triggered by Vercel Cron Jobs.
 
 import { LeaderboardService, LeaderboardEntry } from './leaderboard.service';
+import { PrizePayout } from '@/app/types/wallet.types';
 import { PrizePoolManager } from './prize-pool.service';
-import { WalletService, PrizeDistributionResult, PrizePayout } from './wallet.service';
+import { WalletService } from './wallet.service';
+import { TransferResult } from '@/app/types/wallet.types';
 import { FarcasterProfileService } from './farcaster-profile.service';
 import { formatUnits } from 'viem';
 
@@ -86,7 +88,7 @@ export class PrizeDistributionService {
   private async _logAllIndividualPayoutAttempts(
     summaryId: string,
     originalTxs: Array<{ userId: string; userAddress: string; rank: number; score: number; prizeAmountGlicoSmallestUnit: string }>,
-    results: PrizeDistributionResult[]
+    results: TransferResult[]
   ): Promise<void> {
     const statements = [];
     for (const result of results) {
@@ -117,9 +119,9 @@ export class PrizeDistributionService {
           originalTx.score,
           prizeAmountForLog, // Human-readable for REAL column
           result.transactionHash || null,
-          result.status, // 'SUCCESS' or 'FAILED'
+          result.status, // 'success' or 'failed'
           result.error || null,
-          result.status === 'SUCCESS' ? new Date().toISOString() : null, // distributed_at
+          result.status === 'success' ? new Date().toISOString() : null, // distributed_at
         ],
       });
     }
@@ -167,8 +169,10 @@ export class PrizeDistributionService {
     }
 
     // 4. Resolve FIDs to wallet addresses and calculate individual prize amounts
-    // PrizePayout now expects prizeAmount as string (smallest unit)
-    const prizePayouts: { userId: string; userAddress: string; rank: number; score: number; prizeAmount: string }[] = [];
+    // prizePayouts for WalletService, expects 'prizeAmount'
+    const prizePayouts: PrizePayout[] = [];
+    // originalTxsForLog for detailed logging, uses 'prizeAmountGlicoSmallestUnit'
+    const originalTxsForLog: Array<{ userId: string; userAddress: string; rank: number; score: number; prizeAmountGlicoSmallestUnit: string; }> = [];
     let totalDistributedAmountBigInt = BigInt(0); // Use BigInt for summing distributed amounts
 
     for (let i = 0; i < winners.length; i++) {
@@ -188,11 +192,17 @@ export class PrizeDistributionService {
 
           if (userWalletAddress) {
             prizePayouts.push({
-              userId: winner.userId, // FID
               userAddress: userWalletAddress, // Resolved wallet address
-              rank: winner.rank ?? 0, 
+              prizeAmount: prizeAmountSmallestUnit.toString(), // For WalletService
+              // Optional fields from PrizePayout if needed by WalletService directly
+              userId: winner.userId
+            });
+            originalTxsForLog.push({
+              userId: winner.userId,
+              userAddress: userWalletAddress,
+              rank: winner.rank ?? 0,
               score: winner.score,
-              prizeAmount: prizeAmountSmallestUnit.toString(),
+              prizeAmountGlicoSmallestUnit: prizeAmountSmallestUnit.toString(), // For logging
             });
             totalDistributedAmountBigInt += prizeAmountSmallestUnit;
           } else {
@@ -218,31 +228,36 @@ export class PrizeDistributionService {
     }
 
     // 5. Execute payouts via WalletService
-    let txHash: string | undefined;
+    let payoutResults: TransferResult[] = [];
     let payoutError: string | undefined;
     // totalDistributedAmountBigInt was calculated in the loop above, summing actual payouts
 
     try {
       // prizePayouts now contains prizeAmount as string in smallest unit
-      txHash = await this.walletService.distributePrizes(prizePayouts); 
-      if (txHash) {
-        console.log(`[PrizeDistributionService] WalletService.distributePrizes successful. Tx Hash: ${txHash}. Total distributed (smallest unit): ${totalDistributedAmountBigInt.toString()}`);
+      payoutResults = await this.walletService.distributePrizes(prizePayouts);
+      if (payoutResults.length > 0) {
+        // Log a general success message, individual results are logged later
+        console.log(`[PrizeDistributionService] WalletService.distributePrizes completed. Number of payout attempts: ${payoutResults.length}. Total distributed (smallest unit): ${totalDistributedAmountBigInt.toString()}`);
       } else {
-        // This case implies distributePrizes can return undefined/null on failure without throwing
-        payoutError = 'WalletService.distributePrizes returned no txHash.';
-        console.error(`[PrizeDistributionService] ${payoutError}`);
+        // This case implies distributePrizes might return an empty array on certain failures or if no payouts were attempted
+        payoutError = 'WalletService.distributePrizes returned no results or an empty array.';
+        console.warn(`[PrizeDistributionService] ${payoutError}`); // Changed to warn as it might not always be a critical error
       }
     } catch (error) {
       console.error('[PrizeDistributionService] Error calling WalletService.distributePrizes:', error);
       payoutError = error instanceof Error ? error.message : 'Unknown error from WalletService';
-      // txHash remains undefined
+      // payoutResults remains an empty array or as it was before the error
     }
 
-    // 6. Log detailed results to Turso (prize_distribution_log and update distribution_summary_log)
+    // 6. Log all individual payout attempts
+    // Ensure originalTxsForLog is correctly populated with userAddress for matching
+    await this._logAllIndividualPayoutAttempts(distributionSummaryId, originalTxsForLog, payoutResults);
+
+    // 7. Log overall distribution status
     if (distributionSummaryId) {
-      if (txHash) { // If txHash is defined, it was successful
+      if (payoutResults.length > 0) {
         // For logging, pass totalDistributedAmountBigInt.toString() or the display value as appropriate
-        await this.logSuccessfulDistribution(distributionSummaryId, txHash, totalDistributedAmountBigInt.toString(), totalClaimedPool, prizePayouts);
+        await this.logOverallSuccess(distributionSummaryId, totalDistributedAmountBigInt.toString(), totalClaimedPool, payoutResults.length);
       } else {
         await this.logFailedDistribution(distributionSummaryId, payoutError || 'WalletService payout failed', totalClaimedPool);
         throw new Error(payoutError || 'WalletService payout failed');

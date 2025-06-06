@@ -25,6 +25,7 @@
     "wallet:fund": "tsx scripts/fund-testnet-wallet.ts"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.13.0",
     "@coinbase/onchainkit": "latest",
     "@farcaster/frame-sdk": "^0.0.51",
     "@fingerprintjs/fingerprintjs": "^4.6.2",
