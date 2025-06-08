@@ -1,4 +1,4 @@
-import { WalletService } from '../../app/services/wallet.service';
+import { WalletService } from '@/services/wallet.service';
 
 // These tests will only run if RUN_INTEGRATION_TESTS=true
 const RUN_TESTS = process.env.RUN_INTEGRATION_TESTS === 'true';

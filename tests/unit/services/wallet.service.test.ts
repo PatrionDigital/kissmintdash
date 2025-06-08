@@ -1,5 +1,5 @@
-import { WalletService } from '../../../app/services/wallet.service';
-import { TransferResult } from '../../../app/types/wallet.types';
+import { WalletService } from '@/services/wallet.service';
+import { TransferResult } from '@/types/wallet.types';
 
 // Mock the module with type assertion
 const mockGetDefaultAddress = jest.fn<Promise<string>, []>();

@@ -1,4 +1,4 @@
-import { LeaderboardService } from '../../../app/services/leaderboard.service';
+import { LeaderboardService } from '@/services/leaderboard.service';
 
 // Copy of REDIS_KEYS from service
 const REDIS_KEYS = {
