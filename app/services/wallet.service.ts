@@ -1,171 +1,380 @@
-import { CdpClient } from '@coinbase/cdp-sdk'; // EvmAccount is not an exported member
+import { CdpClient } from '@coinbase/cdp-sdk';
+import { formatUnits, parseUnits, createPublicClient, http, PublicClient, Chain } from 'viem';
+import { base } from 'viem/chains';
+import { sleep } from '@/app/utils/sleep';
 
-import { PrizePayout, TransferResult } from '@/app/types/wallet.types';
-import { parseUnits } from 'viem';
-
-// Assuming 18 decimals for GLICO token, adjust if different
+// Constants
+const DEFAULT_CONFIRMATIONS = 3;
+const MAX_ACCOUNTS_PER_PAGE = 100;
 const GLICO_TOKEN_DECIMALS = 18;
 
+// Types
+interface RetryConfig {
+  maxRetries: number;
+  initialDelayMs: number;
+  maxDelayMs: number;
+  backoffFactor: number;
+}
+
+interface TransferResult {
+  status: 'submitted' | 'confirmed' | 'failed' | 'skipped';
+  transactionHash?: string;
+  userAddress: string;
+  prizeAmount: string;
+  userId?: string | number;
+  timestamp: number;
+  confirmations?: number;
+  error?: string;
+  retries?: number;
+}
+
+interface PrizePayout {
+  userAddress: string;
+  prizeAmount: string;
+  userId?: string | number;
+}
+
+type TransactionStatus = 'success' | 'reverted' | 'confirmed' | 'failed' | 'skipped';
+
+interface ExtendedEvmAccount {
+  address: string;
+  transfer: (params: {
+    to: `0x${string}`;
+    amount: bigint;
+    token: string;
+    network: string;
+  }) => Promise<{ transactionHash: string }>;
+  getBalance?: (params: {
+    token: string;
+    network: string;
+  }) => Promise<bigint>;
+}
+
+class WalletServiceError extends Error {
+  constructor(
+    message: string, 
+    public readonly code: string = 'WALLET_SERVICE_ERROR', 
+    public readonly details?: Record<string, unknown>
+  ) {
+    super(message);
+    this.name = 'WalletServiceError';
+  }
+}
+
+class TransactionError extends WalletServiceError {
+  constructor(
+    message: string,
+    public readonly transactionHash?: string,
+    code: string = 'TRANSACTION_ERROR',
+    details?: Record<string, unknown>
+  ) {
+    super(message, code, details);
+    this.name = 'TransactionError';
+  }
+}
+
+class AccountNotFoundError extends WalletServiceError {
+  constructor(accountId: string) {
+    super(`Account not found: ${accountId}`, 'ACCOUNT_NOT_FOUND');
+    this.name = 'AccountNotFoundError';
+  }
+}
+
+
+
+
+
+// Default retry configuration
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  initialDelayMs: 1000,
+  maxDelayMs: 10000,
+  backoffFactor: 2,
+};
+
+
 export class WalletService {
-  private cdpClient: CdpClient;
-  private payoutAccountId: string;
-  private tokenAddress: string;
+  private static instance: WalletService;
+  private client: CdpClient;
+  private publicClient: PublicClient;
+  private tokenAddress: `0x${string}`;
   private baseNetworkId: string;
+  private payoutAccountId: string;
 
-  constructor() {
-    // These environment variables are critical and must be set for CDP SDK.
-    // CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET are read by CdpClient constructor.
-    this.payoutAccountId = process.env.CDP_PAYOUT_ACCOUNT_ID || '';
-    this.tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || '';
-    this.baseNetworkId = process.env.BASE_NETWORK_ID || 'base-mainnet'; // e.g., 'base-mainnet', 'base-sepolia'
-
-    if (!process.env.CDP_API_KEY_ID) {
-      console.error('CDP_API_KEY_ID is not set');
-      console.error('CONFIGURATION_ERROR: CDP_API_KEY_ID is not configured.');
-      throw new Error('CONFIGURATION_ERROR: CDP_API_KEY_ID is not configured.');
+  private constructor() {
+    if (!process.env.NEXT_PUBLIC_TOKEN_ADDRESS) {
+      throw new WalletServiceError('NEXT_PUBLIC_TOKEN_ADDRESS environment variable is not set');
     }
-    if (!process.env.CDP_API_KEY_SECRET) {
-      console.error('CDP_API_KEY_SECRET is not set');
-      console.error('CONFIGURATION_ERROR: CDP_API_KEY_SECRET is not configured.');
-      throw new Error('CONFIGURATION_ERROR: CDP_API_KEY_SECRET is not configured.');
+    if (!process.env.CDP_PAYOUT_ACCOUNT_ID) {
+      throw new WalletServiceError('CDP_PAYOUT_ACCOUNT_ID environment variable is not set');
     }
-    if (!process.env.CDP_WALLET_SECRET) {
-      console.error('CDP_WALLET_SECRET is not set');
-      console.error('CONFIGURATION_ERROR: CDP_WALLET_SECRET is not configured.');
-      throw new Error('CONFIGURATION_ERROR: CDP_WALLET_SECRET is not configured.');
-    }
-    if (!this.payoutAccountId) {
-      console.error('CDP_PAYOUT_ACCOUNT_ID is not set');
-      console.error('CONFIGURATION_ERROR: Payout account ID (CDP_PAYOUT_ACCOUNT_ID) is not configured.');
-      throw new Error('CONFIGURATION_ERROR: Payout account ID (CDP_PAYOUT_ACCOUNT_ID) is not configured.');
-    }
-    if (!this.tokenAddress) {
-      console.error('NEXT_PUBLIC_TOKEN_ADDRESS is not set');
-      console.error('CONFIGURATION_ERROR: Token address (NEXT_PUBLIC_TOKEN_ADDRESS) is not configured.');
-      throw new Error('CONFIGURATION_ERROR: Token address (NEXT_PUBLIC_TOKEN_ADDRESS) is not configured.');
-    }
-    if (!this.baseNetworkId) {
-      console.error('BASE_NETWORK_ID is not set');
-      console.error('CONFIGURATION_ERROR: Base network ID (BASE_NETWORK_ID) is not configured.');
-      throw new Error('CONFIGURATION_ERROR: Base network ID (BASE_NETWORK_ID) is not configured.');
+    if (!process.env.BASE_NETWORK_ID) {
+      throw new WalletServiceError('BASE_NETWORK_ID environment variable is not set');
     }
 
-    try {
-      this.cdpClient = new CdpClient();
-      console.log('CdpClient initialized successfully.');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Failed to initialize CdpClient:', errorMessage);
-      console.error(`INITIALIZATION_ERROR: Failed to initialize CdpClient: ${errorMessage}`);
-      throw new Error(`INITIALIZATION_ERROR: Failed to initialize CdpClient: ${errorMessage}`);
-    }
+    this.tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}`;
+    this.payoutAccountId = process.env.CDP_PAYOUT_ACCOUNT_ID;
+    this.baseNetworkId = process.env.BASE_NETWORK_ID;
+
+    this.client = new CdpClient({
+      apiKeyId: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || '',
+    });
+
+    this.publicClient = createPublicClient({
+      chain: base as Chain, // Explicitly type the chain
+      transport: http(),
+      batch: {
+        multicall: false
+      }
+    }) as PublicClient; // Explicitly type the client
   }
 
-  public async distributePrizes(prizePayouts: PrizePayout[]): Promise<TransferResult[]> {
-    console.log(
-      `Attempting to distribute prizes to ${prizePayouts.length} users. Using CDP Payout Account: ${this.payoutAccountId}, Token: ${this.tokenAddress}, Network: ${this.baseNetworkId}`,
-    );
-
-    if (prizePayouts.length === 0) {
-      console.warn('No prize payouts to process.');
-      return [];
+  public static getInstance(): WalletService {
+    if (!WalletService.instance) {
+      WalletService.instance = new WalletService();
     }
+    return WalletService.instance;
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- EvmAccount type is not exported by SDK
-    let senderAccount: any;
-    try {
-      console.log(`Listing accounts to find payout account: ${this.payoutAccountId}`);
-      // TODO: Implement pagination if the list of accounts can be very large.
-      // For now, assuming the payout account is on the first page if it exists.
-      const { accounts /*, nextPageToken */ } = await this.cdpClient.evm.listAccounts();
-
-      if (!accounts || accounts.length === 0) {
-        console.error(`No EVM accounts found for the configured CDP client.`);
-        throw new Error(`ACCOUNT_NOT_FOUND: No EVM accounts returned by listAccounts.`);
-      }
-
-      senderAccount = accounts.find(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- EvmAccount type is not exported by SDK
-        (acc: any) => acc.address.toLowerCase() === this.payoutAccountId.toLowerCase()
-      );
-
-      if (!senderAccount) {
-        console.error(`Payout account ${this.payoutAccountId} not found in the listed accounts.`);
-        throw new Error(`ACCOUNT_NOT_FOUND: Payout account ${this.payoutAccountId} not found via listAccounts.`);
-      }
-      console.log(`Successfully found and using sender account: ${senderAccount.address}`);
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`Error obtaining sender account (${this.payoutAccountId}) via listAccounts: ${errorMessage}`);
-      throw new Error(`ACCOUNT_ERROR: Failed to obtain sender account for prize distribution: ${errorMessage}`);
-    }
-
+  /**
+   * Distributes prizes to multiple users
+   */
+  public async distributePrizes(
+    prizePayouts: PrizePayout[],
+    options: {
+      waitForConfirmation?: boolean;
+      confirmations?: number;
+      retryConfig?: Partial<RetryConfig>;
+    } = {}
+  ): Promise<TransferResult[]> {
     const results: TransferResult[] = [];
+    const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...options.retryConfig };
+    const confirmations = options.confirmations ?? DEFAULT_CONFIRMATIONS;
+    
+    // Process payouts sequentially to avoid rate limiting
     for (const payout of prizePayouts) {
-      if (!payout.userAddress || !payout.prizeAmount) {
-        const idForLog = payout.userId ? `FID ${payout.userId}` : `address ${payout.userAddress?.slice(0,8)}...`;
-        console.warn(
-          `Skipping prize for ${idForLog} due to missing userAddress or prizeAmount.`,
-          payout,
-        );
-        results.push({
-          status: 'skipped', // Corrected from 'failed' to 'skipped' for this case
-          error: 'Missing userAddress or prizeAmount',
-          userAddress: payout.userAddress,
-          prizeAmount: payout.prizeAmount,
-          userId: payout.userId,
-        });
-        continue;
-      }
-
       try {
-        // Convert prizeAmount (string) to bigint using token decimals
+        if (!payout.userAddress) {
+          results.push({
+            status: 'skipped',
+            error: 'Missing user address',
+            userAddress: '',
+            prizeAmount: payout.prizeAmount,
+            userId: payout.userId,
+            timestamp: Date.now(),
+          });
+          continue;
+        }
+
+        if (!payout.prizeAmount) {
+          results.push({
+            status: 'skipped',
+            error: 'Missing prize amount',
+            userAddress: payout.userAddress,
+            prizeAmount: '0',
+            userId: payout.userId,
+            timestamp: Date.now(),
+          });
+          continue;
+        }
+
+        // Convert prize amount to BigInt with proper decimal handling
         const amountAsBigInt = parseUnits(payout.prizeAmount, GLICO_TOKEN_DECIMALS);
+        
+        // Get the payout account
+        const senderAccount = await this.getAccountById(this.payoutAccountId);
+        if (!senderAccount) {
+          throw new AccountNotFoundError(this.payoutAccountId);
+        }
 
-        console.log(
-          `Processing prize for ${payout.userAddress}: amount ${payout.prizeAmount} (${amountAsBigInt.toString()} units), token ${this.tokenAddress}, network ${this.baseNetworkId}`,
+        // Execute transfer with retry logic
+        const result = await this.executeWithRetry(
+          async () => {
+            const tx = await senderAccount.transfer({
+              to: payout.userAddress as `0x${string}`,
+              amount: amountAsBigInt,
+              token: this.tokenAddress,
+              network: this.baseNetworkId,
+            });
+
+            let confirmationsResult;
+            if (options.waitForConfirmation) {
+              confirmationsResult = await this.waitForTransactionConfirmations(
+                tx.transactionHash,
+                confirmations
+              );
+            }
+
+            return {
+              txHash: tx.transactionHash,
+              confirmations: confirmationsResult?.confirmations,
+            };
+          },
+          {
+            description: `Transfer ${payout.prizeAmount} to ${payout.userAddress}`,
+            ...retryConfig,
+          }
         );
 
-        const result = await senderAccount.transfer({
-          to: payout.userAddress as `0x${string}`,
-          amount: amountAsBigInt,
-          token: this.tokenAddress as `0x${string}`,
-          network: this.baseNetworkId // this.baseNetworkId is already a string
-        });
-
-        const transactionHash = result.transactionHash; // SDK returns transactionHash
-        const currentStatus = 'success'; // If transfer didn't throw, assume success for now
-
-        const successIdForLog = payout.userId ? `User ID ${payout.userId} (${payout.userAddress})` : payout.userAddress;
-        console.log(
-          `Successfully initiated prize transfer for ${successIdForLog}. TxHash: ${transactionHash}`,
-        );
         results.push({
-          status: currentStatus,
-          transactionHash,
+          status: options.waitForConfirmation ? 'confirmed' : 'submitted',
+          transactionHash: result.txHash,
           userAddress: payout.userAddress,
           prizeAmount: payout.prizeAmount,
           userId: payout.userId,
+          timestamp: Date.now(),
+          confirmations: result.confirmations,
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorIdForLog = payout.userId ? `User ID ${payout.userId} (${payout.userAddress})` : payout.userAddress;
-        console.error(
-          `Failed to process prize for ${errorIdForLog}: ${errorMessage}`,
-        );
         results.push({
           status: 'failed',
           error: errorMessage,
           userAddress: payout.userAddress,
           prizeAmount: payout.prizeAmount,
           userId: payout.userId,
+          timestamp: Date.now(),
+          retries: error && typeof error === 'object' && 'retries' in error 
+            ? Number(error.retries) 
+            : undefined,
         });
       }
     }
+
     return results;
+  }
+
+  /**
+   * Gets the balance of the payout account
+   */
+  public async getPayoutAccountBalance(): Promise<{
+    address: string;
+    balance: bigint;
+    formatted: string;
+  }> {
+    const account = await this.getAccountById(this.payoutAccountId);
+    if (!account) {
+      throw new AccountNotFoundError(this.payoutAccountId);
+    }
+
+    try {
+      const balance = await account.getBalance?.({
+        token: this.tokenAddress,
+        network: this.baseNetworkId,
+      }) ?? 0n;
+
+      return {
+        address: account.address,
+        balance,
+        formatted: formatUnits(balance, GLICO_TOKEN_DECIMALS),
+      };
+    } catch (error) {
+      throw new WalletServiceError(
+        `Failed to get balance for account ${this.payoutAccountId}`,
+        'BALANCE_FETCH_ERROR',
+        { error: error instanceof Error ? error.message : 'Unknown error' }
+      );
+    }
+  }
+
+  /**
+   * Gets an account by ID
+   */
+  private async getAccountById(accountId: string): Promise<ExtendedEvmAccount | null> {
+    try {
+      const accounts = await this.client.accounts.list({
+        pageSize: MAX_ACCOUNTS_PER_PAGE,
+      });
+
+      const account = accounts.find(acc => acc.id === accountId);
+      return account as unknown as ExtendedEvmAccount | null;
+    } catch (error) {
+      throw new WalletServiceError(
+        `Failed to fetch account ${accountId}`,
+        'ACCOUNT_FETCH_ERROR',
+        { error: error instanceof Error ? error.message : 'Unknown error' }
+      );
+    }
+  }
+
+  /**
+   * Waits for a transaction to be confirmed
+   */
+  private async waitForTransactionConfirmations(
+    txHash: string,
+    confirmations: number
+  ): Promise<{ status: TransactionStatus; confirmations: number }> {
+    try {
+      const receipt = await this.publicClient.waitForTransactionReceipt({
+        hash: txHash as `0x${string}`,
+        confirmations,
+      });
+
+      return {
+        status: receipt.status === 'success' ? 'confirmed' : 'reverted',
+        confirmations,
+      };
+    } catch (error) {
+      throw new TransactionError(
+        `Failed to confirm transaction ${txHash}`,
+        txHash,
+        'TRANSACTION_CONFIRMATION_ERROR',
+        { error: error instanceof Error ? error.message : 'Unknown error' }
+      );
+    }
+  }
+
+  /**
+   * Executes a function with retry logic
+   */
+  private async executeWithRetry<T>(
+    fn: () => Promise<T>,
+    config: RetryConfig & { description: string }
+  ): Promise<T> {
+    let lastError: Error | undefined;
+    let attempt = 0;
+    let delay = config.initialDelayMs;
+
+    while (attempt <= config.maxRetries) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error as Error;
+        attempt++;
+
+        if (attempt > config.maxRetries) {
+          break;
+        }
+
+        // Add jitter to avoid thundering herd problem
+        const jitter = Math.random() * 0.2 + 0.9; // 0.9 to 1.1
+        const delayWithJitter = Math.min(delay * jitter, config.maxDelayMs);
+        
+        console.warn(
+          `Retry ${attempt}/${config.maxRetries} for ${config.description} after ${delayWithJitter}ms`,
+          error
+        );
+
+        await sleep(delayWithJitter);
+        delay *= config.backoffFactor;
+      }
+    }
+
+    // Add retry information to the error
+    const errorWithRetries = lastError as Error & { 
+      retries?: number; 
+      code?: string; 
+      details?: Record<string, unknown>; 
+      transactionHash?: string;
+      [key: string]: unknown; // Allow additional properties
+    } & Record<string, unknown>;
+    errorWithRetries.retries = attempt - 1;
+    
+    throw errorWithRetries;
   }
 }
 
-// Singleton instance
-export const walletService = new WalletService();
+// Export a singleton instance
+export const walletService = WalletService.getInstance();
+
+export default walletService;

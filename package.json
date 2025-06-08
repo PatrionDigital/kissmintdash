@@ -2,6 +2,12 @@
   "name": "kissmintdash",
   "version": "0.1.0",
   "private": true,
+  "resolutions": {
+    "viem": "2.30.6",
+    "@walletconnect/utils/viem": "2.30.6",
+    "@reown/walletkit/viem": "2.30.6",
+    "@walletconnect/universal-provider/viem": "2.30.6"
+  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "next lint --fix",
@@ -47,7 +53,7 @@
     "react-dom": "^18",
     "react-icons": "^5.5.0",
     "sonner": "^2.0.3",
-    "viem": "^2.27.2",
+    "viem": "^2.30.6",
     "wagmi": "^2.14.11",
     "yargs": "^17.7.2"
   },
@@ -80,5 +86,6 @@
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "undici": "^7.10.0"
-  }
+  },
+  "packageManager": "yarn@4.9.2"
 }
