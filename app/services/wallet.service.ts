@@ -261,7 +261,7 @@ export class WalletService {
       const balance = await account.getBalance?.({
         token: this.tokenAddress,
         network: this.baseNetworkId,
-      }) ?? 0n;
+      }) ?? BigInt(0);
 
       return {
         address: account.address,
