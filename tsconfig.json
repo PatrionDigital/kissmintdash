@@ -19,10 +19,11 @@
       }
     ],
     "paths": {
-      "@/*": ["./app/*"],
+      "@/*": ["./*", "./app/*"], // Covers all top-level folders including app, lib, etc.
       "@/app/*": ["./app/*"],
       "@/components/*": ["./components/*"],
-      "@/styles/*": ["./styles/*"]
+      "@/styles/*": ["./styles/*"],
+      "@/lib/*": ["./lib/*"] // Added for lib alias
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
