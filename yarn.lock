@@ -2313,6 +2313,8 @@
 
 "@types/jest@^29.5.14":
   version "29.5.14"
+  resolved "https://registry.npmjs.org/@types/jest/-/jest-29.5.14.tgz"
+  integrity sha512-ZN+4sdnLUbo8EVvVc2ao0GFW6oVrQRPn4K2lglySj7APvSrgzxHiNNK99us4WDMi57xxA2yggblIAMNhXOotLQ==
   dependencies:
     expect "^29.0.0"
     pretty-format "^29.0.0"
@@ -5619,6 +5621,11 @@ jest-snapshot@^29.7.0:
     pretty-format "^29.7.0"
     semver "^7.5.3"
 
+jest-ts-webcompat-resolver@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/jest-ts-webcompat-resolver/-/jest-ts-webcompat-resolver-1.0.1.tgz"
+  integrity sha512-6rz4gejsOd0SYq5F/DmVGvJlFPmiCqkoXhkNKhyL1Uaqz4GyFMBbGUoBK+koXHThQdq97Ev7XJiyZ8iusMpWgQ==
+
 jest-util@^29.0.0, jest-util@^29.7.0:
   version "29.7.0"
   dependencies:
@@ -7627,6 +7634,8 @@ ts-interface-checker@^0.1.9:
 
 ts-jest@^29.3.4:
   version "29.3.4"
+  resolved "https://registry.npmjs.org/ts-jest/-/ts-jest-29.3.4.tgz"
+  integrity sha512-Iqbrm8IXOmV+ggWHOTEbjwyCf2xZlUMv5npExksXohL+tk8va4Fjhb+X2+Rt9NBmgO7bJ8WpnMLOwih/DnMlFA==
   dependencies:
     bs-logger "^0.2.6"
     ejs "^3.1.10"

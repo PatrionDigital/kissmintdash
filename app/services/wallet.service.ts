@@ -1,7 +1,7 @@
 import { CdpClient } from '@coinbase/cdp-sdk';
 import { formatUnits, parseUnits, createPublicClient, http, PublicClient, Chain } from 'viem';
 import { base } from 'viem/chains';
-import { sleep } from '@/app/utils/sleep';
+import { sleep } from '../utils/sleep';
 
 // Constants
 const DEFAULT_CONFIRMATIONS = 3;
@@ -108,13 +108,13 @@ export class WalletService {
     if (!process.env.CDP_PAYOUT_ACCOUNT_ID) {
       throw new WalletServiceError('CDP_PAYOUT_ACCOUNT_ID environment variable is not set');
     }
-    if (!process.env.BASE_NETWORK_ID) {
-      throw new WalletServiceError('BASE_NETWORK_ID environment variable is not set');
+    if (!process.env.CDP_BASE_NETWORK_ID) {
+      throw new WalletServiceError('CDP_BASE_NETWORK_ID environment variable is not set');
     }
 
     this.tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}`;
     this.payoutAccountId = process.env.CDP_PAYOUT_ACCOUNT_ID;
-    this.baseNetworkId = process.env.BASE_NETWORK_ID;
+    this.baseNetworkId = process.env.CDP_BASE_NETWORK_ID;
 
     this.client = new CdpClient({
       apiKeyId: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || '',
