@@ -6,7 +6,7 @@ import "../public/farcaster/style.css"; // Import Farcaster icon styles
 import { Providers } from "./providers";
 import dynamic from 'next/dynamic';
 // import AudioInitializer from "./components/AudioInitializer"; // Replaced with dynamic import
-import { UserProfileProvider } from "../src/context/UserContext";
+import { UserProfileProvider } from "./context/UserContext";
 import VhsStaticBackground from "./components/VhsStaticBackground";
 import { Toaster } from "sonner";
 // import AudioPlayer from "./components/AudioPlayer"; // Replaced with dynamic import

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
-import { useUserProfile } from "../../src/context/UserContext";
+import { useUserProfile } from "../context/UserContext";
 import { useAccount, useContractRead } from "wagmi";
 import Image from "next/image";
 import { sdk } from '@farcaster/frame-sdk';
@@ -8,7 +8,7 @@ import NumberFlow from '@number-flow/react';
 // import { TokenTransactionHistory } from "./TokenTransactionHistory"; // Recent Transactions panel hidden
 import { PurchaseAttemptsButton } from "./PurchaseAttemptsButton";
 import { BuyGlicoButton } from "./BuyGlicoButton";
-import { checkFreeAttempt, getTotalAttempts } from "../../src/utils/attemptsManager";
+import { checkFreeAttempt, getTotalAttempts } from "../utils/attemptsManager";
 
 // Cast address to `0x${string}` type for wagmi compatibility
 const GLICO_ADDRESS = (process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "0x6De365d939Ce9Ab46e450E5f1FA706E1DbcEC9Fe") as `0x${string}`;

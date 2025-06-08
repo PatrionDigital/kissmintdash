@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
-import { useUserProfile } from "../../src/context/UserContext";
+import { useUserProfile } from "../context/UserContext";
 import { useNotification } from "@coinbase/onchainkit/minikit";
 import { Wallet, ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { ImTicket } from "react-icons/im";

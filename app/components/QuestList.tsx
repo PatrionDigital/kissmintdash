@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useUserProfile } from "../../src/context/UserContext";
+import { useUserProfile } from "../context/UserContext";
 import { Card } from "./DemoComponents";
 import { Button } from "./DemoComponents";
 import { Icon } from "./DemoComponents";

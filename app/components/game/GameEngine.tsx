@@ -7,7 +7,7 @@ import { Button } from "../DemoComponents";
 import { ShareFrameButton } from "./ShareFrameButton";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { SpaceInvaderIcon } from "../icons/SpaceInvaderIcon";
-import { useUserProfile } from "@/src/context/UserContext";
+import { useUserProfile } from "../../context/UserContext";
 import { toast } from "sonner";
 import { GameFeedback } from "./GameFeedback";
 
