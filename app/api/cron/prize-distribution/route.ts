@@ -26,7 +26,7 @@ const turso: TursoClient = createTursoClient({
 // Initialize services with required dependencies
 const leaderboardService = new LeaderboardService(redis, turso);
 const prizePoolManager = new PrizePoolManager(redis, turso);
-const walletService = new WalletService();
+const walletService = WalletService.getInstance();
 const farcasterProfileService = new FarcasterProfileService(process.env.NEYNAR_API_KEY);
 // Initialize PrizeDistributionService with all required services
 const prizeDistributionService = new PrizeDistributionService(
