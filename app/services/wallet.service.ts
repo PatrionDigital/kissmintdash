@@ -282,11 +282,12 @@ export class WalletService {
    */
   private async getAccountById(accountId: string): Promise<ExtendedEvmAccount | null> {
     try {
-      const accounts = await this.client.accounts.list({
+      // Use the EVM client to list accounts
+      const { accounts } = await this.client.evm.listAccounts({
         pageSize: MAX_ACCOUNTS_PER_PAGE,
       });
 
-      const account = accounts.find(acc => acc.id === accountId);
+      const account = accounts?.find(acc => acc.address === accountId);
       return account as unknown as ExtendedEvmAccount | null;
     } catch (error) {
       throw new WalletServiceError(
