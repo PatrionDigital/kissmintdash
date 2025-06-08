@@ -37,74 +37,24 @@ const prizeDistributionService = new PrizeDistributionService(
   turso
 );
 
-// Helper function to check if an IP is in a CIDR range
-function isIpInRange(ip: string, cidr: string): boolean {
-  try {
-    const [range, bits = '32'] = cidr.split('/');
-    const mask = ~(2 ** (32 - parseInt(bits, 10)) - 1) >>> 0;
-    const ipLong = ip.split('.').reduce((acc, octet, idx) => 
-      acc + (parseInt(octet, 10) << (8 * (3 - idx))), 0) >>> 0;
-    const rangeLong = range.split('.').reduce((acc, octet, idx) => 
-      acc + (parseInt(octet, 10) << (8 * (3 - idx))), 0) >>> 0;
-    return (ipLong & mask) === (rangeLong & mask);
-  } catch (error) {
-    console.error('Error in isIpInRange:', error);
-    return false;
-  }
-}
 
-// Check if request is coming from Vercel's network
-function isFromVercel(request: Request): boolean {
-  // Vercel's IP ranges - update these if Vercel changes their infrastructure
-  const vercelIpRanges = [
-    '76.76.21.0/24',    // Vercel's primary IP range
-    '76.76.22.0/23',    // Vercel's additional IP range
-    '104.248.0.0/16',   // Vercel's additional IP range
-    '172.71.0.0/16',    // Vercel's internal network
-    '172.70.0.0/16'     // Vercel's internal network
-  ];
 
-  // Get the client IP from headers
-  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
-  
-  if (!clientIp) {
-    console.error('No IP address found in request headers');
-    return false;
-  }
 
-  // Check if the IP is in any of Vercel's ranges
-  const isAllowed = vercelIpRanges.some(range => isIpInRange(clientIp, range));
-  
-  if (!isAllowed) {
-    console.log(`Request from non-Vercel IP: ${clientIp}`);
-  }
-  
-  return isAllowed;
-}
 
-// Validate the request is from Vercel and includes a valid secret
+// Validate only the secret from the query string
 function validateApiKey(request: Request): boolean {
-  // First check if the request is coming from Vercel's network
-  if (!isFromVercel(request)) {
-    console.warn('Unauthorized: Request not from Vercel network');
-    return false;
-  }
-
-  // Check for secret in query parameters
   const url = new URL(request.url);
   const secret = url.searchParams.get('secret');
   const expectedSecret = process.env.CRON_SECRET;
-  
+
   if (!expectedSecret) {
     console.error('CRON_SECRET is not set in environment variables');
     return false;
   }
-  
   if (!secret || secret !== expectedSecret) {
     console.warn('Unauthorized: Invalid or missing secret');
     return false;
   }
-
   return true;
 }
 
