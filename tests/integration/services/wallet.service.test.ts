@@ -1,11 +1,10 @@
 import { WalletService } from '@/services/wallet.service';
-import { PrizePayout } from '@/types/wallet.types';
-import fetch from 'node-fetch';
+import type { PrizePayout } from '@/types/wallet.types';
 import crypto from 'crypto';
 
-// Mock node-fetch
-jest.mock('node-fetch', () => jest.fn());
-const { Response } = jest.requireActual('node-fetch');
+// Mock the global fetch
+const mockFetch = jest.fn();
+global.fetch = mockFetch as unknown as typeof global.fetch;
 
 // Mock crypto
 const mockUpdate = jest.fn().mockReturnThis();
@@ -41,9 +40,9 @@ describe('WalletService', () => {
     process.env = originalEnv;
   });
 
-  describe('constructor', () => {
+  describe('getInstance', () => {
     it('should initialize correctly with valid environment variables', () => {
-      expect(() => new WalletService()).not.toThrow();
+      expect(() => WalletService.getInstance()).not.toThrow();
     });
 
     const requiredEnvVars: (keyof typeof mockEnv)[] = [
@@ -58,7 +57,7 @@ describe('WalletService', () => {
     requiredEnvVars.forEach((key) => {
       it(`should throw an error if ${key} is missing`, () => {
         delete process.env[key];
-        expect(() => new WalletService()).toThrow(`Missing required environment variable: ${key}`);
+        expect(() => WalletService.getInstance()).toThrow(`Missing required environment variable: ${key}`);
       });
     });
   });
@@ -68,7 +67,7 @@ describe('WalletService', () => {
     let mockDateNow: jest.SpyInstance;
 
     beforeEach(() => {
-      walletService = new WalletService();
+      walletService = WalletService.getInstance();
       // Mock Date.now() for consistent timestamp in signature
       mockDateNow = jest.spyOn(Date, 'now').mockReturnValue(1678886400000); // Example: March 15, 2023 12:00:00 PM UTC
     });
@@ -83,13 +82,18 @@ describe('WalletService', () => {
     ];
 
     it('should make successful payouts and return success results', async () => {
-      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
-        new Response(JSON.stringify({ data: { id: 'tx_hash_123' } }), { status: 200 })
-      );
+      // Mock successful fetch responses
+      mockPayouts.forEach(() => {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ data: { id: 'tx_hash_123' } }),
+        } as Response);
+      });
 
       const results = await walletService.distributePrizes(mockPayouts);
 
-      expect(fetch).toHaveBeenCalledTimes(mockPayouts.length);
+      expect(mockFetch).toHaveBeenCalledTimes(mockPayouts.length);
       mockPayouts.forEach((payout, index) => {
         const expectedPath = `/v2/accounts/${mockEnv.CDP_PAYOUT_ACCOUNT_ID}/transactions`;
         const expectedTimestamp = '1678886400'; // Math.floor(Date.now() / 1000)
@@ -107,7 +111,7 @@ describe('WalletService', () => {
         expect(mockUpdate).toHaveBeenCalledWith(message);
         expect(mockDigest).toHaveBeenCalledWith('hex');
 
-        expect(fetch).toHaveBeenNthCalledWith(index + 1, 
+        expect(mockFetch).toHaveBeenNthCalledWith(index + 1, 
           `${mockEnv.CDP_API_V2_BASE_URL}${expectedPath}`,
           {
             method: 'POST',
@@ -128,30 +132,40 @@ describe('WalletService', () => {
     });
 
     it('should handle API errors and return failure results', async () => {
-      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce(
-        new Response(JSON.stringify({ data: { id: 'tx_hash_success' } }), { status: 200 })
-      ).mockResolvedValueOnce(
-        new Response(JSON.stringify({ errors: [{ message: 'Insufficient funds' }] }), { status: 400 })
-      );
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ data: { id: 'tx_hash_success' } }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 400,
+          json: async () => ({ errors: [{ message: 'Insufficient funds' }] }),
+        } as Response);
 
       const results = await walletService.distributePrizes(mockPayouts);
 
-      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
       expect(results).toEqual([
         { userAddress: '0xUser1', status: 'SUCCESS', transactionHash: 'tx_hash_success', error: undefined },
         { userAddress: '0xUser2', status: 'FAILED', transactionHash: undefined, error: 'API Error: Insufficient funds' },
       ]);
     });
 
-    it('should handle network errors during fetch and return failure results', async () => {
-      (fetch as jest.MockedFunction<typeof fetch>).mockRejectedValueOnce(new Error('Network failure'));
-      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce(
-        new Response(JSON.stringify({ data: { id: 'tx_hash_success_2' } }), { status: 200 })
-      );
+    it('should handle network errors during fetch', async () => {
+      // Mock fetch to return successful responses
+      mockFetch
+        .mockRejectedValueOnce(new Error('Network failure'))
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ data: { id: 'tx_hash_success_2' } }),
+        } as Response);
 
       const results = await walletService.distributePrizes(mockPayouts);
 
-      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
       expect(results).toEqual([
         { userAddress: '0xUser1', status: 'FAILED', transactionHash: undefined, error: 'Network failure' },
         { userAddress: '0xUser2', status: 'SUCCESS', transactionHash: 'tx_hash_success_2', error: undefined },
@@ -161,13 +175,15 @@ describe('WalletService', () => {
     it('should return an empty array if no payouts are provided', async () => {
       const results = await walletService.distributePrizes([]);
       expect(results).toEqual([]);
-      expect(fetch).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it('should correctly construct the signature message', async () => {
-      (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
-        new Response(JSON.stringify({ data: { id: 'tx_hash_sig_test' } }), { status: 200 })
-      );
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ data: { id: 'tx_hash_sig_test' } }),
+      } as Response);
       
       const singlePayout: PrizePayout[] = [{ userAddress: '0xUserSig', prizeAmount: '500000000000000000' }];
       await walletService.distributePrizes(singlePayout);
@@ -182,7 +198,7 @@ describe('WalletService', () => {
         network_id: mockEnv.CDP_BASE_NETWORK_ID,
         description: 'KissMint Prize Payout',
       });
-      const expectedMessage = expectedTimestamp + 'POST' + expectedPath + expectedBody;
+      const expectedMessage = `${expectedTimestamp}POST${expectedPath}${expectedBody}`;
 
       expect(mockUpdate).toHaveBeenCalledWith(expectedMessage);
     });

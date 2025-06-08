@@ -1,8 +1,8 @@
-import { PrizeDistributionService } from '../../app/services/prize-distribution.service';
-import { LeaderboardService } from '../../app/services/leaderboard.service';
-import { PrizePoolManager } from '../../app/services/prize-pool.service';
-import { WalletService } from '../../app/services/wallet.service';
-import { FarcasterProfileService } from '../../app/services/farcaster-profile.service';
+import { PrizeDistributionService } from '@/services/prize-distribution.service';
+import { LeaderboardService } from '@/services/leaderboard.service';
+import { PrizePoolManager } from '@/services/prize-pool.service';
+import { WalletService } from '@/services/wallet.service';
+import { FarcasterProfileService } from '@/services/farcaster-profile.service';
 
 import { Redis } from '@upstash/redis';
 import { Client as TursoClient, ResultSet, InStatement, Value } from '@libsql/client';

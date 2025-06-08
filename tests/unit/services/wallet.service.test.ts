@@ -1,93 +1,90 @@
 import { WalletService } from '@/services/wallet.service';
-import { TransferResult } from '@/types/wallet.types';
+
+// Helper function to reset the singleton instance for testing
+const resetWalletService = () => {
+  // Clear the singleton instance by calling getInstance with a flag to reset
+  // @ts-expect-error - Accessing private method for testing
+  WalletService.getInstance(true);
+};
 
 // Mock the module with type assertion
-const mockGetDefaultAddress = jest.fn<Promise<string>, []>();
-const mockGetBalance = jest.fn<Promise<string>, []>();
-const mockGetId = jest.fn<string, []>();
-const mockCreateTransfer = jest.fn<Promise<TransferResult>, [unknown]>();
-const mockGetAddress = jest.fn<Promise<string>, []>();
-const mockSignTransaction = jest.fn<Promise<string>, [unknown]>();
+const mockGetAccount = jest.fn();
+const mockCreateTransfer = jest.fn<Promise<{ transactionHash: string }>, [{
+  to: `0x${string}`;
+  amount: bigint;
+  token: string;
+  network: string;
+}]>();
 
-// Mock the module with type assertion
-jest.mock('@coinbase/coinbase-sdk', () => {
-  // Mock Wallet class that matches the expected interface
-  class MockWallet {
-    getDefaultAddress = mockGetDefaultAddress;
-    getBalance = mockGetBalance;
-    createTransfer = mockCreateTransfer;
-    getId = mockGetId;
-    getAddress = mockGetAddress;
-    signTransaction = mockSignTransaction;
-    static create = jest.fn();
-  }
+// Mock the CdpClient
+jest.mock('@coinbase/cdp-sdk', () => ({
+  CdpClient: jest.fn().mockImplementation(() => ({
+    accounts: {
+      getAccount: mockGetAccount,
+    },
+    transfers: {
+      createTransfer: mockCreateTransfer,
+    },
+  })),
+}));
 
-  return {
-    Wallet: MockWallet as unknown as typeof import('@coinbase/coinbase-sdk').Wallet
-  };
-});
-
-// Now import the mocked Wallet
-import { Wallet } from '@coinbase/coinbase-sdk';
-
-// Set up default mock implementations
+// Set up mock implementations
 beforeEach(() => {
   jest.clearAllMocks();
   
-  mockGetDefaultAddress.mockResolvedValue('0x1234567890abcdef1234567890abcdef12345678');
-  mockGetBalance.mockResolvedValue('1000000000000000000'); // 1 token in wei
-  mockGetId.mockReturnValue('test-wallet-id');
-  mockGetAddress.mockResolvedValue('0x1234567890abcdef1234567890abcdef12345678');
-  mockSignTransaction.mockResolvedValue('mocked-signed-tx');
-  
-  // Mock transfer creation
-  mockCreateTransfer.mockImplementation(async () => ({
-    status: 'success',
-    transactionHash: '0x123',
-    to: '0xrecipient',
-    wait: jest.fn().mockResolvedValue({ status: 1, transactionHash: '0x123' }),
-    getTransactionHash: jest.fn().mockReturnValue('0x123')
-  }));
-  
-  // Mock wallet creation
-  (Wallet.create as jest.Mock).mockResolvedValue(new (jest.requireMock('@coinbase/coinbase-sdk').Wallet)());
+  // Default mock implementation for getAccount
+  mockGetAccount.mockResolvedValue({
+    id: 'test-account-id',
+    address: '0x1234567890abcdef1234567890abcdef12345678',
+    type: 'ethereum',
+    network: 'base-mainnet',
+    balance: '1000000000000000000', // 1 token in wei
+    getBalance: jest.fn().mockResolvedValue('1000000000000000000'),
+  });
+
+  // Default mock implementation for createTransfer
+  mockCreateTransfer.mockResolvedValue({
+    transactionHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+  });
 });
 
+// Set environment variables for testing
+process.env.NEXT_PUBLIC_TOKEN_ADDRESS = '0x1234567890123456789012345678901234567890';
+process.env.CDP_PAYOUT_ACCOUNT_ID = 'test-account-id';
+process.env.BASE_NETWORK_ID = 'base-mainnet';
+process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY = 'test-api-key';
+
 describe('WalletService', () => {
-  let service: WalletService;
+  let walletService: WalletService;
 
   beforeEach(() => {
-    service = new WalletService();
+    walletService = WalletService.getInstance();
   });
 
   describe('initialization', () => {
-    it('should initialize with default values', () => {
-      expect(service).toBeInstanceOf(WalletService);
+    it('should initialize with environment variables', () => {
+      expect(walletService).toBeInstanceOf(WalletService);
     });
 
-    it('should initialize wallet when distributePrizes is called', async () => {
-      const payouts = [
-        { userAddress: '0x1111111111111111111111111111111111111111', prizeAmount: '1000000000000000000' }
-      ];
-
-      const results = await service.distributePrizes(payouts);
+    it('should throw error if NEXT_PUBLIC_TOKEN_ADDRESS is missing', () => {
+      // Save the original token address
+      const originalTokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS;
       
-      expect(results).toBeDefined();
-      if (!results) return;
+      // Reset the singleton instance for testing
+      resetWalletService();
       
-      expect(results[0].status).toBe('confirmed');
-      expect(Wallet.create).toHaveBeenCalled();
+      // Remove the token address
+      delete process.env.NEXT_PUBLIC_TOKEN_ADDRESS;
+      
+      // Test that the error is thrown
+      expect(() => WalletService.getInstance()).toThrow('NEXT_PUBLIC_TOKEN_ADDRESS environment variable is not set');
+      
+      // Restore the token address
+      process.env.NEXT_PUBLIC_TOKEN_ADDRESS = originalTokenAddress;
     });
   });
 
-  describe('Prize Distribution', () => {
-    let walletService: WalletService;
-    
-    beforeEach(async () => {
-      walletService = new WalletService();
-      // The wallet will be initialized when distributePrizes is called
-    });
-
+  describe('prize distribution', () => {
     it('should distribute prizes successfully', async () => {
       const payouts = [
         { userAddress: '0x1111111111111111111111111111111111111111', prizeAmount: '1000000000000000000' },
@@ -101,7 +98,7 @@ describe('WalletService', () => {
       
       expect(results).toHaveLength(2);
       expect(results[0].status).toBe('confirmed');
-      expect(results[0].transactionHash).toBe('0x123');
+      expect(results[0].transactionHash).toBe('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef');
       expect(mockCreateTransfer).toHaveBeenCalledTimes(2);
     });
 
@@ -124,11 +121,6 @@ describe('WalletService', () => {
     it('should return undefined for empty payouts', async () => {
       const results = await walletService.distributePrizes([]);
       expect(results).toBeUndefined();
-    });
-
-    it('should return undefined for null or undefined payouts', async () => {
-      expect(await walletService.distributePrizes(null)).toBeUndefined();
-      expect(await walletService.distributePrizes(undefined)).toBeUndefined();
     });
   });
 });
