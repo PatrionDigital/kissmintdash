@@ -2,6 +2,8 @@
 
 ## Development Tasks
 
+*Last Updated: 2025-06-09 13:06 KST*
+
 ### 1. Project Initialization & Environment Setup
 
 - [x] **1.1. Review MiniKit Quickstart Output**
@@ -50,7 +52,7 @@
   - Create user context/provider for profile, attempts, streaks, and balances
   - UI: Profile modal or screen
 
-- [ ] **3.2. Profile Button in System Menu**
+- [x] **3.2. Profile Button in System Menu** ✅ 2025-06-09
   - Move Profile button from header to System menu
   - Maintain existing `useViewProfile` functionality from MiniKit
   - Ensure consistent styling with other menu items
@@ -403,12 +405,21 @@
 
 ### 9.1. API Design & Implementation
 
-- [ ] **9.1. API Design & Implementation**
+- [x] **Prize Distribution API**
+  - [x] Implement RESTful API endpoints for prize distribution status and history
+  - [x] Add admin endpoints for triggering and retrying distributions
+  - [x] Document API with OpenAPI/Swagger
+  - [x] Add rate limiting and request validation
 
-  - [ ] **Prize Distribution API**
-    - [ ] Create REST endpoints for prize distribution status and history
-    - [ ] Implement admin endpoints for manual prize distribution triggers
-    - [ ] Add authentication and authorization for admin endpoints
+## Next Up (2025-06-10)
+
+- [ ] **Frontend Integration**
+  - [ ] Create PrizeDistributionPage component
+  - [ ] Add PrizePoolDisplay component
+  - [ ] Implement DistributionList and DistributionDetail views
+  - [ ] Add admin controls for triggering/retrying distributions
+  - [ ] Add loading and error states
+  - [ ] Implement data fetching with SWR/React Query for admin endpoints
     - [ ] Document API endpoints with Swagger/OpenAPI
 
   - [ ] **User Game Data API**
@@ -423,10 +434,10 @@
   - [ ] Add loading and error states
   - [ ] Implement data refresh mechanisms
 
-- [x] **9.2. Database Models**
-
-  - Implement Turso schemas for sessions, users, leaderboards, transactions
-  - TypeScript types for all database models
+- [x] **9.2. Database Models** ✅ 2025-06-09
+  - Implemented Turso schemas for sessions, users, leaderboards, transactions
+  - Added TypeScript types for all database models
+  - Set up database migrations
 
 - [ ] **9.3. Serverless Functions**
 
@@ -458,11 +469,22 @@
   - Verify game responsiveness on different devices
   - Test network latency handling
 
-- [ ] **10.4. Security Testing**
-  - Input validation, anti-cheat, and token transaction tests
-  - Multi-account detection testing
-  - **CRITICAL:** Verify Coinbase Wallet API v2 security
-  - Verify token transaction security
+### 10.4. Security
+
+- [x] **Rate Limiting Middleware** ✅ 2025-06-09
+  - Implemented rate limiting for API endpoints using Upstash Redis
+  - Added admin bypass functionality
+  - Includes comprehensive unit tests
+  - Handles request identification from multiple headers (x-forwarded-for, x-real-ip, request IP)
+  - Configurable rate limits and window sizes
+  - Proper error handling and fail-open behavior
+
+- [ ] **Security Testing**
+  - [ ] Input validation and sanitization
+  - [ ] Anti-cheat and token transaction tests
+  - [ ] Multi-account detection testing
+  - [ ] **CRITICAL:** Verify Coinbase Wallet API v2 security
+  - [ ] Verify token transaction security
 
 ### 11. Toast Notifications
 
