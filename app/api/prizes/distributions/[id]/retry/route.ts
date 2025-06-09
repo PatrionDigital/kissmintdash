@@ -1,20 +1,15 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { createClient as createTursoClient } from '@libsql/client';
-import { Redis } from '@upstash/redis';
 import { PrizeDistributionService } from '@/app/services/prize-distribution.service';
 import { LeaderboardService } from '@/app/services/leaderboard.service';
 import { PrizePoolManager } from '@/app/services/prize-pool.service';
 import { WalletService } from '@/app/services/wallet.service';
 import { FarcasterProfileService } from '@/app/services/farcaster-profile.service';
 import { ApiResponse, PrizeDistribution } from '../../../../types';
+import { redis } from '@/lib/redis';
 
 // Initialize services
-const redis = new Redis({
-  url: process.env.REDIS_URL!,
-  token: process.env.REDIS_TOKEN!,
-});
-
 const turso = createTursoClient({
   url: process.env.NEXT_PUBLIC_TURSO_URL!,
   authToken: process.env.NEXT_PUBLIC_TURSO_API_SECRET!,
