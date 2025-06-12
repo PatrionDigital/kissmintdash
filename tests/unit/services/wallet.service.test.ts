@@ -14,7 +14,7 @@ const mockCreateTransfer = jest.fn<Promise<TransferResult>, [{
 }]>();
 
 // Mock the sleep utility
-jest.mock('@/utils/sleep', () => ({
+jest.mock("@/app/utils/sleep", () => ({
   sleep: jest.fn().mockResolvedValue(undefined),
 }));
 

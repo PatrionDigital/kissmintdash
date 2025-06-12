@@ -2,6 +2,8 @@
 
 ## Development Tasks
 
+*Last Updated: 2025-06-09 13:06 KST*
+
 ### 1. Project Initialization & Environment Setup
 
 - [x] **1.1. Review MiniKit Quickstart Output**
@@ -50,7 +52,7 @@
   - Create user context/provider for profile, attempts, streaks, and balances
   - UI: Profile modal or screen
 
-- [ ] **3.2. Profile Button in System Menu**
+- [x] **3.2. Profile Button in System Menu** ✅ 2025-06-09
   - Move Profile button from header to System menu
   - Maintain existing `useViewProfile` functionality from MiniKit
   - Ensure consistent styling with other menu items
@@ -99,29 +101,37 @@
   - API endpoints for fetching and submitting scores
   - Integrate with Redis for real-time updates
 
-- [x] **5.3. Social Sharing (Frames)**
+- [ ] **5.3. Social Sharing (Frames)**
       [(Issue 11)](https://github.com/PatrionDigital/kissmintdash/issues/11)
-  - Use Farcaster Links for sharing scores and achievements
-  - Implement proper Farcaster Frame (meta tags, etc.) with link to Mini App
+  - [x]Use Farcaster Links for sharing scores and achievements
+  - [ ]Implement proper Farcaster Frame (meta tags, etc.) with link to Mini App
 
 ### 6. Prize Distribution System & Leaderboards
 
-#### 6.1 Prize Structure Implementation
+#### 6.1 Prize Structure Implementation [(Issue 25)](https://github.com/PatrionDigital/kissmintdash/issues/25)
 
 - [ ] **Daily Rewards (50 $GLICO Base + Dynamic Bonus)**
 
-  - 1st Place: 40% of total pool
-  - 2nd Place: 24% of total pool
-  - 3rd Place: 16% of total pool
-  - 4th Place: 12% of total pool
-  - 5th Place: 8% of total pool
+  - [ ] Implement base prize calculation (50 $GLICO)
+  - [ ] Add dynamic bonus from prize pool (30% of total pool)
+  - [ ] Distribute to top 5 winners:
+    - 1st Place: 40% of total pool
+    - 2nd Place: 24% of total pool
+    - 3rd Place: 16% of total pool
+    - 4th Place: 12% of total pool
+    - 5th Place: 8% of total pool
+  - [ ] Log distribution in Turso database
 
 - [ ] **Weekly Rewards (500 $GLICO Base + Dynamic Bonus)**
-  - 1st Place: 40% of total pool
-  - 2nd Place: 24% of total pool
-  - 3rd Place: 16% of total pool
-  - 4th Place: 12% of total pool
-  - 5th Place: 8% of total pool
+  - [ ] Implement base prize calculation (500 $GLICO)
+  - [ ] Add dynamic bonus from prize pool (70% of total pool)
+  - [ ] Distribute to top 5 winners:
+    - 1st Place: 40% of total pool
+    - 2nd Place: 24% of total pool
+    - 3rd Place: 16% of total pool
+    - 4th Place: 12% of total pool
+    - 5th Place: 8% of total pool
+  - [ ] Log distribution in Turso database
 
 #### 6.2 Revenue Model & Tokenomics
 
@@ -245,9 +255,11 @@
 
 - [x] **Unit Testing**
 
-  - Write unit tests for `LeaderboardService`
-  - Write unit tests for `PrizeDistributionService`
-  - Write unit tests for `PrizePoolManager`
+  - [x] Write unit tests for `LeaderboardService`
+  - [x] Write unit tests for `PrizeDistributionService`
+  - [x] Write unit tests for `PrizePoolManager`
+  - [x] Write integration tests for prize distribution flow
+  - [x] Fix test failures and ensure all tests pass
   - Write unit tests for `WalletService`
   - Write unit tests for `FarcasterProfileService`
 
@@ -389,16 +401,43 @@
 
 ### 9. Backend & Data Management
 
-- [ ] **9.1. API Design**
+## Next Priority: API Implementation
 
-  - REST endpoints for game sessions, leaderboards, user profiles, token transactions
-  - TypeScript interfaces for all API responses
-  - **CRITICAL:** Separate prize distribution endpoints
+### 9.1. API Design & Implementation
 
-- [x] **9.2. Database Models**
+- [x] **Prize Distribution API**
+  - [x] Implement RESTful API endpoints for prize distribution status and history
+  - [x] Add admin endpoints for triggering and retrying distributions
+  - [x] Document API with OpenAPI/Swagger
+  - [x] Add rate limiting and request validation
 
-  - Implement Turso schemas for sessions, users, leaderboards, transactions
-  - TypeScript types for all database models
+## Next Up (2025-06-10)
+
+- [ ] **Frontend Integration**
+  - [ ] [#27 Create PrizeDistributionPage component](https://github.com/PatrionDigital/kissmintdash/issues/27)
+  - [ ] [#28 Add PrizePoolDisplay component](https://github.com/PatrionDigital/kissmintdash/issues/28)
+  - [ ] [#29 Implement DistributionList and DistributionDetail views](https://github.com/PatrionDigital/kissmintdash/issues/29)
+  - [ ] [#30 Add admin controls for prize distributions](https://github.com/PatrionDigital/kissmintdash/issues/30)
+  - [ ] Add loading and error states
+  - [ ] Implement data fetching with SWR/React Query for admin endpoints
+    - [ ] Document API endpoints with Swagger/OpenAPI
+
+  - [ ] **User Game Data API**
+    - [ ] Endpoints for game session history
+    - [ ] Leaderboard data retrieval
+    - [ ] User statistics and achievements
+    - [ ] TypeScript interfaces for all API responses
+
+- [ ] **9.2. Frontend Integration**
+  - [ ] Create API client services
+  - [ ] Implement data fetching hooks
+  - [ ] Add loading and error states
+  - [ ] Implement data refresh mechanisms
+
+- [x] **9.2. Database Models** ✅ 2025-06-09
+  - Implemented Turso schemas for sessions, users, leaderboards, transactions
+  - Added TypeScript types for all database models
+  - Set up database migrations
 
 - [ ] **9.3. Serverless Functions**
 
@@ -430,11 +469,22 @@
   - Verify game responsiveness on different devices
   - Test network latency handling
 
-- [ ] **10.4. Security Testing**
-  - Input validation, anti-cheat, and token transaction tests
-  - Multi-account detection testing
-  - **CRITICAL:** Verify Coinbase Wallet API v2 security
-  - Verify token transaction security
+### 10.4. Security
+
+- [x] **Rate Limiting Middleware** ✅ 2025-06-09
+  - Implemented rate limiting for API endpoints using Upstash Redis
+  - Added admin bypass functionality
+  - Includes comprehensive unit tests
+  - Handles request identification from multiple headers (x-forwarded-for, x-real-ip, request IP)
+  - Configurable rate limits and window sizes
+  - Proper error handling and fail-open behavior
+
+- [ ] **Security Testing**
+  - [ ] Input validation and sanitization
+  - [ ] Anti-cheat and token transaction tests
+  - [ ] Multi-account detection testing
+  - [ ] **CRITICAL:** Verify Coinbase Wallet API v2 security
+  - [ ] Verify token transaction security
 
 ### 11. Toast Notifications
 

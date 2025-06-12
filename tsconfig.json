@@ -7,8 +7,8 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -19,13 +19,29 @@
       }
     ],
     "paths": {
-      "@/*": ["./*", "./app/*"], // Covers all top-level folders including app, lib, etc.
+      "@/*": ["./*", "./app/*"],
       "@/app/*": ["./app/*"],
       "@/components/*": ["./components/*"],
       "@/styles/*": ["./styles/*"],
-      "@/lib/*": ["./lib/*"] // Added for lib alias
-    }
+      "@/lib/*": ["./lib/*"]
+    },
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "tests/types/**/*.d.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "vitest.setup.ts"
+  ],
+  "exclude": ["node_modules"],
+  "typeRoots": [
+    "./node_modules/@types",
+    "./tests/types"
+  ]
 }

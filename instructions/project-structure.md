@@ -74,8 +74,8 @@
 
 ### Testing & Quality Assurance
 
-- **Jest** - Primary unit, integration, and component testing framework
-- **React Testing Library** - Component testing (with Jest)
+- **Vitest** - Primary unit, integration testing framework
+- **React Testing Library** - Component testing (with Vitest)
 - **Lighthouse** - Performance testing
 - **WebPageTest** - Tap response latency measurement
 

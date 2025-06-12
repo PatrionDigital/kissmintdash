@@ -20,7 +20,7 @@ jest.mock('@coinbase/cdp-sdk');
 import viemMock from '../../__mocks__/viem';
 
 // Mock the sleep utility
-jest.mock('@/utils/sleep', () => ({
+jest.mock("@/app/utils/sleep", () => ({
   sleep: jest.fn().mockResolvedValue(undefined),
 }));
 

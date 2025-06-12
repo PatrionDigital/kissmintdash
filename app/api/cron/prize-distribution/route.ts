@@ -1,29 +1,25 @@
 import { NextResponse } from 'next/server';
+import { createClient as createTursoClient } from '@libsql/client';
 import { PrizeDistributionService } from '@/app/services/prize-distribution.service';
 import { LeaderboardService } from '@/app/services/leaderboard.service';
 import { PrizePoolManager } from '@/app/services/prize-pool.service';
 import { WalletService } from '@/app/services/wallet.service';
 import { FarcasterProfileService } from '@/app/services/farcaster-profile.service';
-import { createClient as createTursoClient } from '@libsql/client';
+import { redis } from '@/lib/redis';
 import type { Client as TursoClient } from '@libsql/client';
-import { Redis } from '@upstash/redis';
 
 // Log environment variables for Redis BEFORE client instantiation using console.error
 console.info(`[CRON /api/prize-distribution] INFO (diagnostic): Initializing Redis Client. process.env.REDIS_URL: ${process.env.REDIS_URL}`);
 console.info(`[CRON /api/prize-distribution] INFO (diagnostic): Initializing Redis Client. process.env.REDIS_TOKEN is ${process.env.REDIS_TOKEN ? 'SET (token value not shown)' : 'NOT SET or empty'}`);
 
-// Initialize Redis and Turso clients
-const redis = new Redis({
-  url: process.env.REDIS_URL!,
-  token: process.env.REDIS_TOKEN!,
-});
-
+// Initialize Turso client
 const turso: TursoClient = createTursoClient({
   url: process.env.NEXT_PUBLIC_TURSO_URL!,
   authToken: process.env.NEXT_PUBLIC_TURSO_API_SECRET!,
 });
 
 // Initialize services with required dependencies
+// Using centralized Redis client from lib/redis
 const leaderboardService = new LeaderboardService(redis, turso);
 const prizePoolManager = new PrizePoolManager(redis, turso);
 const walletService = WalletService.getInstance();
