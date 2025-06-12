@@ -1,4 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
+// Mock types for testing
+interface MockResponse<T = { success: boolean }> {
+  status: number;
+  json: () => Promise<T>;
+  headers: Record<string, string>;
+}
+
+// Mock functions
+type MockFunction = jest.Mock;
+
+// Mock globals
+declare global {
+  var mockRedis: { eval: MockFunction };
+  var mockLimit: MockFunction;
+}
+
+// Helper function to create a mock response
+const createMockResponse = <T = { success: boolean }>(
+  status: number, 
+  data: T = { success: true } as T
+): MockResponse<T> => ({
+  status,
+  json: async () => data,
+  headers: {},
+});
+
+// Mock request type
+type MockRequest = {
+  headers: Record<string, string>;
+  ip?: string;
+  method?: string;
+  url?: string;
+};
 import { withRateLimit } from "@/app/middleware/rate-limit";
 import {
   createMockRequest,
@@ -15,20 +47,30 @@ import { Ratelimit } from "@upstash/ratelimit";
 describe("Rate Limiting Middleware", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock environment
     process.env.ADMIN_API_KEY = "test-admin-key";
 
-    (Redis.fromEnv as jest.Mock).mockImplementation(() => ({
-      eval: jest.fn().mockResolvedValue([1, Date.now() + 60000]),
+    // Mock Redis
+    const mockEval = jest.fn().mockResolvedValue([1, Date.now() + 60000]);
+    const mockFromEnv = jest.fn().mockReturnValue({ eval: mockEval });
+    (Redis as unknown as MockFunction) = jest.fn().mockImplementation(() => ({
+      fromEnv: mockFromEnv,
     }));
 
-    (Ratelimit as unknown as jest.Mock).mockImplementation(() => ({
-      limit: jest.fn().mockResolvedValue({
-        success: true,
-        limit: 100,
-        remaining: 99,
-        reset: Math.floor(Date.now() / 1000) + 60,
-      }),
+    // Mock Ratelimit
+    const mockLimit = jest.fn().mockResolvedValue({
+      success: true,
+      limit: 100,
+      remaining: 99,
+      reset: Math.floor(Date.now() / 1000) + 60,
+    });
+    (Ratelimit as unknown as jest.Mock) = jest.fn().mockImplementation(() => ({
+      limit: mockLimit,
     }));
+    
+    // Store mocks for assertions
+    (global as any).mockRedis = { eval: mockEval };
+    (global as any).mockLimit = mockLimit;
   });
 
   afterEach(() => {
@@ -42,25 +84,29 @@ describe("Rate Limiting Middleware", () => {
   });
 
   afterAll(() => {
-    Object.keys(process.env).forEach((key) => {
-      if (!(key in originalEnv)) {
-        delete process.env[key];
-      }
-    });
-    Object.entries(originalEnv).forEach(([key, value]) => {
-      process.env[key] = value;
-    });
+    // Restore original environment
+    process.env = originalEnv;
+    
+    // Clean up global mocks
+    delete (global as any).mockRedis;
+    delete (global as any).mockLimit;
   });
 
-  const testHandler = async (req: NextRequest) => {
-    return NextResponse.json({ success: true });
-  };
+  const testHandler = async (_req: MockRequest): Promise<MockResponse> => 
+    createMockResponse(200);
+    
+  // Make testHandler available in all test scopes
+  Object.defineProperty(global, 'testHandler', {
+    value: testHandler,
+    writable: true,
+    configurable: true
+  });
 
   describe("Basic Rate Limiting", () => {
     it("should allow requests under the rate limit", async () => {
       const handler = jest
         .fn()
-        .mockResolvedValue(NextResponse.json({ success: true }));
+        .mockResolvedValue(createMockResponse(200, { success: true }));
       const rateLimitedHandler = withRateLimit(handler, "test");
 
       const request = createMockRequest();
@@ -74,25 +120,19 @@ describe("Rate Limiting Middleware", () => {
 
     it("should block requests over the rate limit", async () => {
       // Mock rate limit exceeded with proper response headers
-      const mockResponse = new NextResponse(
-        JSON.stringify({
-          error: "Rate limit exceeded",
-          code: "RATE_LIMIT_EXCEEDED",
-        }),
-        {
-          status: 429,
-          headers: {
-            "Content-Type": "application/json",
-            "X-RateLimit-Limit": "100",
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": (
-              Math.floor(Date.now() / 1000) + 60
-            ).toString(),
-          },
-        },
-      );
+      const mockResponse = createMockResponse(429, {
+        error: "Rate limit exceeded",
+        code: "RATE_LIMIT_EXCEEDED"
+      });
+      
+      // Add rate limit headers
+      mockResponse.headers = {
+        ...mockResponse.headers,
+        "X-RateLimit-Limit": "100",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": (Math.floor(Date.now() / 1000) + 60).toString()
+      };
 
-      // @ts-ignore - Mocking the handler to return our custom response
       const handler = jest.fn().mockResolvedValueOnce(mockResponse);
       const rateLimitedHandler = withRateLimit(handler, "test", {
         limit: 100,
@@ -177,7 +217,7 @@ describe("Rate Limiting Middleware", () => {
 
       const handler = jest
         .fn()
-        .mockResolvedValue(NextResponse.json({ success: true }));
+        .mockResolvedValue(createMockResponse(200, { success: true }));
       const rateLimitedHandler = withRateLimit(handler, "test-ip");
 
       const request = createMockRequest(
@@ -208,7 +248,7 @@ describe("Rate Limiting Middleware", () => {
 
       const handler = jest
         .fn()
-        .mockResolvedValue(NextResponse.json({ success: true }));
+        .mockResolvedValue(createMockResponse(200, { success: true }));
       const rateLimitedHandler = withRateLimit(handler, "test-ip");
 
       const request = createMockRequest(
@@ -239,7 +279,7 @@ describe("Rate Limiting Middleware", () => {
 
       const handler = jest
         .fn()
-        .mockResolvedValue(NextResponse.json({ success: true }));
+        .mockResolvedValue(createMockResponse(200, { success: true }));
       const rateLimitedHandler = withRateLimit(handler, "test-ip");
 
       const request = createMockRequest(
@@ -266,7 +306,7 @@ describe("Rate Limiting Middleware", () => {
 
       const handler = jest
         .fn()
-        .mockResolvedValue(NextResponse.json({ success: true }));
+        .mockResolvedValue(createMockResponse(200, { success: true }));
       const rateLimitedHandler = withRateLimit(handler, "test-fail-open");
 
       const request = createMockRequest();
@@ -292,7 +332,7 @@ describe("Rate Limiting Middleware", () => {
 
       const handler = jest
         .fn()
-        .mockResolvedValue(NextResponse.json({ success: true }));
+        .mockResolvedValue(createMockResponse(200, { success: true }));
       const rateLimitedHandler = withRateLimit(handler, "test-headers");
 
       const request = createMockRequest();
@@ -329,20 +369,16 @@ describe("Rate Limiting Middleware", () => {
         limit: mockLimit,
       }));
 
-      const mockResponse = new NextResponse(
-        JSON.stringify({ error: "Rate limit exceeded" }),
-        {
-          status: 429,
-          headers: {
-            "Content-Type": "application/json",
-            "X-RateLimit-Limit": "10",
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": (
-              Math.floor(Date.now() / 1000) + 30
-            ).toString(),
-          },
-        },
-      );
+      const mockResponse = createMockResponse(429, {
+        error: "Rate limit exceeded",
+        code: "RATE_LIMIT_EXCEEDED"
+      });
+      mockResponse.headers = {
+        ...mockResponse.headers,
+        "X-RateLimit-Limit": "10",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": (Math.floor(Date.now() / 1000) + 60).toString()
+      };
 
       const handler = jest.fn().mockResolvedValue(mockResponse);
       const rateLimitedHandler = withRateLimit(handler, "test-custom-options", {
@@ -369,7 +405,7 @@ describe("Rate Limiting Middleware", () => {
     it("should respect the enabled flag", async () => {
       const handler = jest
         .fn()
-        .mockResolvedValue(NextResponse.json({ success: true }));
+        .mockResolvedValue(createMockResponse(200, { success: true }));
       const rateLimitedHandler = withRateLimit(handler, "test-disabled", {
         enabled: false,
       });

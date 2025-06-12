@@ -414,10 +414,10 @@
 ## Next Up (2025-06-10)
 
 - [ ] **Frontend Integration**
-  - [ ] Create PrizeDistributionPage component
-  - [ ] Add PrizePoolDisplay component
-  - [ ] Implement DistributionList and DistributionDetail views
-  - [ ] Add admin controls for triggering/retrying distributions
+  - [ ] [#27 Create PrizeDistributionPage component](https://github.com/PatrionDigital/kissmintdash/issues/27)
+  - [ ] [#28 Add PrizePoolDisplay component](https://github.com/PatrionDigital/kissmintdash/issues/28)
+  - [ ] [#29 Implement DistributionList and DistributionDetail views](https://github.com/PatrionDigital/kissmintdash/issues/29)
+  - [ ] [#30 Add admin controls for prize distributions](https://github.com/PatrionDigital/kissmintdash/issues/30)
   - [ ] Add loading and error states
   - [ ] Implement data fetching with SWR/React Query for admin endpoints
     - [ ] Document API endpoints with Swagger/OpenAPI

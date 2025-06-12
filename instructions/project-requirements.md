@@ -83,6 +83,7 @@ The project aims to create a web application called "KissMint DASH: Tap Runner '
 
 - **Framework:** React with TypeScript
 - **Build Tool:** Next.js
+- **Next.js configuration to use ESM syntax** since the project is configured with "type": "module"
 - **Styling:** TailwindCSS
 - **Platform:** Farcaster Mini App using MiniKit
 - **State Management:** React Context API

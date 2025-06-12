@@ -7,23 +7,47 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Silence warnings
-  // https://github.com/WalletConnect/walletconnect-monorepo/issues/1908
-  webpack: (config) => {
-    config.externals.push("pino-pretty", "lokijs", "encoding");
-    
-    // Enable path aliases
+  // Only include page files with these extensions
+  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
+
+  webpack: (config, { isServer, dev }) => {
+    // Skip test files in production builds
+    if (!dev) {
+      config.module.rules.push({
+        test: /\.(test|spec)\.(ts|tsx|js|jsx)$/,
+        use: 'null-loader',
+      });
+    }
+
+    // Add aliases and externals
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': path.resolve(__dirname, './'),
+      '@': path.resolve(__dirname),
+      '@walletconnect/heartbeat': false, // Prevent build errors from unused worker dependency
     };
-    
+
+    // Add external dependencies to prevent build issues
+    config.externals = config.externals || [];
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
+
+    // Ignore HeartbeatWorker*.js files (WalletConnect v2 ESM worker issue workaround)
+    config.module.rules.push({
+      test: /HeartbeatWorker\.js$/,
+      use: 'null-loader',
+    });
+
     return config;
   },
-  // Enable experimental features for path aliases
+
+  // Configure experimental features
   experimental: {
-    // This is recommended in Next.js 13+ for path aliases
-    externalDir: true,
+    esmExternals: 'loose',
+    externalDir: true, // Recommended for path aliases in Next.js 13+
+  },
+
+  // Configure the build ID to be deterministic
+  generateBuildId: async () => {
+    return 'kissmintdash';
   },
 };
 
