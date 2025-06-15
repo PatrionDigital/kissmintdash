@@ -27,10 +27,10 @@ const nextConfig = {
         use: 'null-loader',
       });
       
-      // Exclude Vitest config file
+      // Exclude Vitest config and setup files
       config.plugins.push(
         new IgnorePlugin({
-          resourceRegExp: /^\/?vitest\.config\.(js|ts)$/
+          resourceRegExp: /^\/?(vitest\.config\.(js|ts)|vitest\.setup\.ts)$/
         })
       );
     }
