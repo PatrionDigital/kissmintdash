@@ -135,11 +135,14 @@ _Last Updated: 2025-06-09 13:06 KST_
 
 #### 6.2 Revenue Model & Tokenomics
 
-- [ ] **Revenue Allocation Implementation**
-  - Project Treasury: 70% (700 $GLICO from daily revenue)
-  - Prize Pool Contribution: 30% (300 $GLICO)
-    - Daily Pool Addition: 30% of contribution (90 $GLICO)
-    - Weekly Pool Addition: 70% of contribution (210 $GLICO)
+- [x] **Revenue Allocation Implementation** (Completed 2025-06-15)
+  - Implemented in `/api/allocate-revenue` endpoint
+  - Project Treasury: 70% of total revenue
+  - Prize Pool Contribution: 30% of total revenue
+    - Daily Pool: 30% of prize pool (9% of total revenue)
+    - Weekly Pool: 70% of prize pool (21% of total revenue)
+  - Integrated with game pass purchase flow
+  - Turso logging for all allocations
 
 #### 6.3 Technical Infrastructure - Core Infrastructure ✅
 
@@ -163,15 +166,20 @@ _Last Updated: 2025-06-09 13:06 KST_
 
 #### 6.4 Redis Structure (Upstash)
 
-- [ ] **Active Data Management**
-  - Daily scores leaderboard (sorted sets)
-  - Weekly scores leaderboard (sorted sets)
-  - Daily pool bonus tracking
-  - Weekly pool bonus tracking
+- [x] **Active Data Management** (Completed 2025-06-15)
+  - Daily scores leaderboard (sorted sets) - `leaderboard:daily`
+  - Weekly scores leaderboard (sorted sets) - `leaderboard:weekly`
+  - Daily pool bonus tracking - `prize_pool:daily`
+  - Weekly pool bonus tracking - `prize_pool:weekly`
+  - Prize pool claiming locks - `prize_pool:lock:{daily|weekly}`
 
 #### 6.5 Database Schema Implementation
 
-- [x] **Turso Schema Implementation (Current schema.sql)**
+- [x] **Turso Schema Implementation** (Completed 2025-06-15)
+  - All tables created with proper indexes
+  - Foreign key constraints where applicable
+  - Timestamp columns for auditing
+  - Schema versioning in place
 
   ```sql
   -- Table to archive leaderboard standings after each period (daily/weekly)

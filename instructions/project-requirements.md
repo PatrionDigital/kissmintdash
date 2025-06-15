@@ -321,7 +321,37 @@ export class TokenService {
 - Engaging animations and sound effects
 - Visual distinction between free and paid attempts
 
-### Compatibility
+### Backend Implementation Details
+
+### Revenue Allocation Flow
+
+1. **Purchase Flow**
+   - User purchases extra attempts with $GLICO
+   - On successful transaction, frontend calls `/api/allocate-revenue`
+   - Endpoint receives `purchaseId` and `totalRevenue`
+
+2. **Allocation Logic**
+   - **Treasury**: 70% of total revenue
+   - **Prize Pools**: 30% of total revenue
+     - Daily Prize Pool: 30% of prize pool (9% of total)
+     - Weekly Prize Pool: 70% of prize pool (21% of total)
+
+3. **Data Storage**
+   - Redis: Stores current prize pool amounts
+   - Turso: Logs all revenue allocations for auditing
+   - Prize distributions are tracked in `prize_distribution_log`
+
+4. **Prize Distribution**
+   - Daily and weekly cron jobs settle prizes
+   - Prizes are distributed to top 5 players:
+     - 1st: 40%
+     - 2nd: 24%
+     - 3rd: 16%
+     - 4th: 12%
+     - 5th: 8%
+   - Base prizes: 50 $GLICO daily, 500 $GLICO weekly
+
+## Compatibility
 
 - Support for modern browsers (Chrome, Firefox, Safari, Edge)
 - Optimization for mobile devices
