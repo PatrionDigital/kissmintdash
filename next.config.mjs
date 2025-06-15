@@ -19,12 +19,20 @@ const nextConfig = {
       })
     );
     
-    // Skip test files in production builds
+    // Skip test and config files in production builds
     if (!dev) {
+      // Exclude test files
       config.module.rules.push({
         test: /\.(test|spec)\.(ts|tsx|js|jsx)$/,
         use: 'null-loader',
       });
+      
+      // Exclude Vitest config file
+      config.plugins.push(
+        new IgnorePlugin({
+          resourceRegExp: /^\/?vitest\.config\.(js|ts)$/
+        })
+      );
     }
     
     // Handle the HeartbeatWorker file as a module
