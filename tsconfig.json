@@ -19,13 +19,19 @@
       }
     ],
     "paths": {
-      "@/*": ["./*", "./app/*"], // Covers all top-level folders including app, lib, etc.
+      "@/*": ["./*", "./app/*"],
       "@/app/*": ["./app/*"],
       "@/components/*": ["./components/*"],
       "@/styles/*": ["./styles/*"],
-      "@/lib/*": ["./lib/*"] // Added for lib alias
-    }
+      "@/lib/*": ["./lib/*"]
+    },
+    "types": ["node", "@types/node", "@types/react", "@types/react-dom"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

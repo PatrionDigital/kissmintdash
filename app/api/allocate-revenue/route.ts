@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrizePoolManager } from '@/app/services';
-import { Redis } from '@upstash/redis/cloudflare';
 import { createClient as createTursoClient, Client as TursoClient } from '@libsql/client';
+import { redis } from '@/lib/redis';
 
 // Define revenue split percentages based on the project plan
 const REVENUE_SPLIT = {
@@ -39,15 +39,8 @@ export async function POST(request: Request) {
     const weeklyContribution = parseFloat((totalRevenue * REVENUE_SPLIT.weeklyPoolPercent).toFixed(2));
     const treasuryShare = parseFloat((totalRevenue * REVENUE_SPLIT.treasuryPercent).toFixed(2));
 
-    // Instantiate Redis client
-    if (!process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
-      console.error('[POST /api/allocate-revenue] CRITICAL: Upstash Redis URL or Token is not configured in environment variables.');
-      throw new Error('Server configuration error: Redis connection details missing.');
-    }
-    const redis = new Redis({
-      url: process.env.REDIS_URL,
-      token: process.env.REDIS_TOKEN,
-    });
+    // Use centralized Redis client from lib/redis
+    // Redis configuration is already validated during app startup
 
     // Instantiate Turso client
     if (!process.env.NEXT_PUBLIC_TURSO_URL || !process.env.NEXT_PUBLIC_TURSO_API_SECRET) {
@@ -63,6 +56,13 @@ export async function POST(request: Request) {
     const prizePoolManager = new PrizePoolManager(redis, turso);
     console.log('[POST /api/allocate-revenue] PrizePoolManager instantiated.');
 
+    // Add to daily prize pool
+    await redis.incrbyfloat('prize_pool:daily', dailyContribution);
+    
+    // Add to weekly prize pool
+    await redis.incrbyfloat('prize_pool:weekly', weeklyContribution);
+
+    // Add to treasury
     await prizePoolManager.addGamePassRevenueToPools(
       purchaseId,
       totalRevenue,

@@ -110,6 +110,31 @@ kissmintdash/
 
 ---
 
+## Revenue Allocation System
+
+The prize pool is funded through a portion of game pass purchases, with the following allocation:
+
+- **70% to Project Treasury**
+  - Funds ongoing development and operations
+
+- **30% to Prize Pools**
+  - **Daily Prizes (30% of prize pool, 9% of total)**
+    - Base prize: 50 $GLICO
+    - Distributed to top 5 daily players
+  - **Weekly Prizes (70% of prize pool, 21% of total)**
+    - Base prize: 500 $GLICO
+    - Distributed to top 5 weekly players
+
+### Prize Distribution
+
+Prizes are distributed to the top 5 players on each leaderboard:
+
+1. 1st place: 40%
+2. 2nd place: 24%
+3. 3rd place: 16%
+4. 4th place: 12%
+5. 5th place: 8%
+
 ## Setup & Environment
 
 1. **Install dependencies:**
@@ -121,7 +146,10 @@ kissmintdash/
    ```
 
 2. **Environment Variables:**
-   - See `.env.example` and `/instructions/detailed-workplan.md` for required variables (Farcaster, Redis, $GLICO, etc.)
+   - See `.env.example` and `/instructions/detailed-workplan.md` for required variables including:
+     - `REDIS_URL` and `REDIS_TOKEN` for prize pool management
+     - `NEXT_PUBLIC_TURSO_URL` and `NEXT_PUBLIC_TURSO_API_SECRET` for allocation logging
+     - `NEXT_PUBLIC_TOKEN_ADDRESS` for $GLICO token operations
 3. **Run locally:**
 
    ```bash

@@ -121,7 +121,7 @@ export class PrizeDistributionService {
           result.transactionHash || null,
           result.status, // 'success' or 'failed'
           result.error || null,
-          result.status === 'success' ? new Date().toISOString() : null, // distributed_at
+          result.status === 'confirmed' ? new Date().toISOString() : null, // distributed_at
         ],
       });
     }
@@ -142,132 +142,115 @@ export class PrizeDistributionService {
 
     console.log(`[PrizeDistributionService] Starting ${poolType} settlement for ${periodIdentifier}.`);
 
-    // Steps reordered: Claim pool first to log it correctly from the start.
-
-    // 1. Claim prize pool from PrizePoolManager
-    const totalClaimedPool = await this.prizePoolManager.claimPrizePool(poolType);
-    console.log(`[PrizeDistributionService] Claimed ${totalClaimedPool} $GLICO from ${poolType} pool.`);
-
-    // 2. Initial distribution attempt already logged with status 'PENDING' and totalClaimedPool.
-
-    // 3. Fetch winners from LeaderboardService
-    const winners: LeaderboardEntry[] = await this.leaderboardService.getActiveLeaderboard(poolType, PRIZE_DISTRIBUTION_PERCENTAGES.length);
-    console.log(`[PrizeDistributionService] Fetched ${winners.length} potential winners for ${poolType} period ${periodIdentifier}.`);
-
-    if (winners.length === 0) {
-      console.log(`[PrizeDistributionService] No winners found for ${poolType} period ${periodIdentifier}. Skipping distribution.`);
-      // totalClaimedPool is already known and logged in initial attempt if distributionSummaryId exists
-      if (distributionSummaryId) await this.logSkippedDistribution(distributionSummaryId, 'No winners found'); 
-      return;
-    }
-    
-    // Check totalClaimedPool after initial log and winner check
-    if (totalClaimedPool <= 0) {
-      console.log(`[PrizeDistributionService] Prize pool for ${poolType} is 0. Skipping distribution.`);
-      if (distributionSummaryId) await this.logSkippedDistribution(distributionSummaryId, 'Prize pool was zero or negative', totalClaimedPool);
-      return;
-    }
-
-    // 4. Resolve FIDs to wallet addresses and calculate individual prize amounts
-    // prizePayouts for WalletService, expects 'prizeAmount'
-    const prizePayouts: PrizePayout[] = [];
-    // originalTxsForLog for detailed logging, uses 'prizeAmountGlicoSmallestUnit'
-    const originalTxsForLog: Array<{ userId: string; userAddress: string; rank: number; score: number; prizeAmountGlicoSmallestUnit: string; }> = [];
-    let totalDistributedAmountBigInt = BigInt(0); // Use BigInt for summing distributed amounts
-
-    for (let i = 0; i < winners.length; i++) {
-      const winner = winners[i]; // winner.userId is an FID
-      const rankIndex = (winner.rank ?? winners.length + 1) - 1; // Use rank, default to out of bounds if no rank
-
-      if (rankIndex < PRIZE_DISTRIBUTION_PERCENTAGES.length) {
-        const prizePercentage = PRIZE_DISTRIBUTION_PERCENTAGES[rankIndex];
-        // Calculate display prize amount first
-        const prizeAmountDisplay = Math.floor(totalClaimedPool * prizePercentage);
-
-        if (prizeAmountDisplay > 0) {
-          // Convert to smallest unit (18 decimals)
-          const prizeAmountSmallestUnit = BigInt(prizeAmountDisplay) * BigInt('1000000000000000000'); // 10^18
-          // Resolve FID to wallet address
-          const userWalletAddress = await this.farcasterProfileService.getWalletAddressForFid(winner.userId);
-
-          if (userWalletAddress) {
-            prizePayouts.push({
-              userAddress: userWalletAddress, // Resolved wallet address
-              prizeAmount: prizeAmountSmallestUnit.toString(), // For WalletService
-              // Optional fields from PrizePayout if needed by WalletService directly
-              userId: winner.userId
-            });
-            originalTxsForLog.push({
-              userId: winner.userId,
-              userAddress: userWalletAddress,
-              rank: winner.rank ?? 0,
-              score: winner.score,
-              prizeAmountGlicoSmallestUnit: prizeAmountSmallestUnit.toString(), // For logging
-            });
-            totalDistributedAmountBigInt += prizeAmountSmallestUnit;
-          } else {
-            console.warn(`[PrizeDistributionService] Could not resolve wallet address for FID ${winner.userId}. Skipping prize for this user.`);
-            // TODO: Log this skipped payout more formally, perhaps in prize_distribution_log with a special status or in a separate table.
-            // The prize money for this user (prizeAmount) is effectively not allocated from totalClaimedPool for distribution.
-          }
-        }
-      }
-    }
-    // Note: totalDistributedAmountBigInt now only includes successfully resolved payouts.
-    const totalDistributedAmount = Number(totalDistributedAmountBigInt / BigInt('1000000000000000000')); // Convert back for logging if needed, or keep as BigInt string
-
-    // Safety check: Ensure totalDistributedAmount (display value) does not exceed totalClaimedPool
-    if (totalDistributedAmount > totalClaimedPool) {
-      console.warn(`[PrizeDistributionService] Total distributed amount display (${totalDistributedAmount}) from BigInt sum (${totalDistributedAmountBigInt.toString()}) exceeds total claimed pool (${totalClaimedPool}). This indicates a logic error. Capping or re-evaluation needed.`);
-    }
-
-    if (prizePayouts.length === 0) {
-      console.log(`[PrizeDistributionService] No valid payouts calculated. Skipping.`);
-      if (distributionSummaryId) await this.logSkippedDistribution(distributionSummaryId, 'No payouts calculated (e.g., pool too small or no qualifying winners)', totalClaimedPool);
-      return;
-    }
-
-    // 5. Execute payouts via WalletService
-    let payoutResults: TransferResult[] = [];
-    let payoutError: string | undefined;
-    // totalDistributedAmountBigInt was calculated in the loop above, summing actual payouts
-
     try {
-      // prizePayouts now contains prizeAmount as string in smallest unit
-      payoutResults = await this.walletService.distributePrizes(prizePayouts);
-      if (payoutResults.length > 0) {
-        // Log a general success message, individual results are logged later
-        console.log(`[PrizeDistributionService] WalletService.distributePrizes completed. Number of payout attempts: ${payoutResults.length}. Total distributed (smallest unit): ${totalDistributedAmountBigInt.toString()}`);
-      } else {
-        // This case implies distributePrizes might return an empty array on certain failures or if no payouts were attempted
-        payoutError = 'WalletService.distributePrizes returned no results or an empty array.';
-        console.warn(`[PrizeDistributionService] ${payoutError}`); // Changed to warn as it might not always be a critical error
+      // 1. Claim prize pool from PrizePoolManager
+      const totalClaimedPool = await this.prizePoolManager.claimPrizePool(poolType);
+      console.log(`[PrizeDistributionService] Claimed ${totalClaimedPool} $GLICO from ${poolType} pool.`);
+
+      // 2. Fetch top 5 winners from LeaderboardService
+      const winners = await this.leaderboardService.getActiveLeaderboard(poolType, 5);
+      console.log(`[PrizeDistributionService] Fetched ${winners.length} winners for ${poolType} period ${periodIdentifier}.`);
+
+      if (winners.length === 0) {
+        console.log(`[PrizeDistributionService] No winners found for ${poolType} period ${periodIdentifier}.`);
+        await this.logSkippedDistribution(distributionSummaryId, 'No winners found', totalClaimedPool);
+        return;
       }
+
+      if (totalClaimedPool <= 0) {
+        console.log(`[PrizeDistributionService] Prize pool for ${poolType} is empty.`);
+        await this.logSkippedDistribution(distributionSummaryId, 'Prize pool was zero or negative', totalClaimedPool);
+        return;
+      }
+
+      // 3. Calculate prize amounts for each winner
+      const basePrize = poolType === 'daily' ? 50 : 500; // Base prize amount
+      const totalPrizePool = basePrize + totalClaimedPool;
+      console.log(`[PrizeDistributionService] Total prize pool: ${totalPrizePool} $GLICO (Base: ${basePrize} + Bonus: ${totalClaimedPool})`);
+
+      const prizePayouts: PrizePayout[] = [];
+      const originalTxsForLog = [];
+
+      // 4. Calculate prize amounts and prepare payouts
+      for (let i = 0; i < Math.min(winners.length, 5); i++) {
+        const winner = winners[i];
+        const rank = i + 1;
+        const percentage = PRIZE_DISTRIBUTION_PERCENTAGES[i];
+        const prizeAmount = Math.floor(totalPrizePool * percentage);
+        
+        // Resolve Farcaster ID to wallet address
+        const walletAddress = await this.farcasterProfileService.getWalletAddressForFid(winner.userId);
+        
+        if (!walletAddress) {
+          console.warn(`[PrizeDistributionService] Could not resolve wallet address for FID ${winner.userId}.`);
+          continue;
+        }
+
+        // Convert to smallest unit (18 decimals)
+        const prizeAmountSmallestUnit = BigInt(prizeAmount) * BigInt('1000000000000000000');
+        
+        prizePayouts.push({
+          userAddress: walletAddress,
+          prizeAmount: prizeAmountSmallestUnit.toString(),
+          userId: winner.userId
+        });
+
+        originalTxsForLog.push({
+          userId: winner.userId,
+          userAddress: walletAddress,
+          rank: rank,
+          score: winner.score,
+          prizeAmountGlicoSmallestUnit: prizeAmountSmallestUnit.toString()
+        });
+
+        console.log(`[PrizeDistributionService] Prepared prize for rank ${rank}: ${prizeAmount} $GLICO to ${walletAddress}`);
+      }
+
+      if (prizePayouts.length === 0) {
+        console.log(`[PrizeDistributionService] No valid payouts to process.`);
+        await this.logSkippedDistribution(distributionSummaryId, 'No valid payouts after wallet resolution', totalClaimedPool);
+        return;
+      }
+
+      // 5. Execute payouts via WalletService
+      console.log(`[PrizeDistributionService] Starting distribution of ${prizePayouts.length} prizes...`);
+      const payoutResults = await this.walletService.distributePrizes(prizePayouts, {
+        waitForConfirmation: true,
+        confirmations: 3
+      });
+
+      // 6. Log individual payout attempts
+      await this._logAllIndividualPayoutAttempts(distributionSummaryId, originalTxsForLog, payoutResults);
+
+      // 7. Calculate total distributed amount
+      const successfulPayouts = payoutResults.filter(r => r.status === 'confirmed');
+      const totalDistributed = successfulPayouts.reduce((sum, p) => {
+        return sum + (p.prizeAmount ? BigInt(p.prizeAmount) : 0n);
+      }, 0n);
+
+      // 8. Update distribution summary
+      if (successfulPayouts.length > 0) {
+        await this.logOverallSuccess(
+          distributionSummaryId,
+          totalDistributed.toString(),
+          totalClaimedPool,
+          successfulPayouts.length
+        );
+        console.log(`[PrizeDistributionService] Successfully distributed ${successfulPayouts.length} prizes`);
+      } else {
+        await this.logFailedDistribution(distributionSummaryId, 'No successful payouts', totalClaimedPool);
+        throw new Error('No prizes were successfully distributed');
+      }
+
     } catch (error) {
-      console.error('[PrizeDistributionService] Error calling WalletService.distributePrizes:', error);
-      payoutError = error instanceof Error ? error.message : 'Unknown error from WalletService';
-      // payoutResults remains an empty array or as it was before the error
+      console.error(`[PrizeDistributionService] Error during prize settlement:`, error);
+      await this.logFailedDistribution(
+        distributionSummaryId,
+        error instanceof Error ? error.message : 'Unknown error during settlement',
+        error instanceof Error && 'totalClaimedPool' in error ? (error as any).totalClaimedPool : 0
+      );
+      throw error;
     }
-
-    // 6. Log all individual payout attempts
-    // Ensure originalTxsForLog is correctly populated with userAddress for matching
-    await this._logAllIndividualPayoutAttempts(distributionSummaryId, originalTxsForLog, payoutResults);
-
-    // 7. Log overall distribution status
-    if (distributionSummaryId) {
-      if (payoutResults.length > 0) {
-        // For logging, pass totalDistributedAmountBigInt.toString() or the display value as appropriate
-        await this.logOverallSuccess(distributionSummaryId, totalDistributedAmountBigInt.toString(), totalClaimedPool, payoutResults.length);
-      } else {
-        await this.logFailedDistribution(distributionSummaryId, payoutError || 'WalletService payout failed', totalClaimedPool);
-        throw new Error(payoutError || 'WalletService payout failed');
-      }
-    } else {
-      console.error('[PrizeDistributionService] CRITICAL: distributionSummaryId is undefined. Cannot log final status.');
-      throw new Error('distributionSummaryId is undefined. Cannot log final status.');
-    }
-
-    console.log(`[PrizeDistributionService] Distribution process for ${poolType} - ${periodIdentifier} completed.`);
   }
 
   // --- Helper methods for date/period identifiers ---
@@ -314,31 +297,52 @@ export class PrizeDistributionService {
     status: 'SUCCESS' | 'FAILED' | 'SKIPPED',
     details: { 
       txHash?: string; 
-      totalDistributed?: number; 
-      numWinners?: number; 
+      totalDistributed?: number;
+      numWinners?: number;
       errorMessage?: string; 
       totalPoolClaimed?: number;
     } = {}
   ): Promise<void> {
     const now = new Date().toISOString();
-    let sql = `UPDATE ${DISTRIBUTION_SUMMARY_LOG_TABLE} SET status = ?, completed_at = ?`;
     const args: InValue[] = [status, now];
-
-    if (details.txHash !== undefined) { sql += ', transaction_hash = ?'; args.push(details.txHash); }
-    if (details.totalDistributed !== undefined) { sql += ', total_distributed_amount = ?'; args.push(details.totalDistributed); }
-    if (details.numWinners !== undefined) { sql += ', num_winners = ?'; args.push(details.numWinners); }
-    if (details.errorMessage !== undefined) { sql += ', reason = ?'; args.push(details.errorMessage); }
-    if (details.totalPoolClaimed !== undefined) { sql += ', total_prize_pool_claimed = ?'; args.push(details.totalPoolClaimed); }
-
-    sql += ' WHERE id = ?';
+    
+    // Build the SQL update statement dynamically based on provided fields
+    const updates = [
+      'status = ?',
+      'completed_at = ?',
+      details.txHash !== undefined && 'transaction_hash = ?',
+      details.totalDistributed !== undefined && 'total_distributed = ?',
+      details.numWinners !== undefined && 'num_winners = ?',
+      details.errorMessage !== undefined && 'error_message = ?',
+      details.totalPoolClaimed !== undefined && 'total_prize_pool_claimed = ?'
+    ].filter(Boolean);
+    
+    // Add values in the same order as the placeholders
+    if (details.txHash !== undefined) args.push(details.txHash);
+    if (details.totalDistributed !== undefined) args.push(details.totalDistributed);
+    if (details.numWinners !== undefined) args.push(details.numWinners);
+    if (details.errorMessage !== undefined) args.push(details.errorMessage);
+    if (details.totalPoolClaimed !== undefined) args.push(details.totalPoolClaimed);
+    
+    // Add the WHERE clause
     args.push(summaryId);
+    
+    const sql = `
+      UPDATE ${DISTRIBUTION_SUMMARY_LOG_TABLE} 
+      SET ${updates.join(', ')}
+      WHERE id = ?
+    `;
 
     try {
       await this.turso.execute({ sql, args });
       console.log(`[PrizeDistributionService] Updated distribution summary ${summaryId} to status ${status}`);
     } catch (dbError) {
-      console.error(`[PrizeDistributionService] Turso error updating status for summary ${summaryId}:`, dbError);
-      // Log and continue if possible, or re-throw if critical
+      console.error(
+        `[PrizeDistributionService] Turso error updating status for summary ${summaryId}:`,
+        dbError
+      );
+      // Re-throw to allow callers to handle the error if needed
+      throw new Error(`Failed to update distribution status: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`);
     }
   }
 
@@ -349,28 +353,51 @@ export class PrizeDistributionService {
     await this.updateDistributionStatus(summaryId, 'SKIPPED', { errorMessage: reason, totalPoolClaimed });
   }
 
-  private async logFailedDistribution(summaryId: string, errorDetails: string, totalPoolClaimed?: number): Promise<void> {
-    await this.updateDistributionStatus(summaryId, 'FAILED', { errorMessage: errorDetails, totalPoolClaimed });
+  private async logFailedDistribution(
+    summaryId: string, 
+    errorDetails: string, 
+    totalPoolClaimed: number = 0
+  ): Promise<void> {
+    try {
+      await this.updateDistributionStatus(summaryId, 'FAILED', { 
+        errorMessage: errorDetails, 
+        totalPoolClaimed,
+        totalDistributed: 0,
+        numWinners: 0
+      });
+      
+      console.error(`[PrizeDistributionService] Distribution failed: ${errorDetails}`);
+      
+      // Log additional context for debugging
+      if (totalPoolClaimed > 0) {
+        console.error(`[PrizeDistributionService] Failed to distribute ${totalPoolClaimed} $GLICO from the prize pool.`);
+      }
+    } catch (logError) {
+      console.error(`[PrizeDistributionService] Failed to log distribution failure:`, logError);
+      // Don't rethrow to prevent masking the original error
+    }
   }
 
   private async logOverallSuccess(
     summaryId: string,
-    totalDistributedSmallestUnit: string, // This is a string representing a BigInt
+    totalDistributedSmallestUnit: string,
     claimedPool: number,
     numSuccessfulPayouts: number
   ): Promise<void> {
-    let displayTotalDistributed = 0;
     try {
-      displayTotalDistributed = Number(formatUnits(BigInt(totalDistributedSmallestUnit), 18));
-    } catch (e) {
-      console.error("[PrizeDistributionService] Error formatting total distributed amount for display:", e);
-      // displayTotalDistributed remains 0 or could be set to a specific error indicator if preferred
+      // Convert from smallest unit to human-readable format (18 decimals)
+      const displayTotalDistributed = Number(formatUnits(BigInt(totalDistributedSmallestUnit), 18));
+      
+      await this.updateDistributionStatus(summaryId, 'SUCCESS', {
+        totalDistributed: displayTotalDistributed,
+        numWinners: numSuccessfulPayouts,
+        totalPoolClaimed: claimedPool
+      });
+      
+      console.log(`[PrizeDistributionService] Successfully logged distribution summary: ${summaryId}, Total Distributed: ${displayTotalDistributed} $GLICO, Winners: ${numSuccessfulPayouts}`);
+    } catch (error) {
+      console.error(`[PrizeDistributionService] Error logging overall success:`, error);
+      // Don't throw here to prevent masking the original error
     }
-    await this.updateDistributionStatus(summaryId, 'SUCCESS', {
-      // txHash: null, // No single transaction hash for the summary log
-      totalDistributed: displayTotalDistributed, // Log the display amount
-      numWinners: numSuccessfulPayouts,
-      totalPoolClaimed: claimedPool
-    });
   }
 }

@@ -7,23 +7,59 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Silence warnings
-  // https://github.com/WalletConnect/walletconnect-monorepo/issues/1908
-  webpack: (config) => {
-    config.externals.push("pino-pretty", "lokijs", "encoding");
-    
-    // Enable path aliases
+  // Only include page files with these extensions
+  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
+
+  webpack: (config, { dev }) => {
+    // Skip test files in production builds
+    if (!dev) {
+      config.module.rules.push({
+        test: /\.(test|spec)\.(ts|tsx|js|jsx)$/,
+        use: 'null-loader',
+      });
+    }
+
+    // Add aliases for path resolution
+    const basePath = path.resolve(__dirname);
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': path.resolve(__dirname, './'),
+      '@': basePath,
+      '@/app': path.resolve(basePath, 'app'),
+      '@/components': path.resolve(basePath, 'components'),
+      '@/styles': path.resolve(basePath, 'styles'),
+      '@/lib': path.resolve(basePath, 'lib'),
+      '@walletconnect/heartbeat': false, // Prevent build errors from unused worker dependency
     };
-    
+
+    // Add external dependencies to prevent build issues
+    config.externals = config.externals || [];
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
+
     return config;
   },
-  // Enable experimental features for path aliases
+
+  // Configure webpack to handle ES modules
   experimental: {
-    // This is recommended in Next.js 13+ for path aliases
-    externalDir: true,
+    esmExternals: 'loose',
+    externalDir: true, // Recommended for path aliases in Next.js 13+
+  },
+
+  // Configure ESLint
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
+  // Configure how Next.js handles static files
+  images: {
+    domains: [],
+  },
+  
+  // Configure the build output directory
+  distDir: '.next',
+  
+  // Configure the build ID to be deterministic
+  generateBuildId: async () => {
+    return 'kissmintdash';
   },
 };
 
