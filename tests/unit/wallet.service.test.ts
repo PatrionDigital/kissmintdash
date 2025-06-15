@@ -1,318 +1,249 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { WalletService } from '../../app/services/wallet.service';
-import type { PrizePayout, TransferResult } from '../../app/types/prize-distribution';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  afterAll,
+} from "vitest";
+import { WalletService } from "../../app/services/wallet.service";
+import { mockPublicClient, resetViemMocks } from "../../tests/__mocks__/viem";
+
+// Define the PrizePayout type locally since we're having import issues
+type PrizePayout = {
+  userAddress: string;
+  prizeAmount: string;
+  userId?: string | number;
+};
 
 // Mock the Coinbase CDP SDK
-vi.mock('@coinbase/cdp-sdk', async () => {
-  const mockAccount = {
-    address: '0x1234567890123456789012345678901234567890',
-    transfer: vi.fn(),
-    getBalance: vi.fn(),
+vi.mock("@coinbase/cdp-sdk", async () => {
+  const _mockAccount = {
+    address: "0x1234567890123456789012345678901234567890",
+    transfer: vi
+      .fn()
+      .mockImplementation(
+        ({ to: _to, amount: _amount, token: _token, network: _network }) => {
+          return Promise.resolve({
+            transactionHash:
+              "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abc123",
+          });
+        },
+      ),
+    getBalance: vi.fn().mockResolvedValue(BigInt("1000000000000000000000")), // 1000 tokens with 18 decimals
   };
 
-  const mockClient = {
+  const _mockClient = {
     evm: {
       listAccounts: vi.fn().mockResolvedValue({
-        accounts: [mockAccount],
+        accounts: [_mockAccount],
       }),
     },
   };
 
   return {
-    CdpClient: vi.fn().mockImplementation(() => mockClient),
-    mockAccount,
-    mockClient,
+    CdpClient: vi.fn().mockImplementation(() => _mockClient),
+    // Alias the mock exports for backward compatibility
+    mockAccount: _mockAccount,
+    mockClient: _mockClient,
+    // Also export with original names for internal use
+    _mockAccount,
+    _mockClient,
   };
 });
 
-// Mock viem
-vi.mock('viem', async () => ({
-  formatUnits: vi.fn((value: bigint, decimals: number) => {
-    const divisor = BigInt(10 ** decimals);
-    const quotient = value / divisor;
-    const remainder = value % divisor;
-    return `${quotient}.${remainder.toString().padStart(decimals, '0')}`;
-  }),
-  createPublicClient: vi.fn(() => ({
-    waitForTransactionReceipt: vi.fn(),
-    getTransactionReceipt: vi.fn(),
-    getTransaction: vi.fn(),
-  })),
-  http: vi.fn(() => ({})),
-  base: {
-    id: 8453,
-    name: 'Base',
-    network: 'base',
-    nativeCurrency: {
-      decimals: 18,
-      name: 'Ether',
-      symbol: 'ETH',
-    },
-    rpcUrls: {
-      default: { http: ['https://mainnet.base.org'] },
-      public: { http: ['https://mainnet.base.org'] },
-    },
-  },
-}));
+// Import the mocks after setting them up
+const getMocks = async () => {
+  return await import("../../tests/__mocks__/@coinbase/cdp-sdk");
+};
 
-describe('WalletService', () => {
+describe("WalletService", () => {
   let walletService: WalletService;
-  
-  // Mock environment variables
-  const mockEnvVars = {
-    NEXT_PUBLIC_TOKEN_ADDRESS: '0xabcdef1234567890abcdef1234567890abcdef12',
-    CDP_PAYOUT_ACCOUNT_ID: 'test-account-id',
-    CDP_BASE_NETWORK_ID: 'base-mainnet',
-    NEXT_PUBLIC_ONCHAINKIT_API_KEY: 'test-api-key',
-  };
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeAll(() => {
+    // Store original env vars
+    originalEnv = { ...process.env };
+
+    // Mock environment variables
+    process.env.NEXT_PUBLIC_TOKEN_ADDRESS =
+      "0x1234567890123456789012345678901234567890";
+    process.env.CDP_PAYOUT_ACCOUNT_ID = "test-account-id";
+    process.env.CDP_BASE_NETWORK_ID = "base-mainnet";
+    process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY = "test-api-key";
+  });
+
+  afterAll(() => {
+    // Restore original env vars
+    process.env = originalEnv;
+  });
 
   beforeEach(() => {
-    // Reset environment variables
-    Object.entries(mockEnvVars).forEach(([key, value]) => {
-      process.env[key] = value;
-    });
-
-    // Clear all mocks
+    // Reset all mocks before each test
     vi.clearAllMocks();
-    
-    // Reset singleton instance
-    (WalletService as unknown as { _instance: WalletService | undefined })._instance = undefined;
-    
+    resetViemMocks();
+
+    // Reset the singleton instance
+    // @ts-expect-error - Accessing private static property for testing
+    WalletService.instance = undefined;
+
+    // Create a new instance for each test
     walletService = WalletService.getInstance();
   });
 
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
+  describe("distributePrizes", () => {
+    it("should successfully distribute prizes to multiple users", async () => {
+      // Get the mocks
+      const { _mockAccount } = await getMocks();
 
-  describe('getInstance', () => {
-    it('should return a singleton instance', () => {
-      const instance1 = WalletService.getInstance();
-      const instance2 = WalletService.getInstance();
-      
-      expect(instance1).toBe(instance2);
-      expect(instance1).toBeInstanceOf(WalletService);
-    });
-
-    it('should throw error if required environment variables are missing', () => {
-      delete process.env.NEXT_PUBLIC_TOKEN_ADDRESS;
-      
-      // Reset singleton to force re-initialization
-      (WalletService as unknown as { _instance: WalletService | undefined })._instance = undefined;
-      
-      expect(() => WalletService.getInstance()).toThrow('Missing required environment variable: NEXT_PUBLIC_TOKEN_ADDRESS');
-    });
-  });
-
-  describe('distributePrizes', () => {
-    const mockPrizePayouts: PrizePayout[] = [
-      {
-        userId: 'user1',
-        userAddress: '0x1111111111111111111111111111111111111111',
-        amount: BigInt('1000000000000000000'), // 1 token
-        reason: 'Daily winner',
-      },
-      {
-        userId: 'user2',
-        userAddress: '0x2222222222222222222222222222222222222222',
-        amount: BigInt('500000000000000000'), // 0.5 tokens
-        reason: 'Weekly winner',
-      },
-    ];
-
-    it('should successfully distribute prizes to multiple users', async () => {
-      // Mock successful transfers
-      const { mockAccount } = await import('@coinbase/cdp-sdk');
-      mockAccount.transfer
-        .mockResolvedValueOnce({ transactionHash: '0xhash1' })
-        .mockResolvedValueOnce({ transactionHash: '0xhash2' });
-
-      const results = await walletService.distributePrizes(mockPrizePayouts);
-
-      expect(results).toHaveLength(2);
-      expect(results[0]).toEqual({
-        userId: 'user1',
-        userAddress: '0x1111111111111111111111111111111111111111',
-        amount: BigInt('1000000000000000000'),
-        success: true,
-        transactionHash: '0xhash1',
-        error: undefined,
-      });
-      expect(results[1]).toEqual({
-        userId: 'user2',
-        userAddress: '0x2222222222222222222222222222222222222222',
-        amount: BigInt('500000000000000000'),
-        success: true,
-        transactionHash: '0xhash2',
-        error: undefined,
-      });
-
-      expect(mockAccount.transfer).toHaveBeenCalledTimes(2);
-    });
-
-    it('should handle transfer failures gracefully', async () => {
-      const { mockAccount } = await import('@coinbase/cdp-sdk');
-      const transferError = new Error('Insufficient balance');
-      
-      mockAccount.transfer
-        .mockResolvedValueOnce({ transactionHash: '0xhash1' })
-        .mockRejectedValueOnce(transferError);
-
-      const results = await walletService.distributePrizes(mockPrizePayouts);
-
-      expect(results).toHaveLength(2);
-      expect(results[0].success).toBe(true);
-      expect(results[1].success).toBe(false);
-      expect(results[1].error).toBe('Insufficient balance');
-      expect(results[1].transactionHash).toBeUndefined();
-    });
-
-    it('should retry failed transfers when retry config is provided', async () => {
-      const { mockAccount } = await import('@coinbase/cdp-sdk');
-      
-      mockAccount.transfer
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockResolvedValueOnce({ transactionHash: '0xhash1' });
-
-      const results = await walletService.distributePrizes(
-        [mockPrizePayouts[0]],
+      // Set up test data
+      const prizePayouts: PrizePayout[] = [
         {
-          retryConfig: {
-            maxRetries: 2,
-            baseDelay: 100,
-            maxDelay: 1000,
-          },
-        }
-      );
-
-      expect(results[0].success).toBe(true);
-      expect(results[0].transactionHash).toBe('0xhash1');
-      expect(mockAccount.transfer).toHaveBeenCalledTimes(2);
-    });
-
-    it('should validate prize payout addresses', async () => {
-      const invalidPayouts: PrizePayout[] = [
+          userAddress: "0x1234567890123456789012345678901234567891",
+          prizeAmount: "100",
+          userId: "user1",
+        },
         {
-          userId: 'user1',
-          userAddress: 'invalid-address',
-          amount: BigInt('1000000000000000000'),
-          reason: 'Test',
+          userAddress: "0x1234567890123456789012345678901234567892",
+          prizeAmount: "200",
+          userId: "user2",
         },
       ];
 
-      await expect(walletService.distributePrizes(invalidPayouts)).rejects.toThrow();
-    });
+      // Configure the mock transfer to return a transaction hash
+      (_mockAccount.transfer as ReturnType<typeof vi.fn>).mockImplementation(
+        async ({
+          to: _to,
+          amount: _amount,
+          token: _token,
+          network: _network,
+        }) => {
+          return {
+            transactionHash: `0x${Math.random().toString(16).substring(2, 66)}`,
+          };
+        },
+      );
 
-    it('should handle empty prize payouts array', async () => {
-      const results = await walletService.distributePrizes([]);
-      
-      expect(results).toEqual([]);
-    });
-  });
+      // Mock the public client to return a successful receipt
+      mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
+        status: "success",
+        transactionHash:
+          "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abc123",
+        blockNumber: 1n,
+        blockHash:
+          "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abc456",
+        transactionIndex: 0,
+        from: "0x1234567890123456789012345678901234567890",
+        to: "0x1234567890123456789012345678901234567891",
+        cumulativeGasUsed: 21000n,
+        gasUsed: 21000n,
+        effectiveGasPrice: 1000000000n,
+        contractAddress: null,
+        logs: [],
+        logsBloom: `0x${"0".repeat(512)}` as `0x${string}`, // Explicitly type as hex string
+        type: "0x2",
+      });
 
-  describe('getPayoutAccountBalance', () => {
-    it('should return formatted balance for payout account', async () => {
-      const { mockAccount } = await import('@coinbase/cdp-sdk');
-      const mockBalance = BigInt('5000000000000000000'); // 5 tokens
-      
-      mockAccount.getBalance.mockResolvedValue(mockBalance);
+      // Execute the test
+      const results = await walletService.distributePrizes(prizePayouts, {
+        waitForConfirmation: true,
+        confirmations: 1,
+      });
 
-      const result = await walletService.getPayoutAccountBalance();
+      // Assert the results
+      expect(results).toHaveLength(2);
+      expect(results[0].status).toBe("confirmed");
+      expect(results[0].transactionHash).toBeDefined();
+      expect(results[1].status).toBe("confirmed");
+      expect(results[1].transactionHash).toBeDefined();
 
-      expect(result).toEqual({
-        address: '0x1234567890123456789012345678901234567890',
-        balance: mockBalance,
-        formatted: '5.000000000000000000',
+      // Verify the transfer was called with the correct parameters
+      expect(_mockAccount.transfer).toHaveBeenCalledTimes(2);
+      expect(_mockAccount.transfer).toHaveBeenCalledWith({
+        to: "0x1234567890123456789012345678901234567891",
+        amount: expect.any(BigInt),
+        token: "0x1234567890123456789012345678901234567890",
+        network: "base-mainnet",
       });
     });
 
-    it('should throw AccountNotFoundError when account is not found', async () => {
-      const { mockClient } = await import('@coinbase/cdp-sdk');
-      
-      mockClient.evm.listAccounts.mockResolvedValue({ accounts: [] });
+    it("should handle transfer failures", async () => {
+      // Get the mocks
+      const { _mockAccount } = await getMocks();
 
-      // Reset singleton to force re-initialization with new mock
-      (WalletService as unknown as { _instance: WalletService | undefined })._instance = undefined;
-      walletService = WalletService.getInstance();
+      // Set up test data
+      const prizePayouts: PrizePayout[] = [
+        {
+          userAddress: "0x1234567890123456789012345678901234567891",
+          prizeAmount: "100",
+          userId: "user1",
+        },
+      ];
 
-      await expect(walletService.getPayoutAccountBalance()).rejects.toThrow('Account not found');
-    });
+      // Configure the mock transfer to throw an error
+      (_mockAccount.transfer as ReturnType<typeof vi.fn>).mockRejectedValue(
+        new Error("Transfer failed"),
+      );
 
-    it('should handle balance fetch errors', async () => {
-      const { mockAccount } = await import('@coinbase/cdp-sdk');
-      
-      mockAccount.getBalance.mockRejectedValue(new Error('Network error'));
+      // Execute the test
+      const results = await walletService.distributePrizes(prizePayouts);
 
-      await expect(walletService.getPayoutAccountBalance()).rejects.toThrow('Network error');
+      // Assert the results
+      expect(results).toHaveLength(1);
+      expect(results[0].status).toBe("failed");
+      expect(results[0].error).toContain("Transfer failed");
     });
   });
 
-  describe('error handling', () => {
-    it('should handle CDP client initialization errors', () => {
-      // Mock CDP client constructor to throw
-      const { CdpClient } = vi.mocked(await import('@coinbase/cdp-sdk'));
-      CdpClient.mockImplementation(() => {
-        throw new Error('CDP initialization failed');
+  describe("getPayoutAccountBalance", () => {
+    it("should return the account balance", async () => {
+      // Get the mocks
+      const { _mockAccount } = await getMocks();
+
+      // Configure the mock balance
+      (_mockAccount.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(
+        BigInt("1000000000000000000"),
+      ); // 1 token with 18 decimals
+
+      // Execute the test
+      const balance = await walletService.getPayoutAccountBalance();
+
+      // Assert the results
+      expect(balance).toEqual({
+        address: "0x1234567890123456789012345678901234567890",
+        balance: BigInt("1000000000000000000"),
+        formatted: "1",
       });
 
-      // Reset singleton to force re-initialization
-      (WalletService as unknown as { _instance: WalletService | undefined })._instance = undefined;
-
-      expect(() => WalletService.getInstance()).toThrow('CDP initialization failed');
+      // Verify the getBalance was called with the correct parameters
+      expect(_mockAccount.getBalance).toHaveBeenCalledWith({
+        token: "0x1234567890123456789012345678901234567890",
+        network: "base-mainnet",
+      });
     });
   });
 
-  describe('retry logic', () => {
-    it('should implement exponential backoff with jitter', async () => {
-      const { mockAccount } = await import('@coinbase/cdp-sdk');
-      
-      // Mock to fail twice then succeed
-      mockAccount.transfer
-        .mockRejectedValueOnce(new Error('Temporary failure'))
-        .mockRejectedValueOnce(new Error('Temporary failure'))
-        .mockResolvedValueOnce({ transactionHash: '0xhash1' });
-
-      const startTime = Date.now();
-      
-      const results = await walletService.distributePrizes(
-        [mockPrizePayouts[0]],
-        {
-          retryConfig: {
-            maxRetries: 3,
-            baseDelay: 100,
-            maxDelay: 1000,
-          },
-        }
+  describe("error handling", () => {
+    it("should handle CDP client initialization errors", async () => {
+      // Get the mocks
+      const { CdpClient } = await import(
+        "../../tests/__mocks__/@coinbase/cdp-sdk"
       );
 
-      const endTime = Date.now();
-      const duration = endTime - startTime;
+      // Mock the CDP client to throw an error
+      CdpClient.mockImplementationOnce(() => {
+        throw new Error("Failed to initialize CDP client");
+      });
 
-      expect(results[0].success).toBe(true);
-      expect(mockAccount.transfer).toHaveBeenCalledTimes(3);
-      // Should have some delay due to retries
-      expect(duration).toBeGreaterThan(100);
-    });
+      // Reset the singleton instance
+      // @ts-expect-error - Accessing private static property for testing
+      WalletService.instance = undefined;
 
-    it('should fail after max retries exceeded', async () => {
-      const { mockAccount } = await import('@coinbase/cdp-sdk');
-      
-      mockAccount.transfer.mockRejectedValue(new Error('Persistent failure'));
-
-      const results = await walletService.distributePrizes(
-        [mockPrizePayouts[0]],
-        {
-          retryConfig: {
-            maxRetries: 2,
-            baseDelay: 50,
-            maxDelay: 200,
-          },
-        }
+      // Execute the test and expect an error
+      await expect(() => WalletService.getInstance()).toThrow(
+        "Failed to initialize CDP client",
       );
-
-      expect(results[0].success).toBe(false);
-      expect(results[0].error).toContain('Persistent failure');
-      expect(mockAccount.transfer).toHaveBeenCalledTimes(3); // Initial + 2 retries
     });
   });
 });

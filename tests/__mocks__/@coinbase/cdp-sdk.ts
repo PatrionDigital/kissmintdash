@@ -52,15 +52,17 @@ export const createMockCdpClient = (): MockCdpClient => ({
 });
 
 // Default mock implementations
-const mockAccount = createMockEvmAccount('0x1234567890123456789012345678901234567890');
-const mockClient = createMockCdpClient();
+export const _mockAccount = createMockEvmAccount('0x1234567890123456789012345678901234567890');
+export const _mockClient = createMockCdpClient();
 
 // Mock the CdpClient class
-export const CdpClient = vi.fn().mockImplementation(() => mockClient);
+export const CdpClient = vi.fn().mockImplementation(() => _mockClient);
 
 // Export mock instances for test access
-export const mockCdpClient = mockClient;
-export const mockEvmAccount = mockAccount;
+export const mockCdpClient = _mockClient;
+export const mockClient = _mockClient; // Alias for backward compatibility
+export const mockEvmAccount = _mockAccount;
+export const mockAccount = _mockAccount; // Alias for backward compatibility
 
 // Reset function for tests
 export const resetMocks = () => {
