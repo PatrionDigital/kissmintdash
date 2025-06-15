@@ -13,10 +13,7 @@ type RequestDuplex = "half" | "full";
 
 // Define ethereum interface to avoid conflicts
 interface EthereumProvider {
-  request: (args: {
-    method: string;
-    params?: unknown[];
-  }) => Promise<unknown>;
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
   on: (event: string, callback: (...args: unknown[]) => void) => void;
   removeListener: (
     event: string,
@@ -123,7 +120,7 @@ if (!global.File) {
   Object.assign(global, { File });
 }
 
-if (!('Readable' in global)) {
+if (!("Readable" in global)) {
   Object.assign(global, { Readable });
 }
 
@@ -174,7 +171,7 @@ if (!global.Request) {
     }
 
     async blob(): Promise<Blob> {
-      return new Blob([], { type: 'application/octet-stream' });
+      return new Blob([], { type: "application/octet-stream" });
     }
 
     async formData(): Promise<FormData> {
@@ -246,7 +243,7 @@ if (!global.Response) {
     }
 
     async blob(): Promise<Blob> {
-      return new Blob([], { type: 'application/octet-stream' });
+      return new Blob([], { type: "application/octet-stream" });
     }
 
     async formData(): Promise<FormData> {
