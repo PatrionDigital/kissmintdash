@@ -1,9 +1,13 @@
 {
   "build": {
     "env": {
-      "NODE_ENV": "production"
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "NODE_ENV": "production",
+      "NPM_ONLY": "true"
     }
   },
+  "installCommand": "npm install --prefer-offline",
+  "buildCommand": "npm run build",
   "functions": {
     "app/api/frame-image/route.ts": {
       "runtime": "nodejs18.x@1.0.0",
