@@ -1,4 +1,4 @@
-import { Redis } from '@upstash/redis/cloudflare';
+import { Redis } from '@upstash/redis';
 import { Client as TursoClient, InStatement } from '@libsql/client';
 
 // Define Redis keys for prize pools
@@ -16,21 +16,9 @@ export class PrizePoolManager {
   constructor(redis: Redis, turso: TursoClient) {
     this.redis = redis;
     this.turso = turso;
-    let redisUrlMessage = "Redis client URL not directly accessible for logging here.";
-    try {
-      const requester = (redis as { requester?: { options?: { url?: string } } }).requester;
-      const url = requester?.options?.url;
-      if (url) {
-        // Attempt to show only the domain part for confirmation, avoid logging full URL or token query params
-        const urlParts = url.split('/');
-        if (urlParts.length >= 3) {
-          redisUrlMessage = `Redis client configured with URL starting: ${urlParts[0]}//${urlParts[2].split('.')[0] + '.redacted...'}`;
-        }
-      }
-    } catch {
-      // Silently ignore if accessing options fails, to prevent logging from breaking execution
-    }
-    console.log(`PrizePoolManager initialized. ${redisUrlMessage}. Turso client also received.`);
+    
+    // Log initialization without exposing sensitive information
+    console.log('PrizePoolManager initialized with Redis and Turso clients.');
   }
 
   private getPoolKey(poolType: PoolType): string {
@@ -65,11 +53,13 @@ export class PrizePoolManager {
   async getPrizePoolValue(poolType: PoolType): Promise<number> {
     const key = this.getPoolKey(poolType);
     try {
+      // Use type assertion to handle the return type properly
       const value = await this.redis.get<number>(key);
       return value !== null ? Number(value) : 0;
     } catch (error) {
       console.error(`Error getting ${poolType} prize pool value from Redis:`, error);
-      throw new Error(`Failed to get ${poolType} prize pool value.`);
+      // Return 0 instead of throwing to prevent API failures
+      return 0;
     }
   }
 

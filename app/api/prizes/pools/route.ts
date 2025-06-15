@@ -1,19 +1,45 @@
 import { NextResponse } from 'next/server';
-import { createClient as createTursoClient } from '@libsql/client';
+import { createClient as createTursoClient, type Client as TursoClient } from '@libsql/client';
 import { PrizePoolManager } from '@/services/prize-pool.service';
 import { ApiResponse, PrizePool } from '../types';
 import { redis } from '@/lib/redis';
 
-// Initialize services
-const turso = createTursoClient({
-  url: process.env.NEXT_PUBLIC_TURSO_URL!,
-  authToken: process.env.NEXT_PUBLIC_TURSO_API_SECRET!,
-});
 
-const prizePoolManager = new PrizePoolManager(redis, turso);
+
+// Initialize Turso client
+let turso: TursoClient | null = null;
+try {
+  turso = createTursoClient({
+    url: process.env.NEXT_PUBLIC_TURSO_URL!,
+    authToken: process.env.NEXT_PUBLIC_TURSO_API_SECRET!,
+  });
+} catch (error) {
+  console.error('Failed to initialize Turso client:', error);
+  // Turso client will be undefined and handled in the route
+}
+
+// Initialize PrizePoolManager with proper error handling
+let prizePoolManager: PrizePoolManager | null = null;
+try {
+  if (!turso) {
+    throw new Error('Turso client not initialized');
+  }
+  prizePoolManager = new PrizePoolManager(redis, turso);
+} catch (error) {
+  console.error('Failed to initialize PrizePoolManager:', error);
+  prizePoolManager = null;
+}
 
 // GET /api/prizes/pools - Get current prize pool amounts
 export async function GET() {
+  // Return error if PrizePoolManager failed to initialize
+  if (!prizePoolManager) {
+    return NextResponse.json(
+      { error: 'Failed to initialize services' },
+      { status: 500 }
+    );
+  }
+
   try {
     // Get base prize amounts (from constants)
     const basePrizes = {
