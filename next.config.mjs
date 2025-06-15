@@ -12,10 +12,10 @@ const nextConfig = {
   webpack: (config, { dev, _isServer, webpack }) => {
     // Use webpack's built-in IgnorePlugin
     const { IgnorePlugin } = webpack;
-    // Ignore createCdpAccount.ts from the build
+    // Ignore the entire scripts directory from the build
     config.plugins.push(
       new IgnorePlugin({
-        resourceRegExp: /^\/?(scripts\/createCdpAccount\.ts)$/,
+        resourceRegExp: /^\/?(scripts\/|createCdpAccount\.ts$)/
       })
     );
     
