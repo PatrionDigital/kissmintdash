@@ -7,8 +7,8 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Only include page files with these extensions
-  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
+  // Include both default Next.js page files and explicit .page.* files
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js', 'page.tsx', 'page.ts', 'page.jsx', 'page.js'],
 
   webpack: (config, { dev }) => {
     // Skip test files in production builds

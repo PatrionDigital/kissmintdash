@@ -1,4 +1,4 @@
-import Segment from "./Segment.jsx";
+import Segment from "./Segment";
 import React from "react";
 import defaultCharMap, { CharToDigit } from "./charToDigit";
 
