@@ -110,28 +110,27 @@ _Last Updated: 2025-06-09 13:06 KST_
 
 #### 6.1 Prize Structure Implementation [(Issue 25)](https://github.com/PatrionDigital/kissmintdash/issues/25)
 
-- [ ] **Daily Rewards (50 $GLICO Base + Dynamic Bonus)**
-
-  - [ ] Implement base prize calculation (50 $GLICO)
-  - [ ] Add dynamic bonus from prize pool (30% of total pool)
-  - [ ] Distribute to top 5 winners:
+- [x] **Daily Rewards (50 $GLICO Base + Dynamic Bonus)** (Completed 2025-06-15)
+  - [x] Implement base prize calculation (50 $GLICO)
+  - [x] Add dynamic bonus from prize pool (30% of total pool)
+  - [x] Distribute to top 5 winners:
     - 1st Place: 40% of total pool
     - 2nd Place: 24% of total pool
     - 3rd Place: 16% of total pool
     - 4th Place: 12% of total pool
     - 5th Place: 8% of total pool
-  - [ ] Log distribution in Turso database
+  - [x] Log distribution in Turso database
 
-- [ ] **Weekly Rewards (500 $GLICO Base + Dynamic Bonus)**
-  - [ ] Implement base prize calculation (500 $GLICO)
-  - [ ] Add dynamic bonus from prize pool (70% of total pool)
-  - [ ] Distribute to top 5 winners:
+- [x] **Weekly Rewards (500 $GLICO Base + Dynamic Bonus)** (Completed 2025-06-15)
+  - [x] Implement base prize calculation (500 $GLICO)
+  - [x] Add dynamic bonus from prize pool (70% of total pool)
+  - [x] Distribute to top 5 winners:
     - 1st Place: 40% of total pool
     - 2nd Place: 24% of total pool
     - 3rd Place: 16% of total pool
     - 4th Place: 12% of total pool
     - 5th Place: 8% of total pool
-  - [ ] Log distribution in Turso database
+  - [x] Log distribution in Turso database
 
 #### 6.2 Revenue Model & Tokenomics
 
