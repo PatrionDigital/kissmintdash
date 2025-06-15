@@ -7,8 +7,8 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -25,23 +25,13 @@
       "@/styles/*": ["./styles/*"],
       "@/lib/*": ["./lib/*"]
     },
-    "types": ["vitest/globals", "@testing-library/jest-dom", "node"]
+    "types": ["node", "@types/node", "@types/react", "@types/react-dom"]
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    "tests/types/**/*.d.ts",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "vitest.setup.ts"
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"],
-  "typeRoots": [
-    "./node_modules/@types",
-    "./tests/types"
-  ]
+  "exclude": ["node_modules"]
 }

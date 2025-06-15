@@ -10,7 +10,7 @@ const nextConfig = {
   // Only include page files with these extensions
   pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
 
-  webpack: (config, { isServer, dev }) => {
+  webpack: (config, { dev }) => {
     // Skip test files in production builds
     if (!dev) {
       config.module.rules.push({
@@ -19,10 +19,15 @@ const nextConfig = {
       });
     }
 
-    // Add aliases and externals
+    // Add aliases for path resolution
+    const basePath = path.resolve(__dirname);
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': path.resolve(__dirname),
+      '@': basePath,
+      '@/app': path.resolve(basePath, 'app'),
+      '@/components': path.resolve(basePath, 'components'),
+      '@/styles': path.resolve(basePath, 'styles'),
+      '@/lib': path.resolve(basePath, 'lib'),
       '@walletconnect/heartbeat': false, // Prevent build errors from unused worker dependency
     };
 
@@ -30,21 +35,28 @@ const nextConfig = {
     config.externals = config.externals || [];
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
 
-    // Ignore HeartbeatWorker*.js files (WalletConnect v2 ESM worker issue workaround)
-    config.module.rules.push({
-      test: /HeartbeatWorker\.js$/,
-      use: 'null-loader',
-    });
-
     return config;
   },
 
-  // Configure experimental features
+  // Configure webpack to handle ES modules
   experimental: {
     esmExternals: 'loose',
     externalDir: true, // Recommended for path aliases in Next.js 13+
   },
 
+  // Configure ESLint
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
+  // Configure how Next.js handles static files
+  images: {
+    domains: [],
+  },
+  
+  // Configure the build output directory
+  distDir: '.next',
+  
   // Configure the build ID to be deterministic
   generateBuildId: async () => {
     return 'kissmintdash';

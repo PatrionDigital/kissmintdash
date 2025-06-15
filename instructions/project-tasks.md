@@ -2,7 +2,7 @@
 
 ## Development Tasks
 
-*Last Updated: 2025-06-09 13:06 KST*
+_Last Updated: 2025-06-09 13:06 KST_
 
 ### 1. Project Initialization & Environment Setup
 
@@ -345,10 +345,35 @@
   const results = await walletService.distributePrizes(prizePayouts);
   ```
 
-- [x] **Testing Infrastructure**
-  - Comprehensive test suite in `tests/unit/services/wallet.service.test.ts`
-  - Mocked Coinbase SDK for reliable testing
-  - Test coverage for success and error cases
+- [ ] **Testing Infrastructure**
+  - **Wallet Service**
+    - [ ] Initialization and environment validation
+    - [ ] Prize distribution (single/multiple/empty payouts)
+    - [ ] Account balance retrieval and formatting
+    - [ ] Transaction confirmation handling
+    - [ ] Error cases and retry logic
+    - [ ] Unit tests in `tests/unit/services/wallet.service.test.ts`
+  - **Prize Distribution Service**
+    - [ ] Daily and weekly prize distribution
+    - [ ] Prize calculation logic
+    - [ ] Error handling and edge cases
+    - [ ] Comprehensive logging
+    - [ ] Unit tests in `tests/unit/services/prize-distribution.service.test.ts`
+  - **Leaderboard Service**
+    - [ ] Score submission and validation
+    - [ ] Leaderboard queries (daily/weekly)
+    - [ ] Period management and snapshots
+    - [ ] Data persistence
+    - [ ] Unit tests in `tests/unit/services/leaderboard.service.test.ts`
+  - **Integration Tests**
+    - [ ] End-to-end prize distribution flow
+    - [ ] Error scenarios and recovery
+    - [ ] Performance and concurrency testing
+  - **Test Coverage**
+    - [ ] Minimum 80% code coverage
+    - [ ] All error cases tested
+    - [ ] Mocked external dependencies (Coinbase SDK, Redis, Turso)
+    - [ ] Automated test execution in CI/CD
 
 #### 7.4 Deployment Tasks - Pending ⏳
 
@@ -414,12 +439,14 @@
 ## Next Up (2025-06-10)
 
 - [ ] **Frontend Integration**
+
   - [ ] [#27 Create PrizeDistributionPage component](https://github.com/PatrionDigital/kissmintdash/issues/27)
   - [ ] [#28 Add PrizePoolDisplay component](https://github.com/PatrionDigital/kissmintdash/issues/28)
   - [ ] [#29 Implement DistributionList and DistributionDetail views](https://github.com/PatrionDigital/kissmintdash/issues/29)
   - [ ] [#30 Add admin controls for prize distributions](https://github.com/PatrionDigital/kissmintdash/issues/30)
   - [ ] Add loading and error states
   - [ ] Implement data fetching with SWR/React Query for admin endpoints
+
     - [ ] Document API endpoints with Swagger/OpenAPI
 
   - [ ] **User Game Data API**
@@ -429,12 +456,14 @@
     - [ ] TypeScript interfaces for all API responses
 
 - [ ] **9.2. Frontend Integration**
+
   - [ ] Create API client services
   - [ ] Implement data fetching hooks
   - [ ] Add loading and error states
   - [ ] Implement data refresh mechanisms
 
 - [x] **9.2. Database Models** ✅ 2025-06-09
+
   - Implemented Turso schemas for sessions, users, leaderboards, transactions
   - Added TypeScript types for all database models
   - Set up database migrations
@@ -472,6 +501,7 @@
 ### 10.4. Security
 
 - [x] **Rate Limiting Middleware** ✅ 2025-06-09
+
   - Implemented rate limiting for API endpoints using Upstash Redis
   - Added admin bypass functionality
   - Includes comprehensive unit tests

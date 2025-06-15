@@ -1,14 +1,57 @@
 // Import test globals from vitest
-import { expect, vi, afterEach } from "vitest";
-import { cleanup } from "@testing-library/react";
-import matchers from "@testing-library/jest-dom/matchers";
+import { expect, vi, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+// Import and extend Vitest's expect with jest-dom matchers
+import * as matchers from '@testing-library/jest-dom/matchers';
 
 // Extend Vitest's expect with jest-dom matchers
-expect.extend(matchers);
+Object.entries(matchers).forEach(([key, matcher]) => {
+  // @ts-expect-error - Dynamic property access
+  expect[key] = matcher;
+});
+
+// Add type definitions for the matchers
+type MatcherResult = Promise<void> | void;
+
+declare global {
+  // Extend Vitest's expect with custom matchers
+  namespace Vi {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface JestAssertion<T = unknown> extends CustomMatchers<T> {}
+    interface AsymmetricMatchersContaining extends CustomMatchers {}
+  }
+
+  // Extend Window and GlobalThis with our mocks
+  interface Window {
+    matchMedia: (query: string) => MediaQueryList;
+    ethereum: {
+      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+      on: (event: string, callback: (...args: unknown[]) => void) => void;
+      removeListener: (event: string, callback: (...args: unknown[]) => void) => void;
+      isMetaMask: boolean;
+    };
+  }
+
+  // Extend NodeJS.Global for Node.js global types
+  namespace NodeJS {
+    interface Global {
+      ethereum: Window['ethereum'];
+      TextEncoder: typeof TextEncoder;
+      TextDecoder: typeof TextDecoder;
+      Blob: typeof Blob;
+      File: typeof File;
+      Readable: typeof Readable;
+      Request: typeof Request;
+      Response: typeof Response;
+    }
+  }
+}
 
 // Cleanup after each test case
 afterEach(() => {
   cleanup();
+  vi.clearAllMocks();
 });
 
 // Mock Next.js router
@@ -101,48 +144,181 @@ if (!global.Readable) {
 
 // Mock Request and Response if needed
 if (!global.Request) {
-  global.Request = class MockRequest {
-    constructor(input, init = {}) {
-      this.url = input instanceof URL ? input.href : input;
-      this.method = init.method || "GET";
+  class MockRequest implements Request {
+    readonly cache: RequestCache = 'default';
+    readonly credentials: RequestCredentials = 'same-origin';
+    readonly destination: RequestDestination = '';
+    readonly headers: Headers;
+    readonly integrity: string = '';
+    readonly isHistoryNavigation: boolean = false;
+    readonly isReloadNavigation: boolean = false;
+    readonly keepalive: boolean = false;
+    method: string;
+    readonly mode: RequestMode = 'cors';
+    readonly redirect: RequestRedirect = 'follow';
+    readonly referrer: string = '';
+    readonly referrerPolicy: ReferrerPolicy = '';
+    readonly signal: AbortSignal = new AbortController().signal;
+    readonly url: string;
+    body: ReadableStream<Uint8Array> | null = null;
+    bodyUsed: boolean = false;
+    readonly duplex: RequestDuplex = 'half';
+    readonly priority: string = 'auto';
+
+    constructor(input: RequestInfo | URL, init: RequestInit = {}) {
+      this.url = input instanceof URL ? input.href : input.toString();
+      this.method = init.method?.toUpperCase() || 'GET';
       this.headers = new Headers(init.headers);
-      this.body = init.body || null;
-      this.bodyUsed = false;
+      
+      if (init.body) {
+        if (typeof init.body === 'string') {
+          const encoder = new TextEncoder();
+          const stream = new ReadableStream({
+            start(controller) {
+              controller.enqueue(encoder.encode(init.body as string));
+              controller.close();
+            }
+          });
+          this.body = stream;
+        }
+      }
     }
 
-    async arrayBuffer() {
+    async arrayBuffer(): Promise<ArrayBuffer> {
       return new ArrayBuffer(0);
     }
 
-    async text() {
-      return "";
+    async blob(): Promise<Blob> {
+      return new Blob();
     }
 
-    async json() {
+    async formData(): Promise<FormData> {
+      return new FormData();
+    }
+
+    async json(): Promise<unknown> {
       return {};
     }
-  };
+
+    async text(): Promise<string> {
+      return '';
+    }
+
+    clone(): Request {
+      return new MockRequest(this.url, {
+        method: this.method,
+        headers: this.headers,
+        body: this.body,
+      });
+    }
+  }
+
+  global.Request = MockRequest as unknown as typeof Request;
 }
 
 if (!global.Response) {
-  global.Response = class MockResponse {
-    constructor(body, init = {}) {
-      this.body = body;
+  class MockResponse implements Response {
+    readonly body: ReadableStream<Uint8Array> | null = null;
+    readonly bodyUsed: boolean = false;
+    readonly headers: Headers;
+    readonly ok: boolean;
+    readonly redirected: boolean = false;
+    readonly status: number;
+    readonly statusText: string;
+    readonly type: ResponseType = 'default';
+    readonly url: string = '';
+    readonly trailer: Promise<Headers> = Promise.resolve(new Headers());
+
+    constructor(body?: BodyInit | null, init: ResponseInit = {}) {
       this.status = init.status || 200;
-      this.statusText = init.statusText || "OK";
+      this.statusText = init.statusText || 'OK';
       this.headers = new Headers(init.headers);
+      this.ok = this.status >= 200 && this.status < 300;
+
+      if (body) {
+        if (typeof body === 'string') {
+          const encoder = new TextEncoder();
+          this.body = new ReadableStream({
+            start(controller) {
+              controller.enqueue(encoder.encode(body as string));
+              controller.close();
+            }
+          });
+        }
+      }
     }
 
-    async arrayBuffer() {
+    get [Symbol.toStringTag](): string {
+      return 'Response';
+    }
+
+    async arrayBuffer(): Promise<ArrayBuffer> {
       return new ArrayBuffer(0);
     }
 
-    async text() {
-      return this.body || "";
+    async blob(): Promise<Blob> {
+      return new Blob();
     }
 
-    async json() {
-      return JSON.parse(this.body || "{}");
+    async formData(): Promise<FormData> {
+      return new FormData();
     }
+
+    async json(): Promise<unknown> {
+      try {
+        const text = await this.text();
+        return text ? JSON.parse(text) : {};
+      } catch {
+        return {};
+      }
+    }
+
+    async text(): Promise<string> {
+      if (!this.body) return '';
+      
+      const reader = this.body.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        result += decoder.decode(value, { stream: true });
+      }
+      
+      return result;
+    }
+
+    clone(): Response {
+      return new MockResponse(this.body, {
+        status: this.status,
+        statusText: this.statusText,
+        headers: this.headers,
+      });
+    }
+
+    get bodyUsed(): boolean {
+      return this.bodyUsed;
+    }
+  }
+
+  // Add static methods to Response
+  MockResponse.error = (): Response => new MockResponse(null, { status: 0 });
+  MockResponse.redirect = (url: string | URL, status: number): Response => {
+    const response = new MockResponse(null, { status });
+    response.headers.set('Location', url.toString());
+    return response;
   };
+  MockResponse.json = (data: unknown, init: ResponseInit = {}): Response => {
+    const headers = new Headers(init.headers);
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+    return new MockResponse(JSON.stringify(data), {
+      ...init,
+      headers,
+    });
+  };
+
+  global.Response = MockResponse as unknown as typeof Response;
 }

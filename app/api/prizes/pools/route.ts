@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient as createTursoClient } from '@libsql/client';
-import { PrizePoolManager } from '@/app/services/prize-pool.service';
+import { PrizePoolManager } from '@/services/prize-pool.service';
 import { ApiResponse, PrizePool } from '../types';
 import { redis } from '@/lib/redis';
 

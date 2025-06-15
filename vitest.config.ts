@@ -17,18 +17,22 @@ export default defineConfig({
       reporter: ["text", "json", "html"],
       exclude: [
         "node_modules/",
-        "src/test/",
         "**/*.config.{js,ts}",
         "**/*.d.ts",
         ".next/",
         "out/",
+        "tests/**",
       ],
     },
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      // Add any other aliases from your next.config.js
-    },
+    alias: [
+      { find: "@/", replacement: path.resolve(__dirname, "./") },
+      { find: "@/app", replacement: path.resolve(__dirname, "./app") },
+      { find: "@/components", replacement: path.resolve(__dirname, "./components") },
+      { find: "@/lib", replacement: path.resolve(__dirname, "./lib") },
+      { find: "@/services", replacement: path.resolve(__dirname, "./app/services") },
+      { find: "@/styles", replacement: path.resolve(__dirname, "./styles") },
+    ],
   },
 });
