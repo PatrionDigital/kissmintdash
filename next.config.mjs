@@ -10,7 +10,7 @@ const nextConfig = {
   // Include both default Next.js page files and explicit .page.* files
   pageExtensions: ['tsx', 'ts', 'jsx', 'js', 'page.tsx', 'page.ts', 'page.jsx', 'page.js'],
 
-  webpack: (config, { dev }) => {
+  webpack: (config, { dev, _isServer, _webpack }) => {
     // Skip test files in production builds
     if (!dev) {
       config.module.rules.push({
@@ -18,6 +18,28 @@ const nextConfig = {
         use: 'null-loader',
       });
     }
+    
+    // Handle the HeartbeatWorker file as a module
+    config.module.rules.push({
+      test: /HeartbeatWorker\.js$/,
+      type: 'javascript/auto',
+      use: [
+        {
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              ['@babel/preset-env', { modules: 'commonjs' }]
+            ]
+          }
+        }
+      ]
+    });
+    
+    // Skip problematic modules
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@walletconnect/heartbeat': false,
+    };
 
     // Add aliases for path resolution
     const basePath = path.resolve(__dirname);
