@@ -1,6 +1,5 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
-
 // Get the directory name in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +9,16 @@ const nextConfig = {
   // Include both default Next.js page files and explicit .page.* files
   pageExtensions: ['tsx', 'ts', 'jsx', 'js', 'page.tsx', 'page.ts', 'page.jsx', 'page.js'],
 
-  webpack: (config, { dev, _isServer, _webpack }) => {
+  webpack: (config, { dev, _isServer, webpack }) => {
+    // Use webpack's built-in IgnorePlugin
+    const { IgnorePlugin } = webpack;
+    // Ignore createCdpAccount.ts from the build
+    config.plugins.push(
+      new IgnorePlugin({
+        resourceRegExp: /^\/?(scripts\/createCdpAccount\.ts)$/,
+      })
+    );
+    
     // Skip test files in production builds
     if (!dev) {
       config.module.rules.push({
