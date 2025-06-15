@@ -74,11 +74,38 @@ export async function POST(
       );
     }
 
+    // Get the board type with type safety
+    const boardType = distribution.board_type;
+    if (boardType !== 'daily' && boardType !== 'weekly') {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid board type. Must be "daily" or "weekly"',
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    // Ensure period_identifier is not null before proceeding
+    if (!distribution.period_identifier) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Cannot retry distribution: period_identifier is missing",
+          },
+        },
+        { status: 400 },
+      );
+    }
+
     // Start the retry in the background
     prizeDistributionService
       .settlePrizesForPeriod(
-        distribution.pool_type,
-        distribution.period_identifier,
+        boardType,
+        distribution.period_identifier as string, // Type assertion since we've checked for null
       )
       .catch((error) => {
         console.error(`Failed to retry distribution ${distributionId}:`, error);
@@ -86,9 +113,9 @@ export async function POST(
 
     return NextResponse.json(
       {
-        message: `Retrying ${distribution.pool_type} prize distribution for period ${distribution.period_identifier}`,
+        message: `Retrying ${boardType} prize distribution for period ${distribution.period_identifier}`,
         distributionId,
-        poolType: distribution.pool_type,
+        poolType: boardType,
         periodIdentifier: distribution.period_identifier,
       },
       { status: 202 },
