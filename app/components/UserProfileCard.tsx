@@ -214,8 +214,6 @@ export const UserProfileCard = () => {
           <BuyGlicoButton />
         </div>
       </div>
-      
-
     </>
   );
 };

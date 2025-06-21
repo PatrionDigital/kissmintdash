@@ -15,7 +15,7 @@ export const TapButton: React.FC<TapButtonProps> = ({ onTap, disabled = false, f
       type="button"
       onClick={onTap}
       disabled={disabled}
-      className="w-32 h-32 rounded-full bg-accent text-white text-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform focus:outline-none focus:ring-4 focus:ring-accent/50 disabled:opacity-50"
+      className="w-48 h-48 rounded-full bg-accent text-white text-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform focus:outline-none focus:ring-4 focus:ring-accent/50 disabled:opacity-50"
       aria-label="Tap"
     >
       TAP

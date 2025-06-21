@@ -5,6 +5,7 @@ import Image from "next/image";
 import { GameEngine } from "./game";
 import { FaHome } from "react-icons/fa";
 import { UserProfileCard } from "./UserProfileCard";
+import { useGame } from "../context/GameContext";
 
 type ButtonProps = {
   children?: ReactNode;
@@ -263,6 +264,8 @@ export function Features({ setActiveTab }: FeaturesProps) {
 }
 
 export function Home() {
+  const { isGameRunning } = useGame();
+  
   return (
     <div className="space-y-6 animate-fade-in">
       <Card title="Tap Runner'99" className="my-8">
@@ -271,9 +274,11 @@ export function Home() {
         </div>
       </Card>
 
-      <Card className="border-4 border-cyber">
-        <UserProfileCard />
-      </Card>
+      {!isGameRunning && (
+        <Card className="border-4 border-cyber">
+          <UserProfileCard />
+        </Card>
+      )}
     </div>
   );
 }

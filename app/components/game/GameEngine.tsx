@@ -8,6 +8,8 @@ import { ShareFrameButton } from "./ShareFrameButton";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { SpaceInvaderIcon } from "../icons/SpaceInvaderIcon";
 import { useUserProfile } from "../../context/UserContext";
+import { useGame } from "../../context/GameContext";
+import { GameState } from './types';
 import { toast } from "sonner";
 import { GameFeedback } from "./GameFeedback";
 
@@ -27,14 +29,7 @@ interface DeviceInfo {
   touchSupport: boolean;
 }
 
-// 1. Game States
-export enum GameState {
-  Idle = "idle",
-  Ready = "ready",  // Ready for player to tap to start countdown
-  Countdown = "countdown",
-  Running = "running",
-  Finished = "finished",
-}
+// Game states are imported from './types'
 
 type GameAction =
   | { type: "START_GAME" }
@@ -135,6 +130,7 @@ function gameReducer(state: GameStateModel, action: GameAction): GameStateModel 
 function GameEngine() {
   // --- State ---
   const [showTimesUp, setShowTimesUp] = useState(false);
+  const { setGameState } = useGame();
   
   // --- User profile and attempts ---
   const { profile, updateProfile } = useUserProfile();
@@ -156,11 +152,12 @@ function GameEngine() {
     taps: [],
     feedback: false,
     tapTimestamps: [],
-    deviceInfo: undefined,
-    deviceFingerprint: undefined,
-    performanceScore: undefined,
-    integrityHash: undefined,
   });
+
+  // Update context when game state changes
+  useEffect(() => {
+    setGameState(state.gameState);
+  }, [state.gameState, setGameState]);
 
   // Countdown state
   const [countdown, setCountdown] = useState(3);
@@ -515,7 +512,7 @@ function GameEngine() {
       <div className="relative w-full flex flex-col items-center gap-6">
         {/* Tap Button - Hidden when game is idle or finished */}
         {state.gameState !== GameState.Idle && state.gameState !== GameState.Finished && (
-          <div className="relative w-32 h-32 flex items-center justify-center">
+          <div className="relative w-64 h-64 flex items-center justify-center">
             <TapButton 
               onTap={state.gameState === GameState.Ready ? handleStartGame : handleTap} 
               disabled={state.gameState !== GameState.Running} 

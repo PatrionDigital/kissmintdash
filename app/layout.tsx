@@ -7,6 +7,7 @@ import { Providers } from "./providers";
 import dynamic from 'next/dynamic';
 // import AudioInitializer from "./components/AudioInitializer"; // Replaced with dynamic import
 import { UserProfileProvider } from "./context/UserContext";
+import { GameProvider } from "./context/GameContext";
 import VhsStaticBackground from "./components/VhsStaticBackground";
 import { Toaster } from "sonner";
 // import AudioPlayer from "./components/AudioPlayer"; // Replaced with dynamic import
@@ -65,11 +66,13 @@ export default function RootLayout({
         {/* VHS Static Canvas Background */}
         <VhsStaticBackground />
         <UserProfileProvider>
-          <Providers>
-            <DynamicAudioInitializer />
-            {children}
-            <Toaster position="bottom-center" />
-          </Providers>
+          <GameProvider>
+            <Providers>
+              <DynamicAudioInitializer />
+              {children}
+              <Toaster position="bottom-center" />
+            </Providers>
+          </GameProvider>
         </UserProfileProvider>
         {/* Global Audio Player Controls Removed */}
       </body>
